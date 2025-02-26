@@ -24,8 +24,8 @@ endif(NOT OPENGL_FOUND)
 
 if  (WIN32)
 
-	message(STATUS "Toolkits_DIR set to: " ${TOOLKITS_FOLDER})
 	set(TOOLKITS_FOLDER "${CMAKE_SOURCE_DIR}/toolkits" CACHE PATH "Path to Toolkits folder")
+	message(STATUS "Toolkits_DIR set to: " ${TOOLKITS_FOLDER})
 	
 	if (NOT EXISTS "${TOOLKITS_FOLDER}/glut/GL/glut.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glut/glut32.lib")
 		message(ERROR ": GLUT not found")

@@ -11,10 +11,7 @@
 #include <GL/glut.h>
 #endif
 
-
-
 #include <vector>
-using namespace std;
 
 float alfa = 0.0f, beta = 0.8f, radius = 5.0f;
 float camX, camY, camZ;
