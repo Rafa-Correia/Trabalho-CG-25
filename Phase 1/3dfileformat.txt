@@ -1,6 +1,6 @@
 All values separated by ;
 
-Options (3 numbers, first to say if there are indices, second to say if there are normals)
+Options (3 numbers, 1 - true, 0 - false, 1st - if indices are used, 2nd - if tex coords are used, 3rd - if normals are used)
 Set of all indices
 Set of texture coordinates (2 floats per vertex)
 Set of vertex normals (3 floats per vertex)
