@@ -1,13 +1,13 @@
 All values separated by ;
 
-Options (2 numbers, first to say if there are tex coords, second to say if there are normals)
+Options (3 numbers, first to say if there are indices, second to say if there are normals)
 Set of all indices
 Set of texture coordinates (2 floats per vertex)
 Set of vertex normals (3 floats per vertex)
 Set of vertex positions (3 floats per vertex)
 
 Example:
-11 (both tex and normals)
+111
 1;2;3
 0.0;0.0;0.5;0.5;1.0;1.0;    (tex coords, values are random)
 1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0;1.0    (vertex normals, values are random)

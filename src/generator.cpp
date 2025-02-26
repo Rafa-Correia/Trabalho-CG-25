@@ -4,6 +4,16 @@
 #include <iostream>
 #include <fstream>
 
+#define UNIT_SIZE 1.0f
+
+bool validate_filepath(const std::string& filepath) {
+    const std::string extention = ".3d";
+    if(filepath.length() <= extention.length()) {
+        return false;
+    }
+    return filepath.compare(filepath.length() - extention.length(), extention.length(), extention);
+}
+
 int main(int argc, char **argv) {
     if (argc < 5 || argc > 7) {
         std::cout << "Wrong number of arguments." << std::endl;
@@ -21,7 +31,7 @@ int main(int argc, char **argv) {
 
     }
     else if(model_type.compare("plane") == 0) {
-        
+
     }
     else {
         std::cout << "Invalid shape!" << std::endl;
