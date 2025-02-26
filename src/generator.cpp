@@ -11,7 +11,7 @@ bool validate_filepath(const std::string& filepath) {
     if(filepath.length() <= extention.length()) {
         return false;
     }
-    return filepath.compare(filepath.length() - extention.length(), extention.length(), extention);
+    return filepath.compare(filepath.length() - extention.length(), extention.length(), extention) == 0;
 }
 
 int main(int argc, char **argv) {
