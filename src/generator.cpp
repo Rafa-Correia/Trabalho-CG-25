@@ -127,7 +127,7 @@ bool generate_cone(int argc, char** argv) {
         std::vector<size_t> indices;
 
         float angle_delta = 2 * M_PI / slices;
-        unsigned int i = 0;
+        int i = 0;
         float alpha = angle_delta * i;
 
         //vertex 0 (center)
@@ -163,8 +163,8 @@ bool generate_cone(int argc, char** argv) {
 
         //sides!
         
-        unsigned int j;
-        unsigned int k;
+        int j;
+        int k;
 
         float radius_delta, height_delta;
         float cur_radius, cur_height;
@@ -233,7 +233,7 @@ bool generate_cone(int argc, char** argv) {
         //indices first
         size_t *indices_array = indices.data();
         file << indices_array[0];
-        for(i = 1; i < indices.size(); i++) {
+        for(i = 1; (long long unsigned int)i < indices.size(); i++) {
             file << ";" << indices_array[i];
         }
         file << "\n";
@@ -241,7 +241,7 @@ bool generate_cone(int argc, char** argv) {
         //vertices
         float *vertices_array = vertices.data();
         file << vertices_array[0];
-        for(i = 1; i < vertices.size(); i++) {
+        for(i = 1; (long long unsigned int)i < vertices.size(); i++) {
             file << ";" << vertices_array[i];
         }
 
@@ -249,6 +249,7 @@ bool generate_cone(int argc, char** argv) {
     }
     else {
         std::cout << "Error opening the file!" << std::endl;
+        return false;
     }
 
     return true;
@@ -277,6 +278,7 @@ bool generate_plane(int argc, char **argv) {
 
         std::ofstream file(filepath);
         plane_file.close();
+        return true;
     }
     else {
         std::cerr << "Error opening file" << std::endl;
@@ -297,6 +299,7 @@ bool generate_plane(int argc, char **argv) {
         }
     }
     */
+   return true;
 }
 
 int main(int argc, char **argv) {
@@ -318,7 +321,9 @@ int main(int argc, char **argv) {
         }
     }
     else if(model_type.compare("plane") == 0) {
-        generate_plane(argc, argv);
+        if(!generate_plane(argc, argv)) {
+            return 1;
+        }
     }
     else {
         std::cout << "Invalid shape!" << std::endl;
