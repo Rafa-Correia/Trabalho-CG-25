@@ -35,3 +35,6 @@ build/*
 # .vs or .vscode
 .vs/*
 .vscode/*
+
+# file.3d
+*.3d

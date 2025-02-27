@@ -91,7 +91,10 @@ void readfile() {
 	std::vector<float> p;
 	std::vector<unsigned int> i;
 
-	std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file
+	//std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file RAFA
+	std::ifstream file("C:/Users/Rodrigo/Desktop/Trabalho-CG-25/src/box.3d"); // Open file EU
+	//std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file RUI
+
     if (!file) {
         std::cerr << "Error opening file\n";
         return;
