@@ -56,7 +56,6 @@ void changeSize(int w, int h) {
 }
 
 
-
 void renderScene(void) {
 
 	// clear buffers
