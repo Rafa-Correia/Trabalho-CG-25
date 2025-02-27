@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -16,7 +20,7 @@
 float alfa = 0.0f, beta = 0.8f, radius = 5.0f;
 float camX, camY, camZ;
 
-GLuint vertices, verticeCount;
+GLuint vertices, verticeCount, indices, indexCount;
 
 void spherical2Cartesian() {
 
@@ -64,6 +68,12 @@ void renderScene(void) {
 		0.0, 0.0, 0.0,
 		0.0f, 1.0f, 0.0f);
 
+	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	
 
 	// End of frame
 	glutSwapBuffers();
@@ -75,6 +85,67 @@ void processKeys(unsigned char c, int xx, int yy) {
 // put code to process regular keys in here
 
 }
+
+//create a read from file function here?
+void readfile() {
+
+	std::vector<float> p;
+	std::vector<unsigned int> i;
+
+	std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file
+    if (!file) {
+        std::cerr << "Error opening file\n";
+        return;
+    }
+
+    std::string line;
+	int line_index = 0;
+    while (std::getline(file, line)) { // Read file line by line
+        std::stringstream ss(line);  // Use stringstream to parse the line
+        std::string token;
+
+        // Split the line by ';'
+		if (line_index == 0) {
+			//skipped for now, settings line
+		}
+		if (line_index == 1) {
+			//indices
+			while (std::getline(ss, token, ';')) {
+				//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
+				int index = std::stoi(token);
+				i.push_back(index);
+			}
+		}
+		if(line_index == 2) {
+			//vertices
+			while (std::getline(ss, token, ';')) {
+            	//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
+				float vertex_float = std::stof(token);
+				p.push_back(vertex_float);
+        	}
+		}
+        line_index++;
+    }
+
+    file.close();
+
+	verticeCount = p.size() / 3;
+
+	//generate VBO
+	glGenBuffers(1, &vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * p.size(), p.data(), GL_STATIC_DRAW);
+
+	//EBO
+	glGenBuffers(1, &indices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+					sizeof(unsigned int) * i.size(),
+				i.data(),
+				GL_STATIC_DRAW);
+	indexCount = i.size();
+}
+
 
 
 void processSpecialKeys(int key, int xx, int yy) {
@@ -150,13 +221,16 @@ int main(int argc, char **argv) {
 //  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT, GL_FILL);
+	glPolygonMode(GL_FRONT, GL_LINE);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
+	//prepare_data();
 
 	spherical2Cartesian();
 
 	printInfo();
+
+	readfile();
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
