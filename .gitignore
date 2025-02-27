@@ -30,7 +30,7 @@
 *.app
 
 # Build
-./build/*
+build/*
 
 # .vs or .vscode
 .vs/*

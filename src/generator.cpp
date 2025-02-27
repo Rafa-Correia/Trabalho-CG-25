@@ -271,8 +271,8 @@ bool generate_plane(int argc, char **argv) {
             return false;
         }
         
-        std::cout << "Length: " << length << std::endl;
-        std::cout << "Divisons: " << divisions << std::endl;
+        //std::cout << "Length: " << length << std::endl;
+        //std::cout << "Divisons: " << divisions << std::endl;
         std::cout << "Filepath: " << filepath << std::endl;
 
         std::ofstream file(filepath);
@@ -282,6 +282,7 @@ bool generate_plane(int argc, char **argv) {
         std::cerr << "Error opening file" << std::endl;
     }
 
+    /*
     for (int i = -1; i < 2; i++) {
         for (int j = -1; j < 2; j++) {
             // Primeiro tri�ngulo
@@ -295,6 +296,7 @@ bool generate_plane(int argc, char **argv) {
             glVertex3f(0.5f + i, 0.0f, 0.5f + j);
         }
     }
+    */
 }
 
 int main(int argc, char **argv) {
@@ -316,7 +318,7 @@ int main(int argc, char **argv) {
         }
     }
     else if(model_type.compare("plane") == 0) {
-        generate_plane(argc, **argv);
+        generate_plane(argc, argv);
     }
     else {
         std::cout << "Invalid shape!" << std::endl;
