@@ -86,13 +86,13 @@ void processKeys(unsigned char c, int xx, int yy) {
 }
 
 //create a read from file function here?
-void readfile() {
+void readfile(int vbo_index) {
 
 	std::vector<float> p;
 	std::vector<unsigned int> i;
 
-	//std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file RAFA
-	std::ifstream file("C:/Users/Rodrigo/Desktop/Trabalho-CG-25/src/box.3d"); // Open file EU
+	std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/file.3d"); // Open file RAFA
+	//std::ifstream file("C:/Users/Rodrigo/Desktop/Trabalho-CG-25/src/box.3d"); // Open file EU
 	//std::ifstream file("C:/Users/rafae/Desktop/Trabalho-CG-25/src/output/file.3d"); // Open file RUI
 
     if (!file) {
@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
 
 	printInfo();
 
-	readfile();
+	readfile(1);
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
