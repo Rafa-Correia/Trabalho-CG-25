@@ -460,7 +460,7 @@ int main(int argc, char **argv) {
 	
 	//readfile(1);
 	std::cout << "Loading config file..." << std::endl; 
-	if(!load_config_file(std::string("path_to_config.xml"))) return 1;
+	if(!load_config_file(std::string("C:/Users/rafar/Desktop/Trabalho-CG-25/config_example.xml"))) return 1;
 	std::cout << "Done!\n" << std::endl;
 
 	glutReshapeWindow(win_width, win_height);

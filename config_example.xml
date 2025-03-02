@@ -8,8 +8,7 @@
     </camera>
     <group>
         <models>
-            <model file="path_to_sphere.3d" />
-            <model file="path_to_cone.3d" />
+            <model file="C:/Users/rafar/Desktop/Trabalho-CG-25/plane.3d" />
         </models>
     </group>
 </world>
