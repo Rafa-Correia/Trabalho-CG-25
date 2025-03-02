@@ -530,54 +530,102 @@ bool generate_sphere(int argc, char **argv)
     return true;
 }
 
-
-
-bool generate_plane(int argc, char **argv)
+bool generate_plane(int argc, char** argv)
 {
-    std::ofstream plane_file("plane.3d");
-
-    if (plane_file.is_open())
+    if (argc != 5)
     {
-        if (argc != 5)
-        {
-            std::cout << "Wrong number of arguments!" << std::endl;
-            return false;
-        }
-        std::string filepath(argv[4]);
-        if (!validate_filepath(filepath))
-        {
-            std::cout << "Not valid" << std::endl;
-            return false;
-        }
-
-        // std::cout << "Length: " << length << std::endl;
-        // std::cout << "Divisons: " << divisions << std::endl;
-        std::cout << "Filepath: " << filepath << std::endl;
-
-        std::ofstream file(filepath);
-        plane_file.close();
-        return true;
+        std::cout << "Wrong number of arguments!" << std::endl;
+        return false;
     }
-    else
+
+    std::string filepath(argv[4]);
+    if (!validate_filepath(filepath))
     {
-        std::cerr << "Error opening file" << std::endl;
+        std::cout << "File is not valid!" << std::endl;
+        return false;
     }
 
-    /*
-    for (int i = -1; i < 2; i++) {
-        for (int j = -1; j < 2; j++) {
-            // Primeiro tri�ngulo
-            glVertex3f(-0.5f + i, 0.0f, -0.5f + j);
-            glVertex3f(0.5f + i, 0.0f, 0.5f + j);
-            glVertex3f(0.5f + i, 0.0f, -0.5f + j);
+    float length = std::stof(argv[2]);
+    int divisions = std::stoi(argv[3]);
 
-            // Segundo tri�ngulo
-            glVertex3f(-0.5f + i, 0.0f, -0.5f + j);
-            glVertex3f(-0.5f + i, 0.0f, 0.5f + j);
-            glVertex3f(0.5f + i, 0.0f, 0.5f + j);
-        }
+    if (length <= 0 || divisions < 1)
+    {
+        std::cout << "Invalid length or divisions!" << std::endl;
+        return false;
     }
-    */
+
+    std::ofstream file(filepath);
+    if (!file.is_open())
+    {
+        std::cout << "Error opening the file!" << std::endl;
+        return false;
+    }
+
+    std::vector<float> vertices;
+    std::vector<size_t> indices;
+
+    float halfSize = length / 2.0f;
+    float step = length / divisions;
+
+    // Função para adicionar uma face
+    auto addFace = [&](float nx, float ny, float nz, // Normal direction
+        float ox, float oy, float oz, // Origin
+        float ux, float uy, float uz, // Horizontal vector (U)
+        float vx, float vy, float vz // Vertical vector (V)
+        ) {          // Invert triangle order if needed
+            int baseIndex = vertices.size() / 3;
+
+            for (int i = 0; i <= divisions; i++)
+            {
+                for (int j = 0; j <= divisions; j++)
+                {
+                    float x = ox + j * ux + i * vx;
+                    float y = 0.0f;
+                    float z = oz + j * uz + i * vz;
+
+                    vertices.push_back(x);
+                    vertices.push_back(y);
+                    vertices.push_back(z);
+
+                    if (i < divisions && j < divisions)
+                    {
+                        int current = baseIndex + i * (divisions + 1) + j;
+                        int nextRow = baseIndex + (i + 1) * (divisions + 1) + j;
+                       
+                        indices.push_back(current);
+                        indices.push_back(nextRow);
+                        indices.push_back(nextRow + 1);
+
+                        indices.push_back(current);
+                        indices.push_back(nextRow + 1);
+                        indices.push_back(current + 1);
+
+                    }
+                }
+            };
+            file << "100\n"; // Placeholder de settings, pode ajustar se necessário
+            size_t* indices_array = indices.data();
+            // Escreve índices
+            for (size_t i = 0; i < indices.size(); i++)
+            {
+                if (i > 0)
+                    file << ";";
+                file << indices_array[i];
+            }
+            file << "\n";
+
+            float* vertices_array = vertices.data();
+            // Escreve vértices
+            for (size_t i = 0; i < vertices.size(); i++)
+            {
+                if (i > 0)
+                    file << ";";
+                file << vertices_array[i];
+            }
+
+            file.close();
+        };
+    addFace(0, 1, 0, -halfSize, -halfSize, -halfSize, step, 0, 0, 0, 0, step);
     return true;
 }
 
