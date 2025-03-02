@@ -8,10 +8,10 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add source files
-set(SOURCES src/main.cpp)
+set(SOURCES src/main.cpp src/tinyxml2.cpp)
 
 # Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES})
+	add_executable(${PROJECT_NAME} ${SOURCES})
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
@@ -47,6 +47,8 @@ if  (WIN32)
 	endif(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")	
 	
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+	
 	
 else (WIN32) #Linux and Mac
 
