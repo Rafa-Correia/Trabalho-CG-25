@@ -207,7 +207,7 @@ bool readfile(int vbo_index, const char *filepath) {
 bool load_config_file(std::string filepath) {
 	tinyxml2::XMLDocument doc;
 	if(doc.LoadFile(filepath.data()) != tinyxml2::XML_SUCCESS) {
-		std::cout << "Failed to load XML config file!" << std::endl;
+		std::cout << "Failed to load XML config file at: " << filepath << std::endl;
 		return false;
 	}
 
