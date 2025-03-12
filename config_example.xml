@@ -1,5 +1,5 @@
 <world>
-    <window width="1600" height="1200" />
+    <window width="800" height="600" />
     <camera>
         <position x="0" y="2" z="5" />
         <lookAt x="0" y="0" z="0" />
@@ -7,8 +7,47 @@
         <projection fov="60" near="1" far="1000" />
     </camera>
     <group>
+        <transform>
+            <translate x="1" y="1" z="1" />
+            <rotate angle="1" x="0" y="1" z="0" />
+            <scale x="1" y="1" z="1" /> 
+        </transform>
         <models>
-            <model file="C:/Users/rafar/Desktop/Trabalho-CG-25/plane.3d" />
+            <model file="cone.3d" />
+            <model file="sphere.3d" />
         </models>
+        <group>
+            <transform>
+                <translate x="1" y="1" z="1" />
+                <rotate angle="1" x="0" y="1" z="0" />
+                <scale x="1" y="1" z="1" /> 
+            </transform>
+            <models>
+                <model file="cone.3d" />
+                <model file="sphere.3d" />
+            </models>
+            <group>
+                <transform>
+                    <translate x="1" y="1" z="1" />
+                    <rotate angle="1" x="0" y="1" z="0" />
+                    <scale x="1" y="1" z="1" /> 
+                </transform>
+                <models>
+                    <model file="cone.3d" />
+                    <model file="sphere.3d" />
+                </models>
+            </group>
+            <group>
+                <transform>
+                    <translate x="1" y="1" z="1" />
+                    <rotate angle="1" x="0" y="1" z="0" />
+                    <scale x="1" y="1" z="1" /> 
+                </transform>
+                <models>
+                    <model file="cone.3d" />
+                    <model file="sphere.3d" />
+                </models>
+            </group>
+        </group>
     </group>
 </world>

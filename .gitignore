@@ -36,5 +36,11 @@ build/*
 .vs/*
 .vscode/*
 
+# Bin
+bin/*
+
 # file.3d
 *.3d
+
+#powershell scripts
+*.ps1

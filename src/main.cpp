@@ -1,3 +1,5 @@
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -16,7 +18,13 @@
 #endif
 
 #include <vector>
+
 #include "tinyxml2.h"
+#include "config.hpp"
+#include "group.hpp"
+
+
+config *cfg_obj = NULL;
 
 //window options
 int win_width = 10, win_height = 10;
@@ -125,7 +133,7 @@ bool readfile(int vbo_index, const char *filepath) {
 	std::vector<float> p;
 	std::vector<unsigned int> i;
 
-	std::ifstream file(filepath); // Open file RAFA
+	std::ifstream file(filepath);
 
     if (!file) {
         std::cerr << "Error opening file\n";
@@ -236,8 +244,8 @@ bool load_config_file(std::string filepath) {
 			win_width = width;
 			win_height = height;
 
-			std::cout << "Width: " << width << std::endl;
-			std::cout << "Height: " << height << std::endl;
+			//std::cout << "Width: " << width << std::endl;
+			//std::cout << "Height: " << height << std::endl;
 		} else {
 			std::cout << "No window element!" << std::endl;
 			return false;
@@ -410,19 +418,16 @@ void printInfo() {
 
 	printf("Vendor: %s\n", glGetString(GL_VENDOR));
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
-	printf("Version: %s\n", glGetString(GL_VERSION));
-
-	//printf("\nUse Arrows to move the camera up/down and left/right\n");
-	//printf("Page Up and Page Down control the distance from the camera to the origin\n");
-	std::cout << "Init camera pos -> x: " << cam_x << ", y: " << cam_y << ", z: " << cam_z << std::endl;
-	std::cout << "Init camera lookAt -> x: " << cam_lookat_x << ", y: " << cam_lookat_y << ", z: " << cam_lookat_z << std::endl;
-	std::cout << "Init camera up -> x: " << up_x << ", y: " << up_y << ", z: " << up_z << std::endl;
-	std::cout << "A/B/R -> alpha: " << alfa << ", beta: " << beta << ", radius: " << radius << std::endl;
+	printf("Version: %s\n\n", glGetString(GL_VERSION));
 }
 
 
 int main(int argc, char **argv) {
 // init GLUT and the window
+	if(argc != 2) {
+		std::cout << "Wrong number of arguments!" << std::endl;
+		return 1;
+	}
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
@@ -456,17 +461,56 @@ int main(int argc, char **argv) {
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
 	//prepare_data();
-
+	
 	
 	//readfile(1);
 	std::cout << "Loading config file..." << std::endl; 
-	if(!load_config_file(std::string("C:/Users/rafar/Desktop/Trabalho-CG-25/config_example.xml"))) return 1;
+	if(!load_config_file(std::string(argv[1]))) return 1;
 	std::cout << "Done!\n" << std::endl;
-
-	glutReshapeWindow(win_width, win_height);
-	cartesian2Spherical();
 	
 	printInfo();
+	
+	cfg_obj = new config(argv[1]);
+	cfg_obj->print_info();
+
+	std::vector<group> root_groups = cfg_obj->get_root_groups();
+	group *root_groups_data = root_groups.data();
+	for(size_t i = 0; i < root_groups.size(); i++) {
+		group g = root_groups_data[i];
+		g.print_group("");
+	}
+
+
+	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
+	glutReshapeWindow(std::get<0>(win_attribs), std::get<1>(win_attribs));
+
+
+	std::tuple<float, float, float> camera_position = cfg_obj->get_camera_position();
+	cam_x = std::get<0>(camera_position);
+	cam_y = std::get<1>(camera_position);
+	cam_z = std::get<2>(camera_position);
+
+	std::tuple<float, float, float> camera_lookAt = cfg_obj->get_camera_lookAt();
+	cam_lookat_x = std::get<0>(camera_lookAt);
+	cam_lookat_y = std::get<1>(camera_lookAt);
+	cam_lookat_z = std::get<2>(camera_lookAt);
+	
+	std::tuple<float, float, float> camera_up_vector = cfg_obj->get_camera_up_vector();
+	up_x = std::get<0>(camera_up_vector);
+	up_y = std::get<1>(camera_up_vector);
+	up_z = std::get<2>(camera_up_vector);
+	
+	std::tuple<float, float, float> projection_attributes = cfg_obj->get_projection_settings();
+	cam_fov = std::get<0>(projection_attributes);
+	cam_near = std::get<1>(projection_attributes);
+	cam_far = std::get<2>(projection_attributes);
+
+
+	cartesian2Spherical();
+	
+
+	
+	//config c_loaded(argv[1]);
 	
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
