@@ -258,15 +258,10 @@ bool generate_cone(int argc, char **argv)
         // write to file
 
         // settings
+
+        //always generating with indices, with no normals and no tex coords
         file << "100\n";
-        // indices first
-        size_t *indices_array = indices.data();
-        file << indices_array[0];
-        for (i = 1; (long long unsigned int)i < indices.size(); i++)
-        {
-            file << ";" << indices_array[i];
-        }
-        file << "\n";
+        
 
         // vertices
         float *vertices_array = vertices.data();
@@ -275,6 +270,16 @@ bool generate_cone(int argc, char **argv)
         {
             file << ";" << vertices_array[i];
         }
+        file << "\n";
+        
+        // indices
+        size_t *indices_array = indices.data();
+        file << indices_array[0];
+        for (i = 1; (long long unsigned int)i < indices.size(); i++)
+        {
+            file << ";" << indices_array[i];
+        }
+        
 
         file.close();
     }
@@ -502,14 +507,7 @@ bool generate_sphere(int argc, char **argv)
 
         // settings
         file << "100\n";
-        // indices first
-        size_t *indices_array = indices.data();
-        file << indices_array[0];
-        for (i = 1; (long long unsigned int)i < indices.size(); i++)
-        {
-            file << ";" << indices_array[i];
-        }
-        file << "\n";
+        
 
         // vertices
         float *vertices_array = vertices.data();
@@ -518,6 +516,16 @@ bool generate_sphere(int argc, char **argv)
         {
             file << ";" << vertices_array[i];
         }
+        file << "\n";
+        
+        // indices
+        size_t *indices_array = indices.data();
+        file << indices_array[0];
+        for (i = 1; (long long unsigned int)i < indices.size(); i++)
+        {
+            file << ";" << indices_array[i];
+        }
+        
 
         file.close();
     }
@@ -530,6 +538,13 @@ bool generate_sphere(int argc, char **argv)
     return true;
 }
 
+
+
+/**
+ * <----------------------------------------->
+ * PLANE VERTICES/INDICES GENERATING FUNCTION
+ * <----------------------------------------->
+ */
 bool generate_plane(int argc, char** argv)
 {
     if (argc != 5)
@@ -604,15 +619,7 @@ bool generate_plane(int argc, char** argv)
                 }
             };
             file << "100\n"; // Placeholder de settings, pode ajustar se necessário
-            size_t* indices_array = indices.data();
-            // Escreve índices
-            for (size_t i = 0; i < indices.size(); i++)
-            {
-                if (i > 0)
-                    file << ";";
-                file << indices_array[i];
-            }
-            file << "\n";
+            
 
             float* vertices_array = vertices.data();
             // Escreve vértices
@@ -622,6 +629,17 @@ bool generate_plane(int argc, char** argv)
                     file << ";";
                 file << vertices_array[i];
             }
+            file << "\n";
+            
+            size_t* indices_array = indices.data();
+            // Escreve índices
+            for (size_t i = 0; i < indices.size(); i++)
+            {
+                if (i > 0)
+                    file << ";";
+                file << indices_array[i];
+            }
+            
 
             file.close();
         };
@@ -741,14 +759,7 @@ bool generate_cube(int argc, char **argv)
     // Escreve no ficheiro
     file << "100\n"; // Placeholder de settings, pode ajustar se necessário
 
-    // Escreve índices
-    for (size_t i = 0; i < indices.size(); i++)
-    {
-        if (i > 0)
-            file << ";";
-        file << indices[i];
-    }
-    file << "\n";
+    
 
     // Escreve vértices
     for (size_t i = 0; i < vertices.size(); i++)
@@ -757,6 +768,15 @@ bool generate_cube(int argc, char **argv)
             file << ";";
         file << vertices[i];
     }
+    file << "\n";
+    // Escreve índices
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        if (i > 0)
+            file << ";";
+        file << indices[i];
+    }
+    
 
     file.close();
     return true;

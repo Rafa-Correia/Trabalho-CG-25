@@ -29,6 +29,8 @@ class config {
 
         std::vector<group> get_root_groups();
 
+        void prepare_all_groups();
+        void render_all_groups();
     private:
         //attributes
 
@@ -50,7 +52,6 @@ class config {
         std::vector<group> root_groups;
 
         bool load(const char *path);
-
 };
 
 class FailedToLoadException : public std::exception {

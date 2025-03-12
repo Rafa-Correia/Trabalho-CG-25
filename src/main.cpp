@@ -98,285 +98,18 @@ void renderScene(void) {
 
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
 	//glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-	GLuint *vertex_buffer_array = vertex_buffers.data();
-	GLuint *index_buffer_array = index_buffers.data();
-	std::size_t *index_count_array = index_count.data();
-	for(unsigned long long int i = 0; i < current_buffer; i++) {
-		GLuint vertices = vertex_buffer_array[i];
-		GLuint indices = index_buffer_array[i];
-		std::size_t n_indices = index_count_array[i];
-
-
-		glBindBuffer(GL_ARRAY_BUFFER, vertices);
-		glVertexPointer(3, GL_FLOAT, 0, 0);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-		glDrawElements(GL_TRIANGLES, n_indices, GL_UNSIGNED_INT, 0);
-	}
+	cfg_obj->render_all_groups();
 	
 
 	// End of frame
 	glutSwapBuffers();
 }
 
-
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
 
 }
-
-//create a read from file function here?
-bool readfile(int vbo_index, const char *filepath) {
-	std::cout << "Trying to load file: " << filepath << std::endl;
-
-	std::vector<float> p;
-	std::vector<unsigned int> i;
-
-	std::ifstream file(filepath);
-
-    if (!file) {
-        std::cerr << "Error opening file\n";
-        return false;
-    }
-
-    std::string line;
-	int line_index = 0;
-    while (std::getline(file, line)) { // Read file line by line
-        std::stringstream ss(line);  // Use stringstream to parse the line
-        std::string token;
-
-        // Split the line by ';'
-		if (line_index == 0) {
-			//skipped for now, settings line
-			//assumed all files have indices and no normals or tex coords
-		}
-		if (line_index == 1) {
-			//indices
-			while (std::getline(ss, token, ';')) {
-				//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
-				int index = std::stoi(token);
-				i.push_back(index);
-			}
-		}
-		if(line_index == 2) {
-			//vertices
-			while (std::getline(ss, token, ';')) {
-            	//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
-				float vertex_float = std::stof(token);
-				p.push_back(vertex_float);
-        	}
-		}
-        line_index++;
-    }
-
-    file.close();
-	
-	current_buffer++;
-
-	std::cout << "Finished reading file, now creating VBO\\EBO (" << current_buffer << ")..." << std::endl;
-
-	GLuint vertices, indices;
-
-	GLenum err;
-	while ((err = glGetError()) != GL_NO_ERROR) {
-    	std::cerr << "OpenGL Error: " << err << std::endl;
-	}
-
-
-	//generate VBO
-	glGenBuffers(1, &vertices);
-
-	//std::cout << vertices << std::endl;
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertices);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * p.size(), p.data(), GL_STATIC_DRAW);
-
-	std::cout << "Finished generating VBO..." << std::endl;
-
-	//EBO
-	glGenBuffers(1, &indices);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-					sizeof(unsigned int) * i.size(),
-				i.data(),
-				GL_STATIC_DRAW);
-
-	vertex_buffers.push_back(vertices);
-	index_buffers.push_back(indices);
-	//vertex_count.push_back(p.size() / 3);
-	index_count.push_back(i.size());
-
-	std::cout << "Finished creating VBO\\EBO!" << std::endl;
-
-	return true;
-}
-
-bool load_config_file(std::string filepath) {
-	tinyxml2::XMLDocument doc;
-	if(doc.LoadFile(filepath.data()) != tinyxml2::XML_SUCCESS) {
-		std::cout << "Failed to load XML config file at: " << filepath << std::endl;
-		return false;
-	}
-
-	tinyxml2::XMLElement *root = doc.RootElement();
-	if(root) {
-		if(std::string(root->Value()) != "world") {
-			std::cout << "Unexpected root element." << std::endl;
-			return false;
-		}
-
-		tinyxml2::XMLElement *window = root->FirstChildElement("window");
-		if(window) {
-			int width = -1, height = -1;
-			window->QueryIntAttribute("width", &width);
-			window->QueryIntAttribute("height", &height);
-
-			if(width == -1 || height == -1) { //check if loaded
-				std::cout << "There was a problem loading width\\height!" << std::endl;
-				return false;
-			}
-			if(width <= 0 || height <= 0) { //check if valid
-				std::cout << "Width\\Height is not valid!" << std::endl;
-				return false;
-			}
-
-			win_width = width;
-			win_height = height;
-
-			//std::cout << "Width: " << width << std::endl;
-			//std::cout << "Height: " << height << std::endl;
-		} else {
-			std::cout << "No window element!" << std::endl;
-			return false;
-		}
-
-		tinyxml2::XMLElement *camera = root->FirstChildElement("camera");
-		if(camera) {
-			tinyxml2::XMLElement *position = camera->FirstChildElement("position");
-			if(position) {
-				float x = 0, y = 0, z = 0;
-				position->QueryFloatAttribute("x", &x);
-				position->QueryFloatAttribute("y", &y);
-				position->QueryFloatAttribute("z", &z);
-
-				cam_x = x;
-				cam_y = y;
-				cam_z = z;
-			} else {
-				std::cout << "No position element!" << std::endl;
-				return false;
-			}
-
-			tinyxml2::XMLElement *lookat = camera->FirstChildElement("lookAt");
-			if(lookat) {
-				float x = 0, y = 0, z = 0;
-				lookat->QueryFloatAttribute("x", &x);
-				lookat->QueryFloatAttribute("y", &y);
-				lookat->QueryFloatAttribute("z", &z);
-
-				cam_lookat_x = x;
-				cam_lookat_y = y;
-				cam_lookat_z = z;
-			} else {
-				std::cout << "No lookAt element!" << std::endl;
-				return false;
-			}
-
-			tinyxml2::XMLElement *up = camera->FirstChildElement("up");
-			if(up) {
-				float x = 0, y = 0, z = 0;
-				up->QueryFloatAttribute("x", &x);
-				up->QueryFloatAttribute("y", &y);
-				up->QueryFloatAttribute("z", &z);
-
-				up_x = x;
-				up_y = y;
-				up_z = z;
-			} else {
-				std::cout << "No up element!" << std::endl;
-				return false;
-			}
-
-			
-			tinyxml2::XMLElement *projection = camera->FirstChildElement("projection");
-			if(projection) {
-				float fov = -1, near = -1, far = -1;
-				projection->QueryFloatAttribute("fov", &fov);
-				projection->QueryFloatAttribute("near", &near);
-				projection->QueryFloatAttribute("far", &far);
-
-				if(fov == -1 || near == -1 || far == -1) {
-					std::cout << "Camera fov\\near plane\\far plane wasn't loaded!" << std::endl;
-					return false;
-				}
-				if(fov <= 0 || near <= 0 || far <= 0) {
-					std::cout << "Camera fov\\near plane\\far plane isn't valid!" << std::endl;
-					return false;
-				}
-
-				cam_fov = fov;
-				cam_near = near;
-				cam_far = far;
-			} else {
-				std::cout << "No projection element!" << std::endl;
-				return false;
-			}
-
-		} else {
-			std::cout << "No camera element!" << std::endl;
-			return false;
-		}
-
-		bool loaded_group_at_least_once = false;
-		tinyxml2::XMLElement *group = root->FirstChildElement("group");
-		while(group) {
-			loaded_group_at_least_once = true;
-			//load transforms here
-
-			//CHANGE THIS WHEN LOADING TRANSFORMS
-			//FIRSTCHILDELEMENT -> NEXTSIBLINGELEMENT
-			tinyxml2::XMLElement *models = group->FirstChildElement("models");
-			if(models) {
-				bool loaded_model_at_least_once = false;
-				tinyxml2::XMLElement *model = models->FirstChildElement("model");
-				while(model) {
-					loaded_model_at_least_once = true;
-					const char* filepath = model->Attribute("file");
-					if(filepath) {
-						if(!readfile(1, filepath)) {
-							std::cout << "file attribute is invalid!" << std::endl;
-							return false;
-						}
-					} else {
-						std::cout << "A model element must have a file attribute!" << std::endl;
-						return false;
-					}
-					model = model->NextSiblingElement("model");
-				}
-				if(!loaded_model_at_least_once) {
-					std::cout << "A models element must have at least one model child element!" << std::endl;
-					return false;
-				}
-			} else {
-				std::cout << "A group element must have models child element!" << std::endl;
-				return false;
-			}
-			group = group->NextSiblingElement("group");
-		}
-
-		if(!loaded_group_at_least_once) {
-			std::cout << "At least one group element is mandatory!" << std::endl;
-			return false;
-		}
-
-		return true;
-	} else {
-		std::cout << "Failed to load root element!" << std::endl;
-		return false;
-	}
-}
-
 
 void processSpecialKeys(int key, int xx, int yy) {
 
@@ -400,12 +133,12 @@ void processSpecialKeys(int key, int xx, int yy) {
 			beta = -1.5f;
 		break;
 
-	case GLUT_KEY_PAGE_DOWN: radius -= 0.1f;
+	case GLUT_KEY_PAGE_DOWN: radius -= 1.0f;
 		if (radius < 0.1f)
 			radius = 0.1f;
 		break;
 
-	case GLUT_KEY_PAGE_UP: radius += 0.1f; break;
+	case GLUT_KEY_PAGE_UP: radius += 1.0f; break;
 	}
 	spherical2Cartesian();
 
@@ -443,7 +176,7 @@ int main(int argc, char **argv) {
 // Required callback registry 
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
-	glutIdleFunc(renderScene);
+	//glutIdleFunc(renderScene);
 	
 	// Callback registration for keyboard processing
 	glutKeyboardFunc(processKeys);
@@ -464,20 +197,24 @@ int main(int argc, char **argv) {
 	
 	
 	//readfile(1);
+	/*
 	std::cout << "Loading config file..." << std::endl; 
 	if(!load_config_file(std::string(argv[1]))) return 1;
 	std::cout << "Done!\n" << std::endl;
+	*/
 	
 	printInfo();
 	
 	cfg_obj = new config(argv[1]);
 	cfg_obj->print_info();
 
+	cfg_obj->prepare_all_groups();
+
 	std::vector<group> root_groups = cfg_obj->get_root_groups();
 	group *root_groups_data = root_groups.data();
 	for(size_t i = 0; i < root_groups.size(); i++) {
 		group g = root_groups_data[i];
-		g.print_group("");
+		g.print_group("|");
 	}
 
 

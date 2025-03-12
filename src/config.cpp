@@ -196,3 +196,15 @@ bool config::load(const char *filepath) {
 		return false;
 	}
 }
+
+void config::prepare_all_groups() {
+	for(size_t i = 0; i < root_groups.size(); i++) {
+		root_groups.at(i).prepare_render();
+	}
+}
+
+void config::render_all_groups() {
+	for(size_t i = 0; i < root_groups.size(); i++) {
+		root_groups.at(i).render_group();
+	}
+}
