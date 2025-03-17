@@ -39,6 +39,8 @@ class group {
         float rotate_angle, rotate_x, rotate_y, rotate_z; //rotation transform
         float scale_x, scale_y, scale_z; //scaling transform
 
+        float color_r, color_g, color_b;
+
         //vectors of mesh vertex vector and index vector
         std::vector<std::vector<float>> mesh_vertices_buffer;
         std::vector<std::tuple<bool, std::vector<int>>> mesh_indices_buffer;

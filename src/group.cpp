@@ -4,6 +4,10 @@ group::group(tinyxml2::XMLElement *root) {
     if(!group::parse_group(root)) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
+
+    color_r = (float)rand() / (float)RAND_MAX;
+    color_g = (float)rand() / (float)RAND_MAX;
+    color_b = (float)rand() / (float)RAND_MAX;
 }
 
 void group::prepare_render() {
@@ -89,9 +93,11 @@ void group::render_group() {
         throw new NotReadyToRenderException("prepare_render() must be called first!");
     }
 
-    std::cout << "Rendering group..." << std::endl;
+    //std::cout << "Rendering group..." << std::endl;
 
     //rendering a group should render all subgroups
+    glColor3f(color_r, color_g, color_b);
+
     glPushMatrix();
 
         for(size_t i = 0; i < transform_order.size(); i++) {
@@ -107,7 +113,7 @@ void group::render_group() {
         }
 
         for(unsigned int j = 0; j < mesh_count; j++) {
-            std::cout << "Rendering mesh " << j << "..." << std::endl;
+            //std::cout << "Rendering mesh " << j << "..." << std::endl;
             GLuint VBO = group_vbos.at(j);
             std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
             int obj_count = vertex_or_index_count.at(j);
@@ -118,20 +124,20 @@ void group::render_group() {
             if(!std::get<0>(EBO_t)) {
                 //only vbo
                 glDrawArrays(GL_TRIANGLES, 0, obj_count);
-                std::cout << "Rendered mesh " << j << " (VBO)" << std::endl;
+                //std::cout << "Rendered mesh " << j << " (VBO)" << std::endl;
             } 
             else {
                 //with indices
-                std::cout << "obj_count -> " << obj_count << std::endl;
+                //std::cout << "obj_count -> " << obj_count << std::endl;
 
                 GLuint EBO = std::get<1>(EBO_t);
 
-                std::cout << "EBO -> " << EBO << std::endl;
+                //std::cout << "EBO -> " << EBO << std::endl;
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
                 glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
 
-                std::cout << "Rendered mesh " << j << " (VBO, EBO)" << std::endl;
+                //std::cout << "Rendered mesh " << j << " (VBO, EBO)" << std::endl;
             }
         }
 

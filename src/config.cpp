@@ -37,18 +37,6 @@ std::tuple<int, int> config::get_window_attributes() {
     return std::tuple<int, int>(w_width, w_height);
 }
 
-std::tuple<float, float, float> config::get_camera_position() {
-    return std::tuple<float, float, float>(c_pos_x, c_pos_y, c_pos_z);
-}
-
-std::tuple<float, float, float> config::get_camera_lookAt() {
-    return std::tuple<float, float, float>(c_lookat_x, c_lookat_y, c_lookat_z);
-}
-
-std::tuple<float, float, float> config::get_camera_up_vector() {
-    return std::tuple<float, float, float>(c_up_x, c_up_y, c_up_z);
-}
-
 std::tuple<float, float, float> config::get_projection_settings() {
     return std::tuple<float, float, float>(c_fov, c_near_plane, c_far_plane);
 }
@@ -207,4 +195,8 @@ void config::render_all_groups() {
 	for(size_t i = 0; i < root_groups.size(); i++) {
 		root_groups.at(i).render_group();
 	}
+}
+
+camera* config::get_config_camera_init() {
+	return new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z);
 }

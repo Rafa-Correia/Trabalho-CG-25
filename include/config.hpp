@@ -3,6 +3,7 @@
 
 #include "tinyxml2.h"
 #include "group.hpp"
+#include "camera.hpp"
 
 #include <exception>
 #include <iostream>
@@ -21,13 +22,11 @@ class config {
 
         std::tuple<int, int> get_window_attributes();
 
-        std::tuple<float, float, float> get_camera_position();
-        std::tuple<float, float, float> get_camera_lookAt();
-        std::tuple<float, float, float> get_camera_up_vector();
-
         std::tuple<float, float, float> get_projection_settings();
 
         std::vector<group> get_root_groups();
+
+        camera* get_config_camera_init();
 
         void prepare_all_groups();
         void render_all_groups();
