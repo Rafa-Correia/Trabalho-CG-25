@@ -23,6 +23,10 @@ class config {
         std::tuple<int, int> get_window_attributes();
 
         std::tuple<float, float, float> get_projection_settings();
+        std::tuple<float, float, float> get_locked_cam_pos();
+        std::tuple<float, float, float> get_locked_cam_lookat();
+        std::tuple<float, float, float> get_locked_cam_up();
+        
 
         std::vector<group> get_root_groups();
 

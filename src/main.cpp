@@ -44,7 +44,14 @@ camera *cam = NULL;
 int win_width = 10, win_height = 10;
 float cam_fov, cam_near, cam_far;
 
+//locked cam
+float radius, alpha, beta;
+float cam_x, cam_y, cam_z;
+float cam_lookat_x, cam_lookat_y, cam_lookat_z;
+float cam_up_x, cam_up_y, cam_up_z;
+
 //flag
+bool in_free_cam = false;
 bool draw_axis = true;
 bool wire_mode = true;
 
@@ -87,6 +94,20 @@ void disableVSync() {
 	#endif
 }
 
+
+void spherical2Cartesian() {
+	cam_x = radius * cos(beta) * sin(alpha);
+	cam_y = radius * sin(beta);
+	cam_z = radius * cos(beta) * cos(alpha);
+}
+
+void cartesian2Spherical() {
+    radius = std::sqrt(cam_x * cam_x + cam_y * cam_y + cam_z * cam_z);
+    beta = std::asin(cam_y / radius);
+    alpha = std::atan2(cam_x, cam_z);
+}
+
+
 void changeSize(int w, int h) {
 
 	// Prevent a divide by zero, when window is too short
@@ -123,7 +144,20 @@ void renderScene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//use cameras view matrix
-	cam->camera_glu_lookat();
+	if(in_free_cam) {
+		cam->camera_glu_lookat();
+	}
+	else {
+		glLoadIdentity();
+		gluLookAt(	cam_x, cam_y, cam_z, 
+					cam_lookat_x, cam_lookat_y, cam_lookat_z,
+					cam_up_x, cam_up_y, cam_up_z);
+
+		std::cout 	<< cam_x << " " << cam_y << " " << cam_z << "\n"
+					<< cam_lookat_x << " " << cam_lookat_y << " " << cam_lookat_z << "\n"
+					<< cam_up_x << " " << cam_up_y << " " << cam_up_z << std::endl;			
+		std::cout << "Loaded locked camera view matrix!" << std::endl;
+	}
 	
 	if(draw_axis) {
 		glBegin(GL_LINES);
@@ -187,9 +221,11 @@ void idle() {
 	int delta_time = prevTime - current_time;
 	prevTime = current_time;
 
-	cam->update_camera_position(key_states, delta_time);
+	if(in_free_cam) {
+		cam->update_camera_position(key_states, delta_time);
+		glutPostRedisplay();
+	}	
 
-	glutPostRedisplay();
 }
 
 void processKeyDown(unsigned char c, int mouse_x, int mouse_y) {
@@ -199,7 +235,17 @@ void processKeyDown(unsigned char c, int mouse_x, int mouse_y) {
 	else if(c == '2') {
 		wire_mode = !wire_mode;
 	}
-
+	else if(c == 'f' || c == 'F') {
+		in_free_cam = !in_free_cam;
+		if(!in_free_cam) {
+			glutSetCursor(GLUT_CURSOR_INHERIT);
+		}
+		else {
+			glutSetCursor(GLUT_CURSOR_NONE);
+			cam->just_switched();
+		}
+		glutPostRedisplay();
+	}
 	else if(c == 27) { //esc
 		exit(0);
 	}
@@ -218,11 +264,39 @@ void processKeyUp(unsigned char c, int mouse_x, int mouse_y) {
 }
 
 void processMouse(int x, int y) {
-	cam->update_camera_direction(x, y);
+	if(in_free_cam)
+		cam->update_camera_direction(x, y);
 }
 
 void processSpecialKeys(int key, int xx, int yy) {
-
+	if(in_free_cam) return;
+	switch (key) {
+		case GLUT_KEY_RIGHT:
+			alpha -= 0.1; 
+			break;
+		case GLUT_KEY_LEFT:
+			alpha += 0.1;
+			break;
+		case GLUT_KEY_UP:
+			beta += 0.1f;
+			if (beta > 1.5f)
+				beta = 1.5f;
+			break;
+		case GLUT_KEY_DOWN:
+			beta -= 0.1f;
+			if (beta < -1.5f)
+				beta = -1.5f;
+			break;
+		case GLUT_KEY_PAGE_DOWN: radius -= 1.0f;
+			if (radius < 0.1f)
+				radius = 0.1f;
+			break;
+		case GLUT_KEY_PAGE_UP: 
+			radius += 1.0f;
+			break;
+	}
+	spherical2Cartesian();
+	glutPostRedisplay();
 }
 
 
@@ -274,7 +348,7 @@ int main(int argc, char **argv) {
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	glutSetCursor(GLUT_CURSOR_NONE);
+	//glutSetCursor(GLUT_CURSOR_NONE);
 	//prepare_data();
 	
 	
@@ -310,6 +384,24 @@ int main(int argc, char **argv) {
 	cam_fov = std::get<0>(projection_attributes);
 	cam_near = std::get<1>(projection_attributes);
 	cam_far = std::get<2>(projection_attributes);
+
+	std::tuple<float, float, float> locked_cam_position = cfg_obj->get_locked_cam_pos();
+	std::tuple<float, float, float> locked_cam_lookat = cfg_obj->get_locked_cam_lookat();
+	std::tuple<float, float, float> locked_cam_up = cfg_obj->get_locked_cam_up();
+
+	cam_x = std::get<0>(locked_cam_position);
+	cam_y = std::get<1>(locked_cam_position);
+	cam_z = std::get<2>(locked_cam_position);
+
+	cam_lookat_x = std::get<0>(locked_cam_lookat);
+	cam_lookat_y = std::get<1>(locked_cam_lookat);
+	cam_lookat_z = std::get<2>(locked_cam_lookat);
+
+	cam_up_x = std::get<0>(locked_cam_up);
+	cam_up_y = std::get<1>(locked_cam_up);
+	cam_up_z = std::get<2>(locked_cam_up);
+
+	cartesian2Spherical();
 	
 	//config c_loaded(argv[1]);
 	    

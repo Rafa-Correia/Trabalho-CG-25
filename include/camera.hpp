@@ -20,6 +20,7 @@ class camera {
         void update_camera_direction(int x, int y);
         void update_window_size(int width, int height);
         void camera_glu_lookat();
+        void just_switched();
     private:
         float pos_x = 0, pos_y = 0, pos_z = 0;
         float up_x = 0, up_y = 1, up_z = 0;
@@ -37,6 +38,8 @@ class camera {
 
         int center_x = 0;
         int center_y = 0;
+
+        bool just_warped = false;
 
         void normalize_dir();
 

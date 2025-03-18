@@ -8,9 +8,9 @@ camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float look
     this->up_y = up_y;
     this->up_z = up_z;
 
-    dir_x = - pos_x + lookat_x;
-    dir_y = - pos_y + lookat_y;
-    dir_z = - pos_z + lookat_z;
+    dir_x =  lookat_x - pos_x;
+    dir_y =  lookat_y - pos_y;
+    dir_z =  lookat_z - pos_z;
 
     normalize_dir();
 }
@@ -57,8 +57,6 @@ bool camera::update_camera_position(const bool key_states[256], int delta_time_m
 }
 
 void camera::update_camera_direction(int x, int y) {
-    static bool just_warped = false;
-
     if(just_warped) {
         just_warped = false;
         return;
@@ -108,4 +106,9 @@ void camera::normalize_dir() {
 void camera::camera_glu_lookat() {
     glLoadIdentity();
     gluLookAt(pos_x, pos_y, pos_z, dir_x + pos_x, dir_y + pos_y, dir_z + pos_z, up_x, up_y, up_z);
+}
+
+void camera::just_switched() {
+    just_warped = true;
+    glutWarpPointer(center_x, center_y);
 }

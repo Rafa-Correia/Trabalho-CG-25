@@ -41,6 +41,20 @@ std::tuple<float, float, float> config::get_projection_settings() {
     return std::tuple<float, float, float>(c_fov, c_near_plane, c_far_plane);
 }
 
+std::tuple<float, float, float> config::get_locked_cam_pos() {
+    return std::tuple<float, float, float>(c_pos_x, c_pos_y, c_pos_z);
+}
+
+std::tuple<float, float, float> config::get_locked_cam_lookat() {
+    return std::tuple<float, float, float>(c_lookat_x, c_lookat_y, c_lookat_z);
+}
+
+std::tuple<float, float, float> config::get_locked_cam_up() {
+    return std::tuple<float, float, float>(c_up_x, c_up_y, c_up_z);
+}
+
+
+
 std::vector<group> config::get_root_groups() {
 	return root_groups;
 }
@@ -200,3 +214,4 @@ void config::render_all_groups() {
 camera* config::get_config_camera_init() {
 	return new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z);
 }
+
