@@ -8,21 +8,17 @@ group::group(tinyxml2::XMLElement *root) {
     color_r = (float)rand() / (float)RAND_MAX;
     color_g = (float)rand() / (float)RAND_MAX;
     color_b = (float)rand() / (float)RAND_MAX;
+
+    this->prepare_render();
 }
 
 void group::prepare_render() {
-    //prepare render of root group prepares render of all sub groups
-    if(ready_to_render) {
-        std::cout << "Warning: Group is already prepared!" << std::endl;
-        return;
-    }
-
-    std::cout << "Preparing group..." << std::endl;
+    //std::cout << "Preparing group..." << std::endl;
 
     size_t i;
 
     for(i = 0; i < mesh_count; i++) {
-        std::cout << "Mesh " << i << std::endl;
+        //std::cout << "Mesh " << i << std::endl;
         std::vector<float> vertices = mesh_vertices_buffer.at(i);
         std::tuple<bool, std::vector<int>> indices = mesh_indices_buffer.at(i);
 
@@ -32,7 +28,7 @@ void group::prepare_render() {
         //ignoring normals and tex coords for now
 
         if(!std::get<0>(indices)) {
-            std::cout << "VBO only!" << std::endl;
+            //std::cout << "VBO only!" << std::endl;
             //normal vbo
             int vertex_count = vertices.size() / 3;
             const float *vertices_data = vertices.data();
@@ -51,7 +47,7 @@ void group::prepare_render() {
         }
         else {
             //index as well
-            std::cout << "VBO and EBO!" << std::endl;
+            //std::cout << "VBO and EBO!" << std::endl;
             std::vector<int> indices_v = std::get<1>(indices);
             int index_count = indices_v.size();
 
@@ -78,9 +74,7 @@ void group::prepare_render() {
         //if normals and tex coords exist, do something!
     }
 
-    std::cout << "Finished preparing all meshes!" << std::endl;
-
-    ready_to_render = true;
+    //std::cout << "Finished preparing all meshes!" << std::endl;
 
     //prepare render of all subgroups
     for(i = 0; i < sub_groups.size(); i++) {
@@ -89,10 +83,6 @@ void group::prepare_render() {
 }
 
 void group::render_group() {
-    if(!ready_to_render) {
-        throw new NotReadyToRenderException("prepare_render() must be called first!");
-    }
-
     //std::cout << "Rendering group..." << std::endl;
 
     //rendering a group should render all subgroups
@@ -226,7 +216,9 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 			loaded_model_at_least_once = true;
 			const char* filepath = model->Attribute("file");
 			if(filepath) {
-				parse_model_file(filepath);
+				if(!parse_model_file(filepath)) {
+                    return false;
+                }
                 mesh_count++;
 
 			} else {
@@ -258,7 +250,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 }
 
 bool group::parse_model_file(const char *filepath) {
-    std::cout << "Trying to load file \"" << filepath << "\"" << std::endl;
+    //std::cout << "Trying to load file \"" << filepath << "\"" << std::endl;
 
     std::ifstream file(filepath);
 
@@ -281,28 +273,28 @@ bool group::parse_model_file(const char *filepath) {
         std::stringstream ss(line);  // Use stringstream to parse the line
         std::string token;
 
-        std::cout << line_index << std::endl;
+        //std::cout << line_index << std::endl;
         // Split the line by ';'
 		if (line_index == 0) {
 			const char* line_data = line.data();
             if(line_data[0] == '1') {
                 i_flag = true;
                 data_order.push_back('i');
-                std::cout << "Indices -> True" << std::endl;
+                //std::cout << "Indices -> True" << std::endl;
             }
             if(line_data[1] == '1') {
                 n_flag = true;
                 data_order.push_back('n');
-                std::cout << "Normals -> True" << std::endl;
+                //std::cout << "Normals -> True" << std::endl;
             }
             if(line_data[2] == '1') {
                 t_flag = true;
                 data_order.push_back('t');
-                std::cout << "Tex -> True" << std::endl;
+                //std::cout << "Tex -> True" << std::endl;
             }
         }
         else if (line_index == 1) {  //vertices
-            std::cout << "Reading vertices..." << std::endl;
+            //std::cout << "Reading vertices..." << std::endl;
             //read vertices
             while (std::getline(ss, token, ';')) {
             	//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
@@ -315,7 +307,7 @@ bool group::parse_model_file(const char *filepath) {
         else {  //all the others
             if(data_order.size() == 0) break; //only indices
             if(data_order.at(line_index - 2) == 'i') {
-                std::cout << "Reading indices..." << std::endl;
+                //std::cout << "Reading indices..." << std::endl;
                 //read indices
                 while (std::getline(ss, token, ';')) {
                     //std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
@@ -343,22 +335,22 @@ bool group::parse_model_file(const char *filepath) {
     if(!i_flag) {
         std::tuple<bool, std::vector<int>> index_t(false, indices);
         mesh_indices_buffer.push_back(index_t);
-        std::cout << "Indices -> False" << std::endl;
+        //std::cout << "Indices -> False" << std::endl;
     }
     if(!n_flag) {
         std::tuple<bool, std::vector<float>> normal_t(false, normals);
         mesh_normals_buffer.push_back(normal_t);
-        std::cout << "Normals -> False" << std::endl;
+        //std::cout << "Normals -> False" << std::endl;
     }
     if(!t_flag) {
         std::tuple<bool, std::vector<float>> coord_t(false, tex_coords);
         mesh_tex_coords_buffer.push_back(coord_t);
-        std::cout << "Tex -> False" << std::endl;
+        //std::cout << "Tex -> False" << std::endl;
     }   
 
     file.close();
 
-    std::cout << "Done!" << std::endl;
+    //std::cout << "Done!" << std::endl;
 
     return true;
 }
@@ -374,7 +366,8 @@ void group::print_group(const std::string prepend) {
     std::cout << prepend << "\n" << prepend << "Transform order: " << curated_order << "\n" << prepend << "\n";
 
     for(size_t i = 0; i < transform_order.size(); i++) {
-        if(curated_order[i] == 't') {std::cout << "Indices -> False" << std::endl;
+        if(curated_order[i] == 't') {
+            std::cout << "Indices -> False" << std::endl;
             std::cout   << prepend << "Translate:\n"
                         << prepend << "\tx: " << translate_x << "\n"
                         << prepend << "\ty: " << translate_y << "\n"

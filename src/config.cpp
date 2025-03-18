@@ -6,6 +6,8 @@ config::config(const char *path) {
         ss << "Failed to load file at: " << path;
         throw FailedToLoadException(ss.str());
     }
+
+	cam = new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z);
 }
 
 void config::print_info() {
@@ -41,20 +43,6 @@ std::tuple<float, float, float> config::get_projection_settings() {
     return std::tuple<float, float, float>(c_fov, c_near_plane, c_far_plane);
 }
 
-std::tuple<float, float, float> config::get_locked_cam_pos() {
-    return std::tuple<float, float, float>(c_pos_x, c_pos_y, c_pos_z);
-}
-
-std::tuple<float, float, float> config::get_locked_cam_lookat() {
-    return std::tuple<float, float, float>(c_lookat_x, c_lookat_y, c_lookat_z);
-}
-
-std::tuple<float, float, float> config::get_locked_cam_up() {
-    return std::tuple<float, float, float>(c_up_x, c_up_y, c_up_z);
-}
-
-
-
 std::vector<group> config::get_root_groups() {
 	return root_groups;
 }
@@ -69,7 +57,7 @@ bool config::load(const char *filepath) {
 	tinyxml2::XMLElement *root = doc.RootElement();
 	if(root) {
 		if(std::string(root->Value()) != "world") {
-			std::cout << "Unexpected root element." << std::endl;
+			std::cout << "Unexpected root element: " << root->Value() << std::endl;
 			return false;
 		}
 
@@ -91,8 +79,8 @@ bool config::load(const char *filepath) {
 			w_width = width;
 			w_height = height;
 
-			std::cout << "Width: " << width << std::endl;
-			std::cout << "Height: " << height << std::endl;
+			//std::cout << "Width: " << width << std::endl;
+			//std::cout << "Height: " << height << std::endl;
 		} else {
 			std::cout << "No window element!" << std::endl;
 			return false;
@@ -199,12 +187,6 @@ bool config::load(const char *filepath) {
 	}
 }
 
-void config::prepare_all_groups() {
-	for(size_t i = 0; i < root_groups.size(); i++) {
-		root_groups.at(i).prepare_render();
-	}
-}
-
 void config::render_all_groups() {
 	for(size_t i = 0; i < root_groups.size(); i++) {
 		root_groups.at(i).render_group();
@@ -212,6 +194,11 @@ void config::render_all_groups() {
 }
 
 camera* config::get_config_camera_init() {
-	return new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z);
+	return cam;
 }
 
+std::vector<float> config::lock_postitions() {
+	for(int i = 0; i < root_groups.size(); i++) {
+		
+	}
+}
