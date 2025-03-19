@@ -14,6 +14,10 @@ group::group(tinyxml2::XMLElement *root) {
 
 void group::prepare_render() {
     //std::cout << "Preparing group..." << std::endl;
+    if(is_ready_to_render) {
+        std::cout << "Warning: group was already prepared for render." << std::endl;
+        return;
+    }
 
     size_t i;
 
@@ -77,9 +81,14 @@ void group::prepare_render() {
     //std::cout << "Finished preparing all meshes!" << std::endl;
 
     //prepare render of all subgroups
+
+    /*
     for(i = 0; i < sub_groups.size(); i++) {
         sub_groups.at(i).prepare_render();
     }
+    */
+
+    is_ready_to_render = true;
 }
 
 void group::render_group() {
@@ -401,4 +410,44 @@ void group::print_group(const std::string prepend) {
     std::cout << prepend << "<------------------------------------------------------>\n";
     
     std::cout << std::flush;
+}
+
+std::vector<float> group::lock_positions(float scale_base_x, float scale_base_y, float scale_base_z, float x_base, float y_base, float z_base) {
+    bool scale_first = false;
+
+    if(transform_order.at(0) == 's' || (transform_order.at(1) == 's' && transform_order.at(2)) ) {
+        scale_first = true;
+    }
+
+    float new_base_x, new_base_y, new_base_z;
+    float new_scale_x, new_scale_y, new_scale_z;
+    
+    new_scale_x = scale_base_x * scale_x;
+    new_scale_y = scale_base_y * scale_y;
+    new_scale_z = scale_base_z * scale_z;
+
+    if(scale_first) {
+        new_base_x = x_base + new_scale_x * translate_x;
+        new_base_y = y_base + new_scale_y * translate_y;
+        new_base_z = z_base + new_scale_z * translate_z;
+    }
+    else {
+        new_base_x = x_base + scale_base_x * translate_x;
+        new_base_y = y_base + scale_base_y * translate_y;
+        new_base_z = z_base + scale_base_z * translate_z;
+    }
+
+    
+
+    std::vector<float> lock_pos;
+    lock_pos.push_back(new_base_x);
+    lock_pos.push_back(new_base_y);
+    lock_pos.push_back(new_base_z);
+
+    for(int i = 0; i < sub_groups.size(); i++) {
+        std::vector<float> c_locks = sub_groups.at(i).lock_positions(new_scale_x, new_scale_y, new_scale_z, new_base_x, new_base_y, new_base_z);
+        lock_pos.insert(lock_pos.end(), c_locks.begin(), c_locks.end());
+    }
+
+    return lock_pos;
 }

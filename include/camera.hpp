@@ -2,6 +2,7 @@
 #define CAMERA_HPP
 
 #include <iostream>
+#include <vector>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -13,10 +14,18 @@
 #include <GL/glut.h>
 #endif
 
+//these are purelly identifiers
+
+#define C_ANIMATION_IDLE                                    0
+#define C_ANIMATION_CAMERA_LOCKING                          1
+#define C_ANIMATION_CHANGE_TARGET                           2
+
+#define C_ANIMATION_CAMERA_LOCKING_DURATION                 500                 // < -- duration in ms
+#define C_ANIMATION_CHANGE_TARGET_DURATION                  750                 // < -- duration in ms
 class camera {
     public:
         camera();
-        camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z);
+        camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<float> l_pos = std::vector<float>());
 
         /**
          * Changes camera position based on what keys are pressed. Moves at constant rate, independant on framerate.
@@ -29,16 +38,16 @@ class camera {
         /**
          * Changes direction camera is facing based on mouse movement. Won't change anything in fixed camera mode.
          * 
-         * @param x x position of mouse cursor relative to upper right corner
-         * @param y y position of mouse cursor relative to upper right corner
+         * @param x x position of mouse cursor relative to upper right corner.
+         * @param y y position of mouse cursor relative to upper right corner.
          */
         void update_camera_direction(int x, int y);
 
         /**
          * Updates internal state keeping track of window width and height.
          * 
-         * @param width New width of window
-         * @param height New height of window
+         * @param width New width of window.
+         * @param height New height of window.
          */
         void update_window_size(int width, int height);
 
@@ -60,14 +69,19 @@ class camera {
         /**
          * Plays transition animation from free to fixed camera mode.
          * 
-         * @param delta_time_ms Time since last update in ms
+         * @param delta_time_ms Time since last update in ms.
          */
         void play_animations(int delta_time_ms);
 
         /**
-         * Resets camera to some default value.
+         * Resets camera to some default state.
          */
         void reset_camera();
+
+        /**
+         * Cycles camera target.
+         */
+        void cycle_target();
 
     private:
     
@@ -77,26 +91,33 @@ class camera {
         
         float lock_point_x = 0, lock_point_y = 0, lock_point_z = 0;         // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
         float target_point_x = 0, target_point_y = 0, target_point_z = 0;   // < -- camera always looks at this point in fixed mode
-        float start_target_x, start_target_y, start_target_z;               // < -- when playing lerp camera transition, this serves as the start point
+        float start_target_x, start_target_y, start_target_z;               // < -- when playing lerp camera transition, this serves as the start point for camera target
+        
+        float target_pos_x, target_pos_y, target_pos_z;                     // < -- camera's target position (will move to this point during change target animation)
+        float start_pos_x, start_pos_y, start_pos_z;                        // < -- serves as starting posititon in lerp transition of movement
+
     
-        float radius, alpha, beta;                                          
-        float yaw = 0.0f;
-        float pitch = 0.0f;
+        float radius, alpha, beta;                      // < -- when camera is locked, use spherical coordinates.
+        float yaw = 0.0f, pitch = 0.0f;                 // < -- when in free camera mode use yaw and pitch do turn camera with mouse.
 
-        int center_x = 0;                       //screen center x for cursor locking
-        int center_y = 0;                       //screen center y for cursor locking
+        int center_x = 0, center_y = 0;                 // < -- screen center for locking cursor in free camera mode
 
-        int animation_timer = 0;                //ms
-        int animation_duration = 500;           //ms
+        int current_animation = C_ANIMATION_IDLE;       // < -- current animation, if no animation being played, then it is idle
+
+        int animation_timer = 0;                        //ms
+        int animation_duration = 500;                   //ms
         
-        float linear_movement_speed = 50.0f;     //units per second
-        float angular_movement_speed = 1.0f;    //radians per second
-        float zoom_in_speed = 5.0f;             //units per second
-        float mouse_sensitivity = 0.06f;        //idk tbh
+        float linear_movement_speed = 50.0f;            // < -- movement speed of camera in free camera mode. In units / sec.
+        float angular_movement_speed = 1.0f;            // < -- angular speed of camera in locked camera mode. In radians / sec.
+        float zoom_in_speed = 5.0f;                     // < -- radius change speed in locked camera mode. In units / sec.
+        float mouse_sensitivity = 0.06f;                // < -- mouse sensitivity. I do not know the units :)
         
-        bool is_free_camera = false;
-        bool just_warped = false;
-        bool animation_locked = false;
+        bool is_free_camera = false;                    // < -- state flag. If true then using free camera mode, otherwise using locked camera mode.
+        bool just_warped = false;                       // < -- state flag. Indicates if mouse cursor was warped to center last update, since glutWarpPointer triggers another update event. 
+        bool animation_locked = false;                  // < -- state flag. Indicates if animation is currently being played.
+
+        unsigned int current_target = 0;
+        std::vector<float> lock_points;
 
         /**
          * Internal function used to normalize the direction vector.
@@ -106,26 +127,43 @@ class camera {
         /**
          * Updates spherical coordinates based on the cartesian coordinates.
          */
-        void cardinal_to_spherical_coords();
+        void cartesian_to_spherical_coords();
 
         /**
          * Updates cartesian coordinates based on the spherical coordinates.
          */
-        void spherical_to_cardinal_coords();
+        void spherical_to_cartesian_coords(bool to_target = false);
 
         /**
          * Calculates angle value from radians to degrees.
          * 
-         * @param ang_r Angle in radians
+         * @param ang_r Angle in radians.
          * 
-         * @returns Angle in degrees
+         * @returns Angle in degrees.
          */
-        float radian_to_angle(float ang_r);
+        float radian_to_degree(float ang_r);
 
         /**
-         * Animation helper function. Updates target position according to time alpha, based on linear interpolation.
+         * Function responsible for setting animation and preparing all parameters.
+         * 
+         * @param animation Animation to be set (use defines). 
          */
-        void lerp_transition(float time_alpha);
+        void set_animation(int animation);
+
+        /**
+         * Function responsible for animating camera locking.
+         * 
+         * @param delta_time_ms Time since last update in ms.
+         */
+        void animate_camera_locking(int delta_time_ms);
+
+        /**
+         * Function responsible for animating target transition. 
+         * 
+         * @param delta_time_ms Time since last update in ms. 
+         */
+        void animate_changing_target(int delta_time_ms);
+
 };
 
 #endif

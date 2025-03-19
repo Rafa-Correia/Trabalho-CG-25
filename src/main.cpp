@@ -204,6 +204,9 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 	else if(c == 'r' || c == 'R') {
 		cam->reset_camera();
 	}
+	else if(c == 'c' || c == 'C') {
+		cam->cycle_target();
+	}
 	else if(c == 27) { //esc
 		exit(0);
 	}
@@ -274,9 +277,11 @@ int main(int argc, char **argv) {
 	//  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+
 	glPolygonMode(GL_FRONT, GL_LINE);
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
+
 
 	//glutSetCursor(GLUT_CURSOR_NONE);
 	//prepare_data();

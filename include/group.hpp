@@ -41,9 +41,9 @@ class group {
          * @param y_base Base y position from parent group transforms.
          * @param z_base Base z position from parent group transforms.
          */
-        std::vector<float> lock_positions(float x_base, float y_base, float z_base);
+        std::vector<float> lock_positions(float scale_base_x, float scale_base_y, float scale_base_z, float x_base, float y_base, float z_base);
 
-        private:
+    private:
 
         unsigned int mesh_count = 0;                                                // < -- number of loaded meshes
         
@@ -61,7 +61,7 @@ class group {
         std::vector<std::tuple<bool, std::vector<float>>> mesh_normals_buffer;      // < -- buffer storing pair of boolean and normals. boolean = false -> no normals
         std::vector<std::tuple<bool, std::vector<float>>> mesh_tex_coords_buffer;   // < -- buffer storing pair of boolean and texture coordinates. boolean = false -> no texture coordinates
         
-        
+        bool is_ready_to_render = false;
         
         std::vector<group> sub_groups;                      // < -- All loaded subgroups
         

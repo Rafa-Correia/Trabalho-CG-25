@@ -7,7 +7,7 @@ config::config(const char *path) {
         throw FailedToLoadException(ss.str());
     }
 
-	cam = new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z);
+	cam = new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z, lock_postitions());
 }
 
 void config::print_info() {
@@ -198,7 +198,10 @@ camera* config::get_config_camera_init() {
 }
 
 std::vector<float> config::lock_postitions() {
+	std::vector<float> l_pos;
 	for(int i = 0; i < root_groups.size(); i++) {
-		
+		std::vector<float> c_locks = root_groups.at(i).lock_positions(1, 1, 1, 0, 0, 0);
+		l_pos.insert(l_pos.end(), c_locks.begin(), c_locks.end());
 	}
+	return l_pos;
 }

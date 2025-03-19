@@ -38,13 +38,6 @@ class config {
         std::tuple<float, float, float> get_projection_settings();
 
         /**
-         * Getter for all groups and their sub group positions for camera locking.
-         * 
-         * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
-         */
-        std::vector<float> lock_postitions();
-
-        /**
          * Getter for root groups. 
          * 
          * @returns Vector containing all root groups.
@@ -67,6 +60,7 @@ class config {
          * Calls print_group() for all root groups.
          */
         void print_group_info();
+
     private:
         int w_width, w_height;                          // < -- Window attributes
 
@@ -88,6 +82,13 @@ class config {
          * @returns Boolean indicating if loading process was a success.
          */
         bool load(const char *path);
+
+        /**
+         * Getter for all groups and their sub group positions for camera locking.
+         * 
+         * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
+         */
+        std::vector<float> lock_postitions();
 };
 
 class FailedToLoadException : public std::exception {

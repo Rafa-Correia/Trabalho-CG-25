@@ -2,7 +2,7 @@
 
 //constructor
 
-camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z) {
+camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<float> l_pos) {
     this->pos_x = pos_x;
     this->pos_y = pos_y;
     this->pos_z = pos_z;
@@ -25,10 +25,18 @@ camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float look
 
     normalize_dir();
 
-    cardinal_to_spherical_coords();
+    cartesian_to_spherical_coords();
 
-    pitch = radian_to_angle(asin(dir_y));
-    yaw = -radian_to_angle(atan2(dir_x, dir_z)) + 90.0f;
+    pitch = radian_to_degree(asin(dir_y));
+    yaw = -radian_to_degree(atan2(dir_x, dir_z)) + 90.0f;
+
+    if(l_pos.size() == 0) {
+        lock_points.push_back(0.0f);
+        lock_points.push_back(0.0f);
+        lock_points.push_back(0.0f);
+    }
+
+    lock_points.insert(lock_points.end(), l_pos.begin(), l_pos.end());
 }
 
 //camera movement / orientation
@@ -83,7 +91,7 @@ void camera::update_camera_position(const bool key_states[256], int delta_time_m
         }
 
         if(key_pressed)
-            cardinal_to_spherical_coords();
+            cartesian_to_spherical_coords();
     }
     else {
         if(key_states['w'] || key_states['W']) {
@@ -126,7 +134,7 @@ void camera::update_camera_position(const bool key_states[256], int delta_time_m
         }
         
         if (key_pressed)
-            spherical_to_cardinal_coords();
+            spherical_to_cartesian_coords();
     }
 }
 
@@ -159,16 +167,27 @@ void camera::update_camera_direction(int x, int y) {
 }
 
 void camera::reset_camera() {
-    is_free_camera = false;
-    pos_x = 15;
-    pos_y = 5;
-    pos_z = 0;
+    current_target = 0;
 
-    target_point_x = 0;
-    target_point_y = 0;
-    target_point_z = 0;
+    int index = current_target * 3;
 
-    cardinal_to_spherical_coords();
+    lock_point_x = lock_points.at(index);
+    lock_point_y = lock_points.at(index + 1);
+    lock_point_z = lock_points.at(index + 2);
+
+    set_animation(C_ANIMATION_CHANGE_TARGET);
+}
+
+void camera::cycle_target() {
+    current_target = (current_target + 1) % (lock_points.size() / 3);
+
+    int index = current_target * 3;
+
+    lock_point_x = lock_points.at(index);
+    lock_point_y = lock_points.at(index + 1);
+    lock_point_z = lock_points.at(index + 2);
+
+    set_animation(C_ANIMATION_CHANGE_TARGET);
 }
 
 //misc important
@@ -185,51 +204,134 @@ void camera::switch_camera_mode() {
     if(is_free_camera) { //switched INTO free cam
         glutSetCursor(GLUT_CURSOR_NONE);
 
-        spherical_to_cardinal_coords();
+        spherical_to_cartesian_coords();
 
-        pitch = radian_to_angle(asin(dir_y));
-        yaw = -radian_to_angle(atan2(dir_x, dir_z)) + 90.0f;
+        pitch = radian_to_degree(asin(dir_y));
+        yaw = -radian_to_degree(atan2(dir_x, dir_z)) + 90.0f;
         
         just_warped = true;
         glutWarpPointer(center_x, center_y);
     }
     else {  //switched INTO locked cam
 		glutSetCursor(GLUT_CURSOR_INHERIT);
-        cardinal_to_spherical_coords();
-        animation_locked = true;
+        cartesian_to_spherical_coords();
+        set_animation(C_ANIMATION_CAMERA_LOCKING);
     }
 
     glutPostRedisplay();
 }
 
 void camera::play_animations(int delta_time_ms) {
-    if(!animation_locked) {
+    if(current_animation == C_ANIMATION_IDLE) {
         return;
     }
 
-    if(animation_timer == 0) {
-        start_target_x = target_point_x;
-        start_target_y = target_point_y;
-        start_target_z = target_point_z;
+    if(current_animation == C_ANIMATION_CAMERA_LOCKING) {
+        animate_camera_locking(delta_time_ms);
+        return;
     }
 
+    if(current_animation == C_ANIMATION_CHANGE_TARGET) {
+        animate_changing_target(delta_time_ms);
+        return;
+    }
+}
+
+void camera::set_animation(int animation) {
+    animation_locked = true;
+    animation_timer = 0;
+    
+    if(animation == C_ANIMATION_IDLE) {
+        current_animation = C_ANIMATION_IDLE;
+        animation_locked = false;
+        return;
+    }
+
+    if(animation == C_ANIMATION_CAMERA_LOCKING) {
+        start_target_x = pos_x + dir_x;
+        start_target_y = pos_y + dir_y;
+        start_target_z = pos_z + dir_z;
+
+        is_free_camera = false;
+        current_animation = C_ANIMATION_CAMERA_LOCKING;
+        return;
+    }
+
+    if(animation == C_ANIMATION_CHANGE_TARGET) {
+        start_target_x = pos_x + dir_x;
+        start_target_y = pos_y + dir_y;
+        start_target_z = pos_z + dir_z;
+
+        start_pos_x = pos_x;
+        start_pos_y = pos_y;
+        start_pos_z = pos_z;
+
+        //alpha = (float)rand() / RAND_MAX * (2*M_PI);
+        alpha = 0;
+        beta = 1/4.0f * M_PI;
+        radius = 25.0f;
+
+        is_free_camera = false;
+        spherical_to_cartesian_coords(true);
+
+        current_animation = C_ANIMATION_CHANGE_TARGET;   
+        return;
+    }
+}
+
+void camera::animate_camera_locking(int delta_time_ms) {
     animation_timer += delta_time_ms;
     //std::cout << "Current animation timer: " << animation_timer << " (delta: " << delta_time_ms << ")";
 
-    if(animation_timer >= animation_duration) {
-        animation_locked = false;
-        animation_timer = 0;
+    if(animation_timer >= C_ANIMATION_CAMERA_LOCKING_DURATION) {
+        set_animation(C_ANIMATION_IDLE);
 
         target_point_x = lock_point_x;
         target_point_y = lock_point_y;
         target_point_z = lock_point_z;
+
         return;
     }
 
-    float time_alpha = (float)animation_timer / (float)animation_duration;
+    float time_alpha = (float)animation_timer / (float)C_ANIMATION_CAMERA_LOCKING_DURATION;
 
     //std::cout << " | Progress: " << time_alpha * 100 << "%" << std::endl;
-    lerp_transition(time_alpha);
+    target_point_x = start_target_x * (1 - time_alpha) + lock_point_x * time_alpha;
+    target_point_y = start_target_y * (1 - time_alpha) + lock_point_y * time_alpha;
+    target_point_z = start_target_z * (1 - time_alpha) + lock_point_z * time_alpha;
+
+    glutPostRedisplay();
+}
+
+void camera::animate_changing_target(int delta_time_ms) {
+    animation_timer += delta_time_ms;
+
+    if(animation_timer >= C_ANIMATION_CHANGE_TARGET_DURATION) {
+        set_animation(C_ANIMATION_IDLE);
+
+        target_point_x = lock_point_x;
+        target_point_y = lock_point_y;
+        target_point_z = lock_point_z;
+
+        spherical_to_cartesian_coords();
+
+        return;
+    }
+
+    float time_alpha_mov = (float)animation_timer / (float)C_ANIMATION_CHANGE_TARGET_DURATION;
+    float time_alpha_cam = ((float)animation_timer * 2) / ((float)C_ANIMATION_CHANGE_TARGET_DURATION);
+
+    if(time_alpha_cam < 1) {
+        target_point_x = start_target_x * (1 - time_alpha_cam) + lock_point_x * time_alpha_cam;
+        target_point_y = start_target_y * (1 - time_alpha_cam) + lock_point_y * time_alpha_cam;
+        target_point_z = start_target_z * (1 - time_alpha_cam) + lock_point_z * time_alpha_cam;
+    }
+
+    
+
+    pos_x = start_pos_x * (1 - time_alpha_mov) + target_pos_x * time_alpha_mov;
+    pos_y = start_pos_y * (1 - time_alpha_mov) + target_pos_y * time_alpha_mov;
+    pos_z = start_pos_z * (1 - time_alpha_mov) + target_pos_z * time_alpha_mov;
 
     glutPostRedisplay();
 }
@@ -248,7 +350,7 @@ void camera::camera_glu_lookat() {
 
 //AUXILIARY FUNCTIONS
 
-void camera::cardinal_to_spherical_coords() {
+void camera::cartesian_to_spherical_coords() {
     //std::cout << "CTS" << std::endl;
     float rel_pos_x, rel_pos_y, rel_pos_z;
 
@@ -261,14 +363,22 @@ void camera::cardinal_to_spherical_coords() {
     alpha = atan2(rel_pos_x, rel_pos_z);
 }
 
-void camera::spherical_to_cardinal_coords() {
-    //std::cout << "STC" << std::endl;
+void camera::spherical_to_cartesian_coords(bool to_target) {
+
     float rel_pos_x, rel_pos_y, rel_pos_z;
 
     rel_pos_x = radius * cos(beta) * sin(alpha);
 	rel_pos_y = radius * sin(beta);
 	rel_pos_z = radius * cos(beta) * cos(alpha);
 
+    if(to_target) {
+        target_pos_x = rel_pos_x + lock_point_x;
+        target_pos_y = rel_pos_y + lock_point_y;
+        target_pos_z = rel_pos_z + lock_point_z;
+
+        return;
+    }
+    
     pos_x = rel_pos_x + lock_point_x;
     pos_y = rel_pos_y + lock_point_y;
     pos_z = rel_pos_z + lock_point_z;
@@ -278,12 +388,6 @@ void camera::spherical_to_cardinal_coords() {
     dir_z = lock_point_z - pos_z;
 
     normalize_dir();
-}
-
-void camera::lerp_transition(float time_alpha) {
-    target_point_x = start_target_x * (1 - time_alpha) + lock_point_x * time_alpha;
-    target_point_y = start_target_y * (1 - time_alpha) + lock_point_y * time_alpha;
-    target_point_z = start_target_z * (1 - time_alpha) + lock_point_z * time_alpha;
 }
 
 void camera::normalize_dir() {
@@ -311,6 +415,6 @@ void camera::print_info() {
     std::cout << "Pitch/Yaw: " << pitch << " " << yaw << "\n-|- >< \n\n" << std::endl;
 }
 
-float camera::radian_to_angle(float ang_r) {
+float camera::radian_to_degree(float ang_r) {
     return ang_r * (180.0f / M_PI);
 }
