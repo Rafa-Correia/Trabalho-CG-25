@@ -52,14 +52,14 @@ bool key_states[256] = {false}; //array storing all keystates (if theyre being h
 
 //timers, clock times, fps, etc
 int timebase;
-int prevTime;
+int prev_time;
 
 int frames;
 float fps;
 
 
 
-void disableVSync() {
+void disable_vsync() {
 	#ifdef _WIN32
 		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT =
 			(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
@@ -88,42 +88,29 @@ void disableVSync() {
 	#endif
 }
 
-void changeSize(int w, int h) {
-
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window with zero width).
-
+void change_window_size(int w, int h) {
 	if(h == 0)
 		h = 1;
 
 	cam->update_window_size(w, h);
 
-	// compute window's aspect ratio 
 	float ratio = w * 1.0 / h;
 
 
-	// Set the projection matrix as current
 	glMatrixMode(GL_PROJECTION);
-	// Load Identity Matrix
-	glLoadIdentity();
-	
-	// Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
 
-	// Set perspective
+	glLoadIdentity();
+    glViewport(0, 0, w, h);
 	gluPerspective(cam_fov ,ratio, cam_near ,cam_far);
 
-	// return to the model view matrix mode
 	glMatrixMode(GL_MODELVIEW);
 }
 
 
-void renderScene(void) {
-
-	// clear buffers
+void render_scene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//use cameras view matrix{
+	//use cameras view matrix
 	cam->camera_glu_lookat();
 	
 	if(draw_axis) {
@@ -153,6 +140,7 @@ void renderScene(void) {
 		glPolygonMode(GL_FRONT, GL_FILL);
 	}
 
+	//render all meshes loaded in groups
 	cfg_obj->render_all_groups();
 	
 
@@ -178,13 +166,12 @@ void renderScene(void) {
 }
 
 void idle() {
-	//process camera movement here
 	int current_time = glutGet(GLUT_ELAPSED_TIME);
-	int delta_time = current_time - prevTime;
-	prevTime = current_time;
+	int delta_time_ms = current_time - prev_time;
+	prev_time = current_time;
 
-	cam->play_animations(delta_time);
-	cam->update_camera_position(key_states, delta_time);
+	cam->play_animations(delta_time_ms);
+	cam->update_camera_position(key_states, delta_time_ms);
 	glutPostRedisplay();
 }
 
@@ -199,7 +186,7 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 		cam->switch_camera_mode();
 	}
 	else if(c == 'p' || c == 'P') {
-		cam->print_info();
+		//cam->print_info();
 	}
 	else if(c == 'r' || c == 'R') {
 		cam->reset_camera();
@@ -238,6 +225,12 @@ void printInfo() {
 	printf("Vendor: %s\n", glGetString(GL_VENDOR));
 	printf("Renderer: %s\n", glGetString(GL_RENDERER));
 	printf("Version: %s\n\n", glGetString(GL_VERSION));
+
+	std::cout << "Press 1 to toggle axis rendering." << std::endl;
+	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
+	std::cout << "Press f to switch between fixed camera and free camera mode." << std::endl;
+	std::cout << "Press c to change camera target (in fixed mode)." << std::endl;
+	std::cout << "Press r to reset camera to first target." << std::endl;
 }
 
 
@@ -245,7 +238,6 @@ int main(int argc, char **argv) {
 	
 	srand((unsigned int)time(NULL)); // seed rng
 
-// init GLUT and the window
 	if(argc != 2) {
 		std::cout << "Wrong number of arguments!" << std::endl;
 		return 1;
@@ -257,42 +249,25 @@ int main(int argc, char **argv) {
 	glutInitWindowSize(win_width,win_height);
 	glutCreateWindow("Projeto CG-25");
 		
-// Required callback registry 
-	glutDisplayFunc(renderScene);
+	glutDisplayFunc(render_scene);
 	glutIdleFunc(idle);
-	glutReshapeFunc(changeSize);
+	glutReshapeFunc(change_window_size);
 	
-	// Callback registration for keyboard processing
 	glutKeyboardFunc(processKeyPress);
 	glutKeyboardUpFunc(processKeyRelease);
 	glutPassiveMotionFunc(processMouse);
-
 	glutSpecialFunc(processSpecialKeys);
 	
-	// init GLEW
 	#ifndef __APPLE__
 	glewInit();
 	#endif
 	
-	//  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
 	glPolygonMode(GL_FRONT, GL_LINE);
 	
 	glEnableClientState(GL_VERTEX_ARRAY);
-
-
-	//glutSetCursor(GLUT_CURSOR_NONE);
-	//prepare_data();
-	
-	
-	//readfile(1);
-	/*
-	std::cout << "Loading config file..." << std::endl; 
-	if(!load_config_file(std::string(argv[1]))) return 1;
-	std::cout << "Done!\n" << std::endl;
-	*/
 	
 	printInfo();
 	
@@ -302,16 +277,6 @@ int main(int argc, char **argv) {
 	cam = cfg_obj->get_config_camera_init();
 	cam->print_info();
 
-	/*
-	std::vector<group> root_groups = cfg_obj->get_root_groups();
-	group *root_groups_data = root_groups.data();
-
-	for(size_t i = 0; i < root_groups.size(); i++) {
-		group g = root_groups_data[i];
-		g.print_group("|");
-	}
-	*/
-
 	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
 	glutReshapeWindow(std::get<0>(win_attribs), std::get<1>(win_attribs));
 	
@@ -320,20 +285,13 @@ int main(int argc, char **argv) {
 	cam_near = std::get<1>(projection_attributes);
 	cam_far = std::get<2>(projection_attributes);
 
-	
-	//config c_loaded(argv[1]);
-	    
-
-	
-
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
 	timebase = glutGet(GLUT_ELAPSED_TIME);
-	prevTime = glutGet(GLUT_ELAPSED_TIME);
+	prev_time = glutGet(GLUT_ELAPSED_TIME);
 
-	disableVSync();
+	disable_vsync();
 
-// enter GLUT's main cycle
 	glutMainLoop();
 	
 	return 1;

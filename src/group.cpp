@@ -15,7 +15,6 @@ group::group(tinyxml2::XMLElement *root) {
 }
 
 void group::prepare_render() {
-    //std::cout << "Preparing group..." << std::endl;
     if(is_ready_to_render) {
         std::cout << "Warning: group was already prepared for render." << std::endl;
         return;
@@ -24,7 +23,6 @@ void group::prepare_render() {
     size_t i;
 
     for(i = 0; i < mesh_count; i++) {
-        //std::cout << "Mesh " << i << std::endl;
         std::vector<float> vertices = mesh_vertices_buffer.at(i);
         std::tuple<bool, std::vector<int>> indices = mesh_indices_buffer.at(i);
 
@@ -34,7 +32,6 @@ void group::prepare_render() {
         //ignoring normals and tex coords for now
 
         if(!std::get<0>(indices)) {
-            //std::cout << "VBO only!" << std::endl;
             //normal vbo
             int vertex_count = vertices.size() / 3;
             const float *vertices_data = vertices.data();
@@ -52,8 +49,6 @@ void group::prepare_render() {
             vertex_or_index_count.push_back(vertex_count);
         }
         else {
-            //index as well
-            //std::cout << "VBO and EBO!" << std::endl;
             std::vector<int> indices_v = std::get<1>(indices);
             int index_count = indices_v.size();
 
@@ -80,46 +75,18 @@ void group::prepare_render() {
         //if normals and tex coords exist, do something!
     }
 
-    //std::cout << "Finished preparing all meshes!" << std::endl;
-
-    //prepare render of all subgroups
-
-    /*
-    for(i = 0; i < sub_groups.size(); i++) {
-        sub_groups.at(i).prepare_render();
-    }
-    */
-
     is_ready_to_render = true;
 }
 
 void group::render_group() {
-    //std::cout << "Rendering group..." << std::endl;
-
     //rendering a group should render all subgroups
     glColor3f(color_r, color_g, color_b);
 
     glPushMatrix();
 
-        /*
-        for(size_t i = 0; i < transform_order.size(); i++) {
-            if(transform_order.at(i) == 't') {
-                glTranslatef(translate_x, translate_y, translate_z);
-            }
-            else if(transform_order.at(i) == 'r') {
-                glRotatef(rotate_angle, rotate_x, rotate_y, rotate_z);
-            }
-            else if(transform_order.at(i) == 's') {
-                glScalef(scale_x, scale_y, scale_z);
-            }
-        }
-        */
-
-        //when ready, use only matrix
         glMultMatrixf(transform_matrix.get_data());
 
         for(unsigned int j = 0; j < mesh_count; j++) {
-            //std::cout << "Rendering mesh " << j << "..." << std::endl;
             GLuint VBO = group_vbos.at(j);
             std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
             int obj_count = vertex_or_index_count.at(j);
@@ -128,22 +95,14 @@ void group::render_group() {
             glVertexPointer(3, GL_FLOAT, 0, 0);
 
             if(!std::get<0>(EBO_t)) {
-                //only vbo
                 glDrawArrays(GL_TRIANGLES, 0, obj_count);
-                //std::cout << "Rendered mesh " << j << " (VBO)" << std::endl;
             } 
             else {
-                //with indices
-                //std::cout << "obj_count -> " << obj_count << std::endl;
 
                 GLuint EBO = std::get<1>(EBO_t);
 
-                //std::cout << "EBO -> " << EBO << std::endl;
-
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
                 glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
-
-                //std::cout << "Rendered mesh " << j << " (VBO, EBO)" << std::endl;
             }
         }
 
@@ -178,7 +137,6 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
             }
 
             if(tag == "translate") {
-                //transform_order.push_back('t');
 
                 float t_x = 0, t_y = 0, t_z = 0;
                 child->QueryFloatAttribute("x", &t_x);
@@ -189,7 +147,6 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 transform_matrix = transform_matrix * T;
             }
             else if(tag == "rotate") {
-                //transform_order.push_back('r');
 
                 float angle = 0, r_x = 0, r_y = 0, r_z = 0;
                 child->QueryFloatAttribute("angle", &angle);
@@ -256,7 +213,6 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
     for(subgroup; subgroup; subgroup = subgroup->NextSiblingElement("group")) {
         group sub(subgroup);
         sub_groups.push_back(sub);
-        //super simple, right?
     }
     
 
@@ -264,8 +220,6 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 }
 
 bool group::parse_model_file(const char *filepath) {
-    //std::cout << "Trying to load file \"" << filepath << "\"" << std::endl;
-
     std::ifstream file(filepath);
 
     if(!file) {
@@ -287,31 +241,23 @@ bool group::parse_model_file(const char *filepath) {
         std::stringstream ss(line);  // Use stringstream to parse the line
         std::string token;
 
-        //std::cout << line_index << std::endl;
-        // Split the line by ';'
 		if (line_index == 0) {
 			const char* line_data = line.data();
             if(line_data[0] == '1') {
                 i_flag = true;
                 data_order.push_back('i');
-                //std::cout << "Indices -> True" << std::endl;
             }
             if(line_data[1] == '1') {
                 n_flag = true;
                 data_order.push_back('n');
-                //std::cout << "Normals -> True" << std::endl;
             }
             if(line_data[2] == '1') {
                 t_flag = true;
                 data_order.push_back('t');
-                //std::cout << "Tex -> True" << std::endl;
             }
         }
         else if (line_index == 1) {  //vertices
-            //std::cout << "Reading vertices..." << std::endl;
-            //read vertices
             while (std::getline(ss, token, ';')) {
-            	//std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
 				float vertex_float = std::stof(token);
 				vertices.push_back(vertex_float);
         	}
@@ -321,10 +267,8 @@ bool group::parse_model_file(const char *filepath) {
         else {  //all the others
             if(data_order.size() == 0) break; //only indices
             if(data_order.at(line_index - 2) == 'i') {
-                //std::cout << "Reading indices..." << std::endl;
                 //read indices
                 while (std::getline(ss, token, ';')) {
-                    //std::cout << "i: " << line_index << " | " << "Parsed token: " << token << '\n'; // Output each token
                     int index = std::stoi(token);
                     indices.push_back(index);
                 }
@@ -349,39 +293,32 @@ bool group::parse_model_file(const char *filepath) {
     if(!i_flag) {
         std::tuple<bool, std::vector<int>> index_t(false, indices);
         mesh_indices_buffer.push_back(index_t);
-        //std::cout << "Indices -> False" << std::endl;
     }
     if(!n_flag) {
         std::tuple<bool, std::vector<float>> normal_t(false, normals);
         mesh_normals_buffer.push_back(normal_t);
-        //std::cout << "Normals -> False" << std::endl;
     }
     if(!t_flag) {
         std::tuple<bool, std::vector<float>> coord_t(false, tex_coords);
         mesh_tex_coords_buffer.push_back(coord_t);
-        //std::cout << "Tex -> False" << std::endl;
     }   
 
     file.close();
 
-    //std::cout << "Done!" << std::endl;
-
     return true;
 }
 
-std::vector<float> group::lock_positions(matrix4x4 parent_transform) {
+std::vector<vector3> group::lock_positions(matrix4x4 parent_transform) {
     
     matrix4x4 current_full_transform = parent_transform * transform_matrix;
     
-    std::tuple<float, float, float> resulting_origin = current_full_transform.apply_to_point(0, 0, 0);
+    vector3 resulting_origin = current_full_transform.apply_to_point(0, 0, 0);
     
-    std::vector<float> lock_pos;
-    lock_pos.push_back(std::get<0>(resulting_origin));
-    lock_pos.push_back(std::get<1>(resulting_origin));
-    lock_pos.push_back(std::get<2>(resulting_origin));
+    std::vector<vector3> lock_pos;
+    lock_pos.push_back(resulting_origin);
 
     for(int i = 0; i < sub_groups.size(); i++) {
-        std::vector<float> c_locks = sub_groups.at(i).lock_positions(current_full_transform);
+        std::vector<vector3> c_locks = sub_groups.at(i).lock_positions(current_full_transform);
         lock_pos.insert(lock_pos.end(), c_locks.begin(), c_locks.end());
     }
 

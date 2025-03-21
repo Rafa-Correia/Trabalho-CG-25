@@ -3,6 +3,7 @@
 
 #include "tinyxml2.h"
 #include "matrix4x4.hpp"
+#include "vector3.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -33,11 +34,9 @@ class group {
         /**
          * Returns camera lock positions for this group and calls itself for all subgroups.
          * 
-         * @param x_base Base x position from parent group transforms.
-         * @param y_base Base y position from parent group transforms.
-         * @param z_base Base z position from parent group transforms.
+         * @param parent_transform Transform matrix of parent group.
          */
-        std::vector<float> lock_positions(matrix4x4 parent_transform);
+        std::vector<vector3> lock_positions(matrix4x4 parent_transform);
 
     private:
 

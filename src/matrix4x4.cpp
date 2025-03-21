@@ -84,13 +84,13 @@ matrix4x4 matrix4x4::operator*(const matrix4x4& other) const {
     return result;
 }
 
-std::tuple<float, float, float> matrix4x4::apply_to_point(float x, float y, float z) {
+vector3 matrix4x4::apply_to_point(float x, float y, float z) {
     float new_x, new_y, new_z;
     new_x = m_data[0]*x + m_data[4]*y + m_data[8]*z + m_data[12];
     new_y = m_data[1]*x + m_data[5]*y + m_data[9]*z + m_data[13];
     new_z = m_data[2]*x + m_data[6]*y + m_data[10]*z + m_data[14];
 
-    return std::tuple<float, float, float>(new_x, new_y, new_z);
+    return vector3(new_x, new_y, new_z);
 }
 
 float* matrix4x4::get_data() {

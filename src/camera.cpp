@@ -2,41 +2,26 @@
 
 //constructor
 
-camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<float> l_pos) {
-    this->pos_x = pos_x;
-    this->pos_y = pos_y;
-    this->pos_z = pos_z;
+camera::camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<vector3> l_pos) {
+    pos = vector3(pos_x, pos_y, pos_z);
+    up = vector3(up_x, up_y, up_z);
+    dir = vector3(lookat_x - pos_x, lookat_y - pos_y, lookat_z - pos_z);
 
-    this->up_x = up_x;
-    this->up_y = up_y;
-    this->up_z = up_z;
+    lock_point = vector3(lookat_x, lookat_y, lookat_z);
+    target_point = lock_point;
 
-    this->dir_x =  lookat_x - pos_x;
-    this->dir_y =  lookat_y - pos_y;
-    this->dir_z =  lookat_z - pos_z;
-
-    this->lock_point_x = lookat_x;
-    this->lock_point_y = lookat_y;
-    this->lock_point_z = lookat_z;
-
-    this->target_point_x = lookat_x;
-    this->target_point_y = lookat_y;
-    this->target_point_z = lookat_z;
-
-    normalize_dir();
+    dir.normalize();
 
     cartesian_to_spherical_coords();
 
-    pitch = radian_to_degree(asin(dir_y));
-    yaw = -radian_to_degree(atan2(dir_x, dir_z)) + 90.0f;
+    pitch = radian_to_degree(asin(dir.y));
+    yaw = -radian_to_degree(atan2(dir.x, dir.z)) + 90.0f;
 
     if(l_pos.size() == 0) {
-        lock_points.push_back(0.0f);
-        lock_points.push_back(0.0f);
-        lock_points.push_back(0.0f);
+        lock_point_list.push_back(vector3());
     }
 
-    lock_points.insert(lock_points.end(), l_pos.begin(), l_pos.end());
+    lock_point_list.insert(lock_point_list.end(), l_pos.begin(), l_pos.end());
 }
 
 //camera movement / orientation
@@ -48,44 +33,30 @@ void camera::update_camera_position(const bool key_states[256], int delta_time_m
 
     if(is_free_camera) {
         if(key_states['w'] || key_states['W']) {
-            pos_x += dir_x * linear_movement_speed * delta_time_sec;
-            pos_y += dir_y * linear_movement_speed * delta_time_sec;
-            pos_z += dir_z * linear_movement_speed * delta_time_sec;
+            pos += dir * linear_movement_speed * delta_time_sec;
 
             key_pressed = true;
         }
         if(key_states['s'] || key_states['S']) {
-            pos_x -= dir_x * linear_movement_speed * delta_time_sec;
-            pos_y -= dir_y * linear_movement_speed * delta_time_sec;
-            pos_z -= dir_z * linear_movement_speed * delta_time_sec;
+            pos -= dir * linear_movement_speed * delta_time_sec;
 
             key_pressed = true;
         }
         if(key_states['a'] || key_states['A']) {
-            float cross_x = up_y * dir_z - up_z * dir_y;
-            float cross_z = up_x * dir_y - up_y * dir_x;
-
-            float cross_length = sqrt(cross_x * cross_x + cross_z * cross_z);
-
-            cross_x /= cross_length;
-            cross_z /= cross_length;
-
-            pos_x += cross_x * linear_movement_speed * delta_time_sec;
-            pos_z += cross_z * linear_movement_speed * delta_time_sec;
+            vector3 cross = vector3::cross(up, dir);
+            cross.y = 0;
+            cross.normalize();
+            
+            pos += cross * linear_movement_speed * delta_time_sec;
 
             key_pressed = true;
         }
         if(key_states['d'] || key_states['D']) {
-            float cross_x = up_y * dir_z - up_z * dir_y;
-            float cross_z = up_x * dir_y - up_y * dir_x;
-
-            float cross_length = sqrt(cross_x * cross_x + cross_z * cross_z);
-
-            cross_x /= cross_length;
-            cross_z /= cross_length;
-
-            pos_x -= cross_x * linear_movement_speed * delta_time_sec;
-            pos_z -= cross_z * linear_movement_speed * delta_time_sec;
+            vector3 cross = vector3::cross(up, dir);
+            cross.y = 0;
+            cross.normalize();
+            
+            pos -= cross * linear_movement_speed * delta_time_sec;
 
             key_pressed = true;
         }
@@ -154,11 +125,11 @@ void camera::update_camera_direction(int x, int y) {
     if (pitch > 89.0f) pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
 
-    dir_x = cosf(yaw * (M_PI / 180.0f)) * cosf(pitch * (M_PI / 180.0f));
-    dir_y = sinf(pitch * (M_PI / 180.0f));
-    dir_z = sinf(yaw * (M_PI / 180.0f)) * cosf(pitch * (M_PI / 180.0f));
+    dir.x = cosf(yaw * (M_PI / 180.0f)) * cosf(pitch * (M_PI / 180.0f));
+    dir.y = sinf(pitch * (M_PI / 180.0f));
+    dir.z = sinf(yaw * (M_PI / 180.0f)) * cosf(pitch * (M_PI / 180.0f));
 
-    normalize_dir();
+    dir.normalize();
 
     glutWarpPointer(center_x, center_y);
     just_warped = true;
@@ -167,25 +138,21 @@ void camera::update_camera_direction(int x, int y) {
 }
 
 void camera::reset_camera() {
+    if(animation_locked == true) return;
     current_target = 0;
 
     int index = current_target * 3;
 
-    lock_point_x = lock_points.at(index);
-    lock_point_y = lock_points.at(index + 1);
-    lock_point_z = lock_points.at(index + 2);
+    lock_point = lock_point_list.at(index);
 
     set_animation(C_ANIMATION_CHANGE_TARGET);
 }
 
 void camera::cycle_target() {
-    current_target = (current_target + 1) % (lock_points.size() / 3);
+    if(animation_locked == true) return;
+    current_target = (current_target + 1) % (lock_point_list.size());
 
-    int index = current_target * 3;
-
-    lock_point_x = lock_points.at(index);
-    lock_point_y = lock_points.at(index + 1);
-    lock_point_z = lock_points.at(index + 2);
+    lock_point = lock_point_list.at(current_target);
 
     set_animation(C_ANIMATION_CHANGE_TARGET);
 }
@@ -206,8 +173,8 @@ void camera::switch_camera_mode() {
 
         spherical_to_cartesian_coords();
 
-        pitch = radian_to_degree(asin(dir_y));
-        yaw = -radian_to_degree(atan2(dir_x, dir_z)) + 90.0f;
+        pitch = radian_to_degree(asin(dir.y));
+        yaw = -radian_to_degree(atan2(dir.x, dir.z)) + 90.0f;
         
         just_warped = true;
         glutWarpPointer(center_x, center_y);
@@ -248,9 +215,7 @@ void camera::set_animation(int animation) {
     }
 
     if(animation == C_ANIMATION_CAMERA_LOCKING) {
-        start_target_x = pos_x + dir_x;
-        start_target_y = pos_y + dir_y;
-        start_target_z = pos_z + dir_z;
+        start_target_point = pos + dir;
 
         is_free_camera = false;
         current_animation = C_ANIMATION_CAMERA_LOCKING;
@@ -258,15 +223,9 @@ void camera::set_animation(int animation) {
     }
 
     if(animation == C_ANIMATION_CHANGE_TARGET) {
-        start_target_x = pos_x + dir_x;
-        start_target_y = pos_y + dir_y;
-        start_target_z = pos_z + dir_z;
+        start_target_point = pos + dir;
+        start_pos = pos;
 
-        start_pos_x = pos_x;
-        start_pos_y = pos_y;
-        start_pos_z = pos_z;
-
-        //alpha = (float)rand() / RAND_MAX * (2*M_PI);
         alpha = 0;
         beta = 1/4.0f * M_PI;
         radius = 25.0f;
@@ -281,24 +240,16 @@ void camera::set_animation(int animation) {
 
 void camera::animate_camera_locking(int delta_time_ms) {
     animation_timer += delta_time_ms;
-    //std::cout << "Current animation timer: " << animation_timer << " (delta: " << delta_time_ms << ")";
 
     if(animation_timer >= C_ANIMATION_CAMERA_LOCKING_DURATION) {
         set_animation(C_ANIMATION_IDLE);
-
-        target_point_x = lock_point_x;
-        target_point_y = lock_point_y;
-        target_point_z = lock_point_z;
+        target_point = lock_point;
 
         return;
     }
 
     float time_alpha = (float)animation_timer / (float)C_ANIMATION_CAMERA_LOCKING_DURATION;
-
-    //std::cout << " | Progress: " << time_alpha * 100 << "%" << std::endl;
-    target_point_x = start_target_x * (1 - time_alpha) + lock_point_x * time_alpha;
-    target_point_y = start_target_y * (1 - time_alpha) + lock_point_y * time_alpha;
-    target_point_z = start_target_z * (1 - time_alpha) + lock_point_z * time_alpha;
+    target_point = start_target_point * (1 - time_alpha) + lock_point * time_alpha;
 
     glutPostRedisplay();
 }
@@ -309,9 +260,7 @@ void camera::animate_changing_target(int delta_time_ms) {
     if(animation_timer >= C_ANIMATION_CHANGE_TARGET_DURATION) {
         set_animation(C_ANIMATION_IDLE);
 
-        target_point_x = lock_point_x;
-        target_point_y = lock_point_y;
-        target_point_z = lock_point_z;
+        target_point = lock_point;
 
         spherical_to_cartesian_coords();
 
@@ -322,16 +271,9 @@ void camera::animate_changing_target(int delta_time_ms) {
     float time_alpha_cam = ((float)animation_timer * 2) / ((float)C_ANIMATION_CHANGE_TARGET_DURATION);
 
     if(time_alpha_cam < 1) {
-        target_point_x = start_target_x * (1 - time_alpha_cam) + lock_point_x * time_alpha_cam;
-        target_point_y = start_target_y * (1 - time_alpha_cam) + lock_point_y * time_alpha_cam;
-        target_point_z = start_target_z * (1 - time_alpha_cam) + lock_point_z * time_alpha_cam;
+        target_point = start_target_point * (1 - time_alpha_cam) + lock_point * time_alpha_cam;
     }
-
-    
-
-    pos_x = start_pos_x * (1 - time_alpha_mov) + target_pos_x * time_alpha_mov;
-    pos_y = start_pos_y * (1 - time_alpha_mov) + target_pos_y * time_alpha_mov;
-    pos_z = start_pos_z * (1 - time_alpha_mov) + target_pos_z * time_alpha_mov;
+    pos = start_pos * (1 - time_alpha_mov) + target_pos * time_alpha_mov;
 
     glutPostRedisplay();
 }
@@ -341,76 +283,47 @@ void camera::animate_changing_target(int delta_time_ms) {
 void camera::camera_glu_lookat() {
     glLoadIdentity();
     if(is_free_camera) {
-        target_point_x = dir_x + pos_x;
-        target_point_y = dir_y + pos_y;
-        target_point_z = dir_z + pos_z;
+        target_point = pos + dir;
     }
-    gluLookAt(pos_x, pos_y, pos_z, target_point_x, target_point_y, target_point_z, up_x, up_y, up_z);
+    gluLookAt(pos.x, pos.y, pos.z, target_point.x, target_point.y, target_point.z, up.x, up.y, up.z);
 }
 
 //AUXILIARY FUNCTIONS
 
 void camera::cartesian_to_spherical_coords() {
-    //std::cout << "CTS" << std::endl;
-    float rel_pos_x, rel_pos_y, rel_pos_z;
+    vector3 rel_pos;
 
-    rel_pos_x = pos_x - lock_point_x;
-    rel_pos_y = pos_y - lock_point_y;
-    rel_pos_z = pos_z - lock_point_z;
+    rel_pos = pos - lock_point;
 
-    radius = sqrt(rel_pos_x * rel_pos_x + rel_pos_y * rel_pos_y + rel_pos_z * rel_pos_z);
-    beta = asin(rel_pos_y / radius);
-    alpha = atan2(rel_pos_x, rel_pos_z);
+    radius = sqrt(rel_pos.x * rel_pos.x + rel_pos.y * rel_pos.y + rel_pos.z * rel_pos.z);
+    beta = asin(rel_pos.y / radius);
+    alpha = atan2(rel_pos.x, rel_pos.z);
 }
 
 void camera::spherical_to_cartesian_coords(bool to_target) {
+    vector3 rel_pos;
 
-    float rel_pos_x, rel_pos_y, rel_pos_z;
-
-    rel_pos_x = radius * cos(beta) * sin(alpha);
-	rel_pos_y = radius * sin(beta);
-	rel_pos_z = radius * cos(beta) * cos(alpha);
+    rel_pos.x = radius * cos(beta) * sin(alpha);
+	rel_pos.y = radius * sin(beta);
+	rel_pos.z = radius * cos(beta) * cos(alpha);
 
     if(to_target) {
-        target_pos_x = rel_pos_x + lock_point_x;
-        target_pos_y = rel_pos_y + lock_point_y;
-        target_pos_z = rel_pos_z + lock_point_z;
+        target_pos = rel_pos + lock_point;
 
         return;
     }
     
-    pos_x = rel_pos_x + lock_point_x;
-    pos_y = rel_pos_y + lock_point_y;
-    pos_z = rel_pos_z + lock_point_z;
+    pos = rel_pos + lock_point;
+    dir = lock_point - pos;
 
-    dir_x = lock_point_x - pos_x;
-    dir_y = lock_point_y - pos_y;
-    dir_z = lock_point_z - pos_z;
-
-    normalize_dir();
-}
-
-void camera::normalize_dir() {
-    float dir_vector_length = sqrt(dir_x * dir_x + dir_y * dir_y + dir_z * dir_z);
-
-    if(dir_vector_length == 0) {
-        dir_x = 1.0f;
-        dir_y = 0.0f;
-        dir_z = 0.0f;
-
-        return;
-    }
-    //normalize direction vector
-    dir_x /= dir_vector_length;
-    dir_y /= dir_vector_length;
-    dir_z /= dir_vector_length;
+    dir.normalize();
 }
 
 void camera::print_info() {
-    std::cout << "Position: " << pos_x << " " << pos_y << " " << pos_z << "\n";
-    std::cout << "Lock point: " << lock_point_x << " " << lock_point_y << " " << lock_point_z << "\n";
-    std::cout << "Up vector: " << up_x << " " << up_y << " " << up_z << "\n";
-    std::cout << "Direction vector: " << dir_x << " " << dir_y << " " << dir_z << "\n";
+    std::cout << "Position: " << pos.x << " " << pos.y << " " << pos.z << "\n";
+    std::cout << "Lock point: " << lock_point.x << " " << lock_point.y << " " << lock_point.z << "\n";
+    std::cout << "Up vector: " << up.x << " " << up.y << " " << up.z << "\n";
+    std::cout << "Direction vector: " << dir.x << " " << dir.y << " " << dir.z << "\n";
     std::cout << "Spherical coords: " << radius << " " << alpha << " " << beta << "\n";
     std::cout << "Pitch/Yaw: " << pitch << " " << yaw << "\n-|- >< \n\n" << std::endl;
 }

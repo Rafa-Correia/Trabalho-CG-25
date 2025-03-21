@@ -8,7 +8,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add source files
-set(SOURCES src/main.cpp src/tinyxml2.cpp src/config.cpp src/group.cpp src/camera.cpp src/matrix4x4.cpp)
+set(SOURCES src/main.cpp src/tinyxml2.cpp src/config.cpp src/group.cpp src/camera.cpp src/matrix4x4.cpp src/vector3.cpp)
 
 # Create the executable
 	add_executable(${PROJECT_NAME} ${SOURCES})

@@ -5,6 +5,7 @@
 #include "group.hpp"
 #include "camera.hpp"
 #include "matrix4x4.hpp"
+#include "vector3.hpp"
 
 #include <exception>
 #include <iostream>
@@ -89,7 +90,7 @@ class config {
          * 
          * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
          */
-        std::vector<float> lock_postitions();
+        std::vector<vector3> lock_postitions();
 };
 
 class FailedToLoadException : public std::exception {

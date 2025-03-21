@@ -42,5 +42,5 @@ bin/*
 # file.3d
 *.3d
 
-#powershell scripts
-*.ps1
+# test_files folder 
+/test_files/*

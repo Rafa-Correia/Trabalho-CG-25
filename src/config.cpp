@@ -78,9 +78,6 @@ bool config::load(const char *filepath) {
 
 			w_width = width;
 			w_height = height;
-
-			//std::cout << "Width: " << width << std::endl;
-			//std::cout << "Height: " << height << std::endl;
 		} else {
 			std::cout << "No window element!" << std::endl;
 			return false;
@@ -197,10 +194,10 @@ camera* config::get_config_camera_init() {
 	return cam;
 }
 
-std::vector<float> config::lock_postitions() {
-	std::vector<float> l_pos;
+std::vector<vector3> config::lock_postitions() {
+	std::vector<vector3> l_pos;
 	for(int i = 0; i < root_groups.size(); i++) {
-		std::vector<float> c_locks = root_groups.at(i).lock_positions(matrix4x4::Identity());
+		std::vector<vector3> c_locks = root_groups.at(i).lock_positions(matrix4x4::Identity());
 		l_pos.insert(l_pos.end(), c_locks.begin(), c_locks.end());
 	}
 	return l_pos;

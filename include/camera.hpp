@@ -1,6 +1,8 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
+#include "vector3.hpp"
+
 #include <iostream>
 #include <vector>
 
@@ -25,7 +27,7 @@
 class camera {
     public:
         camera();
-        camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<float> l_pos = std::vector<float>());
+        camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<vector3> l_pos = std::vector<vector3>());
 
         /**
          * Changes camera position based on what keys are pressed. Moves at constant rate, independant on framerate.
@@ -84,17 +86,16 @@ class camera {
         void cycle_target();
 
     private:
-    
-        float pos_x = 0, pos_y = 0, pos_z = 0;                              // < -- position of the camera
-        float up_x = 0, up_y = 1, up_z = 0;                                 // < -- camera's "up" vector (vector pointing up)
-        float dir_x = 0.0f, dir_y = 0.0f, dir_z = 0.0f;                     // < -- camera direction, used in free cam mode
+        vector3 pos;                                    // < -- position of the camera
+        vector3 up;                                     // < -- camera's "up" vector (vector pointing up)
+        vector3 dir;                                    // < -- camera direction, used in free cam mode
         
-        float lock_point_x = 0, lock_point_y = 0, lock_point_z = 0;         // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
-        float target_point_x = 0, target_point_y = 0, target_point_z = 0;   // < -- camera always looks at this point in fixed mode
-        float start_target_x, start_target_y, start_target_z;               // < -- when playing lerp camera transition, this serves as the start point for camera target
+        vector3 lock_point;                             // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
+        vector3 target_point;                           // < -- camera always looks at this point in fixed mode
+        vector3 start_target_point;                     // < -- when playing lerp camera transition, this serves as the start point for camera target
         
-        float target_pos_x, target_pos_y, target_pos_z;                     // < -- camera's target position (will move to this point during change target animation)
-        float start_pos_x, start_pos_y, start_pos_z;                        // < -- serves as starting posititon in lerp transition of movement
+        vector3 target_pos;                             // < -- camera's target position (will move to this point during change target animation)
+        vector3 start_pos;                              // < -- serves as starting posititon in lerp transition of movement
 
     
         float radius, alpha, beta;                      // < -- when camera is locked, use spherical coordinates.
@@ -104,9 +105,8 @@ class camera {
 
         int current_animation = C_ANIMATION_IDLE;       // < -- current animation, if no animation being played, then it is idle
 
-        int animation_timer = 0;                        //ms
-        int animation_duration = 500;                   //ms
-        
+        int animation_timer = 0;                        // < -- timer for current animation
+
         float linear_movement_speed = 50.0f;            // < -- movement speed of camera in free camera mode. In units / sec.
         float angular_movement_speed = 1.0f;            // < -- angular speed of camera in locked camera mode. In radians / sec.
         float zoom_in_speed = 5.0f;                     // < -- radius change speed in locked camera mode. In units / sec.
@@ -116,13 +116,8 @@ class camera {
         bool just_warped = false;                       // < -- state flag. Indicates if mouse cursor was warped to center last update, since glutWarpPointer triggers another update event. 
         bool animation_locked = false;                  // < -- state flag. Indicates if animation is currently being played.
 
-        unsigned int current_target = 0;
-        std::vector<float> lock_points;
-
-        /**
-         * Internal function used to normalize the direction vector.
-         */
-        void normalize_dir();
+        unsigned int current_target = 0;                // < -- current camera target.
+        std::vector<vector3> lock_point_list;           // < -- list of points for camera locking.
 
         /**
          * Updates spherical coordinates based on the cartesian coordinates.
