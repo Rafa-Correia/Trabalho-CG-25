@@ -4,6 +4,7 @@
 #include "tinyxml2.h"
 #include "group.hpp"
 #include "camera.hpp"
+#include "matrix4x4.hpp"
 
 #include <exception>
 #include <iostream>

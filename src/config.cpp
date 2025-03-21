@@ -200,7 +200,7 @@ camera* config::get_config_camera_init() {
 std::vector<float> config::lock_postitions() {
 	std::vector<float> l_pos;
 	for(int i = 0; i < root_groups.size(); i++) {
-		std::vector<float> c_locks = root_groups.at(i).lock_positions(1, 1, 1, 0, 0, 0);
+		std::vector<float> c_locks = root_groups.at(i).lock_positions(matrix4x4::Identity());
 		l_pos.insert(l_pos.end(), c_locks.begin(), c_locks.end());
 	}
 	return l_pos;

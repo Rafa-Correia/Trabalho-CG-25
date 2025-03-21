@@ -19,7 +19,7 @@
         <group>
             <!-- mercury ! -->
             <transform>
-                <rotate angle="0" x="0" y="1" z="0" />
+                <rotate angle="90" x="0" y="1" z="0" />
                 <translate x="4.2" y="0" z="0" />
                 <scale x="0.035" y="0.035" z="0.035" /> 
             </transform>
@@ -49,8 +49,9 @@
                 <model file="sphere.3d" />
             </models>
             <group>
+                <!--- moon ! -->
                 <transform>
-                    <rotate angle="0" x="0" y="1" z="0" />
+                    <rotate angle="160" x="0" y="1" z="0" />
                     <translate x="3.02" y="0" z="0" />
                     <scale x="0.273" y="0.273" z="0.273" /> 
                 </transform>

@@ -1,6 +1,8 @@
 #include "group.hpp"
 
 group::group(tinyxml2::XMLElement *root) {
+    transform_matrix = matrix4x4();
+
     if(!group::parse_group(root)) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
@@ -99,6 +101,7 @@ void group::render_group() {
 
     glPushMatrix();
 
+        /*
         for(size_t i = 0; i < transform_order.size(); i++) {
             if(transform_order.at(i) == 't') {
                 glTranslatef(translate_x, translate_y, translate_z);
@@ -110,6 +113,10 @@ void group::render_group() {
                 glScalef(scale_x, scale_y, scale_z);
             }
         }
+        */
+
+        //when ready, use only matrix
+        glMultMatrixf(transform_matrix.get_data());
 
         for(unsigned int j = 0; j < mesh_count; j++) {
             //std::cout << "Rendering mesh " << j << "..." << std::endl;
@@ -171,19 +178,18 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
             }
 
             if(tag == "translate") {
-                transform_order.push_back('t');
+                //transform_order.push_back('t');
 
                 float t_x = 0, t_y = 0, t_z = 0;
                 child->QueryFloatAttribute("x", &t_x);
                 child->QueryFloatAttribute("y", &t_y);
                 child->QueryFloatAttribute("z", &t_z);
 
-                translate_x = t_x;
-                translate_y = t_y;
-                translate_z = t_z;
+                matrix4x4 T = matrix4x4::Translate(t_x, t_y, t_z);
+                transform_matrix = transform_matrix * T;
             }
             else if(tag == "rotate") {
-                transform_order.push_back('r');
+                //transform_order.push_back('r');
 
                 float angle = 0, r_x = 0, r_y = 0, r_z = 0;
                 child->QueryFloatAttribute("angle", &angle);
@@ -191,22 +197,21 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 child->QueryFloatAttribute("y", &r_y);
                 child->QueryFloatAttribute("z", &r_z);
                 
-                rotate_angle = angle;
-                rotate_x = r_x;
-                rotate_y = r_y;
-                rotate_z = r_z;
+                matrix4x4 R = matrix4x4::Rotate(angle * (M_PI / 180.0f), r_x, r_y, r_z);
+
+                transform_matrix = transform_matrix * R;
             } 
             else if(tag == "scale") {
-                transform_order.push_back('s');
+                //transform_order.push_back('s');
 
                 float s_x = 1, s_y = 1, s_z = 1;
                 child->QueryFloatAttribute("x", &s_x);
                 child->QueryFloatAttribute("y", &s_y);
                 child->QueryFloatAttribute("z", &s_z);
 
-                scale_x = s_x;
-                scale_y = s_y;
-                scale_z = s_z;
+                matrix4x4 S = matrix4x4::Scale(s_x, s_y, s_z);
+
+                transform_matrix = transform_matrix * S;
             }
         }
 
@@ -364,88 +369,19 @@ bool group::parse_model_file(const char *filepath) {
     return true;
 }
 
-void group::print_group(const std::string prepend) {
-    const char *transform_order_data = transform_order.data();
-    char curated_order[4];
-    size_t iter;
-    for(iter = 0; iter < transform_order.size(); iter++) {
-        curated_order[iter] = transform_order_data[iter];
-    }
-    curated_order[iter] = '\0';
-    std::cout << prepend << "\n" << prepend << "Transform order: " << curated_order << "\n" << prepend << "\n";
-
-    for(size_t i = 0; i < transform_order.size(); i++) {
-        if(curated_order[i] == 't') {
-            std::cout << "Indices -> False" << std::endl;
-            std::cout   << prepend << "Translate:\n"
-                        << prepend << "\tx: " << translate_x << "\n"
-                        << prepend << "\ty: " << translate_y << "\n"
-                        << prepend << "\tz: " << translate_z << "\n" << prepend << "\n";
-        }
-        else if(curated_order[i] == 'r') {
-            std::cout   << prepend << "Rotate:\n"
-                        << prepend << "\tangle: " << rotate_angle << "\n"
-                        << prepend << "\tx: " << rotate_x << "\n"
-                        << prepend << "\ty: " << rotate_y << "\n"
-                        << prepend << "\tz: " << rotate_z << "\n" << prepend << "\n"; 
-        }
-        else if(curated_order[i] == 's') {
-            std::cout   << prepend << "Scale:\n"
-                        << prepend << "\tx: " << scale_x << "\n"
-                        << prepend << "\ty: " << scale_y << "\n"
-                        << prepend << "\tz: " << scale_z << "\n" << prepend << "\n";
-        }
-    }
+std::vector<float> group::lock_positions(matrix4x4 parent_transform) {
     
-    if(sub_groups.size() != 0) {
-        std::stringstream ss;
-        ss << prepend << "|\t";
-        std::string sub_prepend = ss.str();
-        std::cout << prepend << "Sub groups -> \n";
-
-        for(int j = 0; j < sub_groups.size(); j++) {
-            sub_groups.at(j).print_group(sub_prepend);
-        }
-    }
-    std::cout << prepend << "<------------------------------------------------------>\n";
+    matrix4x4 current_full_transform = parent_transform * transform_matrix;
     
-    std::cout << std::flush;
-}
-
-std::vector<float> group::lock_positions(float scale_base_x, float scale_base_y, float scale_base_z, float x_base, float y_base, float z_base) {
-    bool scale_first = false;
-
-    if(transform_order.at(0) == 's' || (transform_order.at(1) == 's' && transform_order.at(2)) ) {
-        scale_first = true;
-    }
-
-    float new_base_x, new_base_y, new_base_z;
-    float new_scale_x, new_scale_y, new_scale_z;
+    std::tuple<float, float, float> resulting_origin = current_full_transform.apply_to_point(0, 0, 0);
     
-    new_scale_x = scale_base_x * scale_x;
-    new_scale_y = scale_base_y * scale_y;
-    new_scale_z = scale_base_z * scale_z;
-
-    if(scale_first) {
-        new_base_x = x_base + new_scale_x * translate_x;
-        new_base_y = y_base + new_scale_y * translate_y;
-        new_base_z = z_base + new_scale_z * translate_z;
-    }
-    else {
-        new_base_x = x_base + scale_base_x * translate_x;
-        new_base_y = y_base + scale_base_y * translate_y;
-        new_base_z = z_base + scale_base_z * translate_z;
-    }
-
-    
-
     std::vector<float> lock_pos;
-    lock_pos.push_back(new_base_x);
-    lock_pos.push_back(new_base_y);
-    lock_pos.push_back(new_base_z);
+    lock_pos.push_back(std::get<0>(resulting_origin));
+    lock_pos.push_back(std::get<1>(resulting_origin));
+    lock_pos.push_back(std::get<2>(resulting_origin));
 
     for(int i = 0; i < sub_groups.size(); i++) {
-        std::vector<float> c_locks = sub_groups.at(i).lock_positions(new_scale_x, new_scale_y, new_scale_z, new_base_x, new_base_y, new_base_z);
+        std::vector<float> c_locks = sub_groups.at(i).lock_positions(current_full_transform);
         lock_pos.insert(lock_pos.end(), c_locks.begin(), c_locks.end());
     }
 

@@ -2,6 +2,7 @@
 #define GROUP_HPP
 
 #include "tinyxml2.h"
+#include "matrix4x4.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -23,12 +24,7 @@ class group {
     public:
         group() = delete;
         group(tinyxml2::XMLElement *root);
-
-        /**
-         * Debug function that prints group info, as well as call this function for all sub groups.
-         */
-        void print_group(const std::string prepend);
-
+        
         /**
          * Function that renders this group, as well as call itself for all subgroups.
          */
@@ -41,17 +37,13 @@ class group {
          * @param y_base Base y position from parent group transforms.
          * @param z_base Base z position from parent group transforms.
          */
-        std::vector<float> lock_positions(float scale_base_x, float scale_base_y, float scale_base_z, float x_base, float y_base, float z_base);
+        std::vector<float> lock_positions(matrix4x4 parent_transform);
 
     private:
 
         unsigned int mesh_count = 0;                                                // < -- number of loaded meshes
-        
-        std::vector<char> transform_order;                                          // < -- "string" containing order of transformations
-        
-        float translate_x, translate_y, translate_z;                                // < -- translate transform parameters
-        float rotate_angle, rotate_x, rotate_y, rotate_z;                           // < -- rotate transform parameters
-        float scale_x, scale_y, scale_z;                                            // < -- scale transform parameters
+
+        matrix4x4 transform_matrix;
         
         float color_r, color_g, color_b;                                            // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
         
