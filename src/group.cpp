@@ -7,10 +7,6 @@ group::group(tinyxml2::XMLElement *root) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
 
-    color_r = (float)rand() / (float)RAND_MAX;
-    color_g = (float)rand() / (float)RAND_MAX;
-    color_b = (float)rand() / (float)RAND_MAX;
-
     this->prepare_render();
 }
 
@@ -80,7 +76,7 @@ void group::prepare_render() {
 
 void group::render_group() {
     //rendering a group should render all subgroups
-    glColor3f(color_r, color_g, color_b);
+    glColor3f(color.x, color.y, color.z);
 
     glPushMatrix();
 
@@ -202,10 +198,26 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 			std::cout << "A models element must have at least one model child element!" << std::endl;
 			return false;
 		}
-	} else {
+	} 
+    else {
 		std::cout << "A group element must have models child element!" << std::endl;
 		return false;
 	}
+
+    tinyxml2::XMLElement *color_element = root->FirstChildElement("color");
+    if(color_element) {
+        float r = 1.0f, g = 1.0f, b = 1.0f;
+
+        color_element->QueryFloatAttribute("r", &r);
+        color_element->QueryFloatAttribute("g", &g);
+        color_element->QueryFloatAttribute("b", &b);
+
+        color = vector3(r, g, b);
+    } 
+    else {
+        //if no color element random generate the color.
+        color = vector3(1.0f, 1.0f, 1.0f);
+    }
 
     //loop through all subgroups
 

@@ -235,9 +235,6 @@ void printInfo() {
 
 
 int main(int argc, char **argv) {
-	
-	srand((unsigned int)time(NULL)); // seed rng
-
 	if(argc != 2) {
 		std::cout << "Wrong number of arguments!" << std::endl;
 		return 1;
@@ -272,10 +269,8 @@ int main(int argc, char **argv) {
 	printInfo();
 	
 	cfg_obj = new config(argv[1]);
-	cfg_obj->print_info();
 
 	cam = cfg_obj->get_config_camera_init();
-	cam->print_info();
 
 	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
 	glutReshapeWindow(std::get<0>(win_attribs), std::get<1>(win_attribs));

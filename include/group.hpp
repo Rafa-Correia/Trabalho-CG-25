@@ -44,7 +44,7 @@ class group {
 
         matrix4x4 transform_matrix;
         
-        float color_r, color_g, color_b;                                            // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
+        vector3 color;                                            // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
         
         std::vector<std::vector<float>> mesh_vertices_buffer;                       // < -- buffer storing vertices until VBO created
         std::vector<std::tuple<bool, std::vector<int>>> mesh_indices_buffer;        // < -- buffer storing pair of boolean and indices. boolean = false -> no indices
