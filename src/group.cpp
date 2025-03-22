@@ -184,6 +184,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 			const char* filepath = model->Attribute("file");
 			if(filepath) {
 				if(!parse_model_file(filepath)) {
+                    std::cout << "Model file is invalid: " << filepath << std::endl;
                     return false;
                 }
                 mesh_count++;
