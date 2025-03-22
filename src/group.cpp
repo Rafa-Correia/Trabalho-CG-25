@@ -200,8 +200,8 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 		}
 	} 
     else {
-		std::cout << "A group element must have models child element!" << std::endl;
-		return false;
+		//std::cout << "A group element must have models child element!" << std::endl;
+		//return false;
 	}
 
     tinyxml2::XMLElement *color_element = root->FirstChildElement("color");
