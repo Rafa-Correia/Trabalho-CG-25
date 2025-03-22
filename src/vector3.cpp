@@ -25,7 +25,7 @@ vector3 vector3::cross(const vector3& v1, const vector3& v2) {
 }
 
 void vector3::normalize() {
-    float len = sqrt(x * x + y * y + z * z);
+    float len = sqrtf(x * x + y * y + z * z);
 
     x /= len;
     y /= len;

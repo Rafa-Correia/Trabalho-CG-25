@@ -18,16 +18,19 @@
 
 //these are purelly identifiers
 
-#define C_ANIMATION_IDLE                                    0
-#define C_ANIMATION_CAMERA_LOCKING                          1
-#define C_ANIMATION_CHANGE_TARGET                           2
+#define C_ANIMATION_IDLE                                0
+#define C_ANIMATION_CAMERA_LOCKING                      1
+#define C_ANIMATION_CHANGE_TARGET                       2
+#define C_ANIMATION_CHANGE_RADIUS                       3
 
-#define C_ANIMATION_CAMERA_LOCKING_DURATION                 500                 // < -- duration in ms
-#define C_ANIMATION_CHANGE_TARGET_DURATION                  750                 // < -- duration in ms
+#define C_DURATION_CAMERA_LOCKING                       500                 // < -- duration in ms
+#define C_DURATION_CHANGE_TARGET                        750                 // < -- duration in ms
+#define C_DURATION_CHANGE_RADIUS                        50                 // < -- duration in ms
+
 class camera {
     public:
         camera();
-        camera(float pos_x, float pos_y, float pos_z, float lookat_x, float lookat_y, float lookat_z, float up_x, float up_y, float up_z, std::vector<vector3> l_pos = std::vector<vector3>());
+        camera(vector3 pos, vector3 lock_point, vector3 up, std::vector<vector3> l_pos = std::vector<vector3>());
 
         /**
          * Changes camera position based on what keys are pressed. Moves at constant rate, independant on framerate.
@@ -85,18 +88,28 @@ class camera {
          */
         void cycle_target();
 
+        /**
+         * Adds given delta to camera target radius.
+         * 
+         * @param delta Amount to change target radius by.
+         */
+        void add_to_target_radius(float delta);
+
     private:
         vector3 pos;                                    // < -- position of the camera
         vector3 up;                                     // < -- camera's "up" vector (vector pointing up)
         vector3 dir;                                    // < -- camera direction, used in free cam mode
         
         vector3 lock_point;                             // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
+        
         vector3 target_point;                           // < -- camera always looks at this point in fixed mode
         vector3 start_target_point;                     // < -- when playing lerp camera transition, this serves as the start point for camera target
         
         vector3 target_pos;                             // < -- camera's target position (will move to this point during change target animation)
         vector3 start_pos;                              // < -- serves as starting posititon in lerp transition of movement
 
+        float target_radius;                            // < -- camera's target radius
+        float start_radius;                             // < -- serves as starting radius when playing change radius animation
     
         float radius, alpha, beta;                      // < -- when camera is locked, use spherical coordinates.
         float yaw = 0.0f, pitch = 0.0f;                 // < -- when in free camera mode use yaw and pitch do turn camera with mouse.
@@ -122,7 +135,7 @@ class camera {
         /**
          * Updates spherical coordinates based on the cartesian coordinates.
          */
-        void cartesian_to_spherical_coords();
+        void cartesian_to_spherical_coords(bool set_target_radius = false);
 
         /**
          * Updates cartesian coordinates based on the spherical coordinates.
@@ -158,6 +171,13 @@ class camera {
          * @param delta_time_ms Time since last update in ms. 
          */
         void animate_changing_target(int delta_time_ms);
+
+        /**
+         * Function responsible for animating radius change.
+         * 
+         * @param delta_time_ms Time since last update in ms.
+         */
+        void animate_radius_change(int delta_time_ms);
 
 };
 

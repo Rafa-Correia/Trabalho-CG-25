@@ -1,5 +1,3 @@
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -35,6 +33,8 @@
 #include "tinyxml2.h"
 #include "config.hpp"
 #include "group.hpp"
+#include "matrix4x4.hpp"
+#include "vector3.hpp"
 
 
 config *cfg_obj = NULL;
@@ -155,7 +155,7 @@ void render_scene(void) {
 		timebase = time;
 		frames = 0;
 		
-		sprintf(str, "%.4f", fps);
+		sprintf_s(str, "%.4f", fps);
 
 		glutSetWindowTitle(str);
 	}
@@ -176,29 +176,55 @@ void idle() {
 }
 
 void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
-	if(c == '1') {
-		draw_axis = !draw_axis;
-	}
-	else if(c == '2') {
-		wire_mode = !wire_mode;
-	}
-	else if(c == 'f' || c == 'F') {
-		cam->switch_camera_mode();
-	}
-	else if(c == 'p' || c == 'P') {
-		//cam->print_info();
-	}
-	else if(c == 'r' || c == 'R') {
-		cam->reset_camera();
-	}
-	else if(c == 'c' || c == 'C') {
-		cam->cycle_target();
-	}
-	else if(c == 27) { //esc
-		exit(0);
-	}
-	else {
-		key_states[c] = true;
+	switch(c) {
+		case '1':
+			draw_axis = !draw_axis;
+			break;
+
+		case '2':
+			wire_mode = !wire_mode;
+			break;
+
+		case 'f':
+		case 'F':
+			cam->switch_camera_mode();
+			break;
+
+		/*
+		case 'p':
+		case 'P':
+			//was used to print info, now unused
+			break;
+		*/
+
+
+		case 'r':
+		case 'R':
+			cam->reset_camera();
+			break;
+
+		case 'c':
+		case 'C':
+			cam->cycle_target();
+			break;
+
+		case 'z':
+		case 'Z':
+			cam->add_to_target_radius(-1.0f);
+			break;
+
+		case 'x':
+		case 'X':
+			cam->add_to_target_radius(1.0f);
+			break;
+
+		case 27:
+			exit(0);
+			break;
+
+		default:
+			key_states[c] = true;
+			break;
 	}
 }
 
@@ -222,15 +248,15 @@ void processSpecialKeys(int key, int xx, int yy) {
 
 void printInfo() {
 
-	printf("Vendor: %s\n", glGetString(GL_VENDOR));
-	printf("Renderer: %s\n", glGetString(GL_RENDERER));
-	printf("Version: %s\n\n", glGetString(GL_VERSION));
+	std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
+	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "Version: " << glGetString(GL_VERSION) << "\n" << std::endl;
 
 	std::cout << "Press 1 to toggle axis rendering." << std::endl;
 	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
-	std::cout << "Press f to switch between fixed camera and free camera mode." << std::endl;
-	std::cout << "Press c to change camera target (in fixed mode)." << std::endl;
-	std::cout << "Press r to reset camera to first target." << std::endl;
+	std::cout << "Press f/F to switch between fixed camera and free camera mode." << std::endl;
+	std::cout << "Press c/C to change camera target (in fixed mode)." << std::endl;
+	std::cout << "Press r/R to reset camera to first target." << std::endl;
 }
 
 
@@ -255,6 +281,7 @@ int main(int argc, char **argv) {
 	glutPassiveMotionFunc(processMouse);
 	glutSpecialFunc(processSpecialKeys);
 	
+	
 	#ifndef __APPLE__
 	glewInit();
 	#endif
@@ -275,10 +302,10 @@ int main(int argc, char **argv) {
 	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
 	glutReshapeWindow(std::get<0>(win_attribs), std::get<1>(win_attribs));
 	
-	std::tuple<float, float, float> projection_attributes = cfg_obj->get_projection_settings();
-	cam_fov = std::get<0>(projection_attributes);
-	cam_near = std::get<1>(projection_attributes);
-	cam_far = std::get<2>(projection_attributes);
+	vector3 projection_attributes = cfg_obj->get_projection_settings();
+	cam_fov = projection_attributes.x;
+	cam_near = projection_attributes.y;
+	cam_far = projection_attributes.z;
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
 
@@ -286,6 +313,8 @@ int main(int argc, char **argv) {
 	prev_time = glutGet(GLUT_ELAPSED_TIME);
 
 	disable_vsync();
+
+	std::cout << "Entering main loop..." << std::endl;
 
 	glutMainLoop();
 	

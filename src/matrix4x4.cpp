@@ -27,12 +27,12 @@ matrix4x4 matrix4x4::Translate(float x, float y, float z) {
 
 matrix4x4 matrix4x4::Rotate(float theta, float x, float y, float z) {
     matrix4x4 result;
-    float c = cos(theta);
-    float s = sin(theta);
+    float c = cosf(theta);
+    float s = sinf(theta);
     float oneMinusC = 1.0f - c;
 
     // Normalize axis
-    float len = sqrt(x*x + y*y + z*z);
+    float len = sqrtf(x*x + y*y + z*z);
     if (len == 0.0f) return result;  // Return identity if invalid axis
     x /= len; y /= len; z /= len;
 

@@ -42,16 +42,10 @@ class group {
 
         unsigned int mesh_count = 0;                                                // < -- number of loaded meshes
 
-        matrix4x4 transform_matrix;
+        matrix4x4 model_matrix;                                                     // < -- 4 by 4 matrix storing transformations
         
-        vector3 color;                                            // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
-        
-        std::vector<std::vector<float>> mesh_vertices_buffer;                       // < -- buffer storing vertices until VBO created
-        std::vector<std::tuple<bool, std::vector<int>>> mesh_indices_buffer;        // < -- buffer storing pair of boolean and indices. boolean = false -> no indices
-        
-        std::vector<std::tuple<bool, std::vector<float>>> mesh_normals_buffer;      // < -- buffer storing pair of boolean and normals. boolean = false -> no normals
-        std::vector<std::tuple<bool, std::vector<float>>> mesh_tex_coords_buffer;   // < -- buffer storing pair of boolean and texture coordinates. boolean = false -> no texture coordinates
-        
+        vector3 color;                                                              // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
+
         bool is_ready_to_render = false;
         
         std::vector<group> sub_groups;                      // < -- All loaded subgroups

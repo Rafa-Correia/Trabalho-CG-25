@@ -7,7 +7,7 @@ config::config(const char *path) {
         throw FailedToLoadException(ss.str());
     }
 
-	cam = new camera(c_pos_x, c_pos_y, c_pos_z, c_lookat_x, c_lookat_y, c_lookat_z, c_up_x, c_up_y, c_up_z, lock_postitions());
+	cam = new camera(c_pos, c_lookat, c_up, lock_postitions());
 }
 
 void config::print_info() {
@@ -16,21 +16,21 @@ void config::print_info() {
                 << "\tWindow height: " << w_height << "\n"
                 << "\nCamera setttings:\n"
                 << "\tCamera position:\n"
-                << "\t\tx: " << c_pos_x << "\n"
-                << "\t\ty: " << c_pos_y << "\n"
-                << "\t\tz: " << c_pos_z << "\n"
+                << "\t\tx: " << c_pos.x << "\n"
+                << "\t\ty: " << c_pos.y << "\n"
+                << "\t\tz: " << c_pos.z << "\n"
                 << "\tCamera lookAt:\n"
-                << "\t\tx: " << c_lookat_x << "\n"
-                << "\t\ty: " << c_lookat_y << "\n"
-                << "\t\tz: " << c_lookat_z << "\n"
+                << "\t\tx: " << c_lookat.x << "\n"
+                << "\t\ty: " << c_lookat.y << "\n"
+                << "\t\tz: " << c_lookat.z << "\n"
                 << "\tCamera up vector:\n"
-                << "\t\tx: " << c_up_x << "\n"
-                << "\t\ty: " << c_up_y << "\n"
-                << "\t\tz: " << c_up_z << "\n"
+                << "\t\tx: " << c_up.x << "\n"
+                << "\t\ty: " << c_up.y << "\n"
+                << "\t\tz: " << c_up.z << "\n"
                 << "\nProjection:\n"
-                << "\tCamera fov: " << c_fov << "\n"
-                << "\tCamera near plane: " << c_near_plane << "\n"
-                << "\tCamera far plane: " << c_far_plane << "\n";
+                << "\tCamera fov: " << projection_attributes.x << "\n"
+                << "\tCamera near plane: " << projection_attributes.y << "\n"
+                << "\tCamera far plane: " << projection_attributes.z << "\n";
 
     std::cout << "\n" << std::flush; //same as endl
 }
@@ -39,8 +39,8 @@ std::tuple<int, int> config::get_window_attributes() {
     return std::tuple<int, int>(w_width, w_height);
 }
 
-std::tuple<float, float, float> config::get_projection_settings() {
-    return std::tuple<float, float, float>(c_fov, c_near_plane, c_far_plane);
+vector3 config::get_projection_settings() {
+    return projection_attributes;
 }
 
 std::vector<group> config::get_root_groups() {
@@ -92,9 +92,7 @@ bool config::load(const char *filepath) {
 				position->QueryFloatAttribute("y", &y);
 				position->QueryFloatAttribute("z", &z);
 
-				c_pos_x = x;
-				c_pos_y = y;
-				c_pos_z = z;
+				c_pos = vector3(x, y, z);
 			} else {
 				std::cout << "No position element!" << std::endl;
 				return false;
@@ -107,9 +105,7 @@ bool config::load(const char *filepath) {
 				lookat->QueryFloatAttribute("y", &y);
 				lookat->QueryFloatAttribute("z", &z);
 
-				c_lookat_x = x;
-				c_lookat_y = y;
-				c_lookat_z = z;
+				c_lookat = vector3(x, y, z);
 			} else {
 				std::cout << "No lookAt element!" << std::endl;
 				return false;
@@ -122,9 +118,7 @@ bool config::load(const char *filepath) {
 				up->QueryFloatAttribute("y", &y);
 				up->QueryFloatAttribute("z", &z);
 
-				c_up_x = x;
-				c_up_y = y;
-				c_up_z = z;
+				c_up = vector3(x, y, z);
 			} else {
 				std::cout << "No up element!" << std::endl;
 				return false;
@@ -147,9 +141,7 @@ bool config::load(const char *filepath) {
 					return false;
 				}
 
-				c_fov = fov;
-				c_near_plane = near;
-				c_far_plane = far;
+				projection_attributes = vector3(fov, near, far);
 			} else {
 				std::cout << "No projection element!" << std::endl;
 				return false;
@@ -196,7 +188,7 @@ camera* config::get_config_camera_init() {
 
 std::vector<vector3> config::lock_postitions() {
 	std::vector<vector3> l_pos;
-	for(int i = 0; i < root_groups.size(); i++) {
+	for(size_t i = 0; i < root_groups.size(); i++) {
 		std::vector<vector3> c_locks = root_groups.at(i).lock_positions(matrix4x4::Identity());
 		l_pos.insert(l_pos.end(), c_locks.begin(), c_locks.end());
 	}

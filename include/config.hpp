@@ -18,7 +18,7 @@
 class config {
     public:
         config() = delete;
-        config(const char *path);
+        config(const char *path); 
 
         /**
          * Debug function printing important config class information.
@@ -37,7 +37,7 @@ class config {
          * 
          * @returns Camera FOV, near plane and far plane distances.
          */
-        std::tuple<float, float, float> get_projection_settings();
+        vector3 get_projection_settings();
 
         /**
          * Getter for root groups. 
@@ -66,11 +66,12 @@ class config {
     private:
         int w_width, w_height;                          // < -- Window attributes
 
-        float c_pos_x, c_pos_y, c_pos_z;                // < -- Initial camera position
-        float c_lookat_x, c_lookat_y, c_lookat_z;       // < -- Initial camera lock point
-        float c_up_x, c_up_y, c_up_z;                   // < -- Initial camera "up" vector
+        vector3 c_pos;                                  // < -- Initial camera position
+        vector3 c_lookat;                               // < -- Initial camera lock point
+        vector3 c_up;                                   // < -- Initial camera "up" vector
 
-        float c_fov, c_near_plane, c_far_plane;         // < -- Projection attributes
+        //float c_fov, c_near_plane, c_far_plane;         
+        vector3 projection_attributes;                  // < -- Projection attributes
 
         camera *cam;                                    // < -- Camera object created with initial configuration.
 
