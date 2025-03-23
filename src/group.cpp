@@ -265,19 +265,23 @@ bool group::parse_model_file(const char *filepath) {
     return true;
 }
 
-std::vector<vector3> group::lock_positions(matrix4x4 parent_transform) {
-    
-    matrix4x4 current_full_transform = parent_transform * model_matrix;
-    
-    vector3 resulting_origin = current_full_transform.apply_to_point(vector3());
-    
+std::vector<vector3> group::query_group_positions() {
     std::vector<vector3> lock_pos;
-    lock_pos.push_back(resulting_origin);
+    lock_pos.push_back(position);
 
     for(size_t i = 0; i < sub_groups.size(); i++) {
-        std::vector<vector3> c_locks = sub_groups.at(i).lock_positions(current_full_transform);
+        std::vector<vector3> c_locks = sub_groups.at(i).query_group_positions();
         lock_pos.insert(lock_pos.end(), c_locks.begin(), c_locks.end());
     }
 
     return lock_pos;
+}
+
+void group::update_group_positions(matrix4x4 parent_transform) {
+    matrix4x4 full_transform = parent_transform * model_matrix;
+    position = full_transform.apply_to_point(vector3());
+
+    for(size_t i = 0; i < sub_groups.size(); i++) {
+        sub_groups.at(i).update_group_positions(full_transform);
+    }
 }

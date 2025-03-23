@@ -34,9 +34,14 @@ class group {
         /**
          * Returns camera lock positions for this group and calls itself for all subgroups.
          * 
-         * @param parent_transform Transform matrix of parent group.
+         * @returns Vector of vector3's containing all group positions.
          */
-        std::vector<vector3> lock_positions(matrix4x4 parent_transform);
+        std::vector<vector3> query_group_positions();
+        
+        /**
+         * Updates all groups' positions.
+         */
+        void update_group_positions(matrix4x4 parent_transform);
 
     private:
 
@@ -44,7 +49,9 @@ class group {
 
         matrix4x4 model_matrix;                                                     // < -- 4 by 4 matrix storing transformations
         
-        vector3 color;                                                              // < -- group color, doesnt apply to subgroups. PLACEHOLDER, is randomly generated
+        vector3 color;                                                              // < -- group color, doesnt apply to subgroups.
+
+        vector3 position;                                                           // < -- group position in 3D space.
 
         bool is_ready_to_render = false;
         

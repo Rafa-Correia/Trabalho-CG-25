@@ -91,7 +91,12 @@ class config {
          * 
          * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
          */
-        std::vector<vector3> lock_postitions();
+        std::vector<vector3> query_group_postitions();
+
+        /**
+         * 
+         */
+        void update_group_positions();
 };
 
 class FailedToLoadException : public std::exception {
