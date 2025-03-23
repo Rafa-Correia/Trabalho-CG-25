@@ -2,14 +2,14 @@
 
 //constructor
 
-camera::camera(vector3 pos, vector3 lock_point, vector3 up, std::vector<vector3> l_pos) {
+camera::camera(vector3 pos, vector3 target_lock_point, vector3 up, std::vector<vector3> l_pos) {
     this->pos = pos;
     this->up = up;
     
-    dir = lock_point - pos;
+    dir = target_lock_point - pos;
 
-    this->lock_point = lock_point;
-    this->target_point = lock_point;
+    this->target_lock_point = target_lock_point;
+    this->lock_point = target_lock_point;
 
     dir.normalize();
 
@@ -144,7 +144,7 @@ void camera::reset_camera() {
 
     int index = current_target * 3;
 
-    lock_point = lock_point_list.at(index);
+    target_lock_point = lock_point_list.at(index);
 
     set_animation(C_ANIMATION_CHANGE_TARGET);
 }
@@ -153,7 +153,7 @@ void camera::cycle_target() {
     if(animation_locked == true) return;
     current_target = (current_target + 1) % (lock_point_list.size());
 
-    lock_point = lock_point_list.at(current_target);
+    target_lock_point = lock_point_list.at(current_target);
 
     set_animation(C_ANIMATION_CHANGE_TARGET);
 }
@@ -234,7 +234,7 @@ void camera::set_animation(int animation) {
     }
 
     if(animation == C_ANIMATION_CAMERA_LOCKING) {
-        start_target_point = pos + dir;
+        start_lock_point = pos + dir;
 
         is_free_camera = false;
         current_animation = C_ANIMATION_CAMERA_LOCKING;
@@ -242,7 +242,7 @@ void camera::set_animation(int animation) {
     }
 
     if(animation == C_ANIMATION_CHANGE_TARGET) {
-        start_target_point = pos + dir;
+        start_lock_point = pos + dir;
         start_pos = pos;
 
         alpha = 0;
@@ -271,7 +271,7 @@ void camera::animate_camera_locking(int delta_time_ms) {
 
     if(animation_timer >= C_DURATION_CAMERA_LOCKING) {
         set_animation(C_ANIMATION_IDLE);
-        target_point = lock_point;
+        lock_point = target_lock_point;
 
         return;
     }
@@ -279,7 +279,7 @@ void camera::animate_camera_locking(int delta_time_ms) {
     float time_alpha = (float)animation_timer / (float)C_DURATION_CAMERA_LOCKING;
     float eased_alpha = time_alpha * time_alpha * (3.0f - 2.0f * time_alpha);
 
-    target_point = start_target_point + (lock_point - start_target_point) * eased_alpha;
+    lock_point = start_lock_point + (target_lock_point - start_lock_point) * eased_alpha;
 
     spherical_to_cartesian_coords();
 
@@ -292,7 +292,7 @@ void camera::animate_changing_target(int delta_time_ms) {
     if(animation_timer >= C_DURATION_CHANGE_TARGET) {
         set_animation(C_ANIMATION_IDLE);
 
-        target_point = lock_point;
+        lock_point = target_lock_point;
 
         spherical_to_cartesian_coords();
 
@@ -304,7 +304,7 @@ void camera::animate_changing_target(int delta_time_ms) {
     float eased_alpha = time_alpha * time_alpha * (3.0f - 2.0f * time_alpha);
 
     if(eased_alpha <= 0.5f) {
-        target_point = start_target_point + (lock_point - start_target_point) * eased_alpha * 2.0f;
+        lock_point = start_lock_point + (target_lock_point - start_lock_point) * eased_alpha * 2.0f;
     }
     pos = start_pos + (target_pos - start_pos) * eased_alpha;
 
@@ -339,10 +339,10 @@ void camera::animate_radius_change(int delta_time_ms) {
 
 matrix4x4 camera::get_view_matrix() {
     if(is_free_camera) {
-        target_point = pos + dir;
+        lock_point = pos + dir;
     }
-    //gluLookAt(pos.x, pos.y, pos.z, target_point.x, target_point.y, target_point.z, up.x, up.y, up.z);
-    return matrix4x4::View(pos, target_point, up);
+    //gluLookAt(pos.x, pos.y, pos.z, lock_point.x, lock_point.y, lock_point.z, up.x, up.y, up.z);
+    return matrix4x4::View(pos, lock_point, up);
 }
 
 //AUXILIARY FUNCTIONS
@@ -350,7 +350,7 @@ matrix4x4 camera::get_view_matrix() {
 void camera::cartesian_to_spherical_coords(bool set_target_radius) {
     vector3 rel_pos;
 
-    rel_pos = pos - lock_point;
+    rel_pos = pos - target_lock_point;
 
     radius = sqrt(rel_pos.x * rel_pos.x + rel_pos.y * rel_pos.y + rel_pos.z * rel_pos.z);
     beta = asin(rel_pos.y / radius);
@@ -367,20 +367,20 @@ void camera::spherical_to_cartesian_coords(bool to_target) {
 	rel_pos.z = radius * cos(beta) * cos(alpha);
 
     if(to_target) {
-        target_pos = rel_pos + lock_point;
+        target_pos = rel_pos + target_lock_point;
 
         return;
     }
     
-    pos = rel_pos + lock_point;
-    dir = lock_point - pos;
+    pos = rel_pos + target_lock_point;
+    dir = target_lock_point - pos;
 
     dir.normalize();
 }
 
 void camera::print_info() {
     std::cout << "Position: " << pos.x << " " << pos.y << " " << pos.z << "\n";
-    std::cout << "Lock point: " << lock_point.x << " " << lock_point.y << " " << lock_point.z << "\n";
+    std::cout << "Lock point: " << target_lock_point.x << " " << target_lock_point.y << " " << target_lock_point.z << "\n";
     std::cout << "Up vector: " << up.x << " " << up.y << " " << up.z << "\n";
     std::cout << "Direction vector: " << dir.x << " " << dir.y << " " << dir.z << "\n";
     std::cout << "Spherical coords: " << radius << " " << alpha << " " << beta << "\n";

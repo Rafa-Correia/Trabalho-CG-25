@@ -101,10 +101,10 @@ class camera {
         vector3 up;                                     // < -- camera's "up" vector (vector pointing up)
         vector3 dir;                                    // < -- camera direction, used in free cam mode
         
-        vector3 lock_point;                             // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
+        vector3 lock_point;                             // < -- camera always looks at this point in fixed mode
         
-        vector3 target_point;                           // < -- camera always looks at this point in fixed mode
-        vector3 start_target_point;                     // < -- when playing lerp camera transition, this serves as the start point for camera target
+        vector3 target_lock_point;                      // < -- camera's lock point (in fixed mode, after animation, target point will be equal to this)
+        vector3 start_lock_point;                     // < -- when playing lerp camera transition, this serves as the start point for camera target
         
         vector3 target_pos;                             // < -- camera's target position (will move to this point during change target animation)
         vector3 start_pos;                              // < -- serves as starting posititon in lerp transition of movement
