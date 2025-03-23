@@ -40,6 +40,8 @@
 config *cfg_obj = NULL;
 camera *cam = NULL;
 
+matrix4x4 projection_matrix;
+
 //window options
 int win_width = 10, win_height = 10;
 float cam_fov, cam_near, cam_far;
@@ -96,12 +98,14 @@ void change_window_size(int w, int h) {
 
 	float ratio = w * 1.0 / h;
 
+	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
+
+    glViewport(0, 0, w, h);
 
 	glMatrixMode(GL_PROJECTION);
 
 	glLoadIdentity();
-    glViewport(0, 0, w, h);
-	gluPerspective(cam_fov ,ratio, cam_near ,cam_far);
+	//glMultMatrixf(projection_matrix.get_data());
 
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -109,10 +113,16 @@ void change_window_size(int w, int h) {
 
 void render_scene(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
 
 	//use cameras view matrix
-	cam->camera_glu_lookat();
+	matrix4x4 view_matrix = cam->get_view_matrix();
+
+	matrix4x4 projection_view = projection_matrix * view_matrix;
 	
+	glMultMatrixf(projection_view.get_data());
+	//glMultMatrixf(view_matrix.get_data());
+
 	if(draw_axis) {
 		glBegin(GL_LINES);
 			//x axis
@@ -143,7 +153,6 @@ void render_scene(void) {
 	//render all meshes loaded in groups
 	cfg_obj->render_all_groups();
 	
-
 	
 	//fps counter
 	char str[20];
@@ -314,7 +323,10 @@ int main(int argc, char **argv) {
 
 	disable_vsync();
 
-	std::cout << "Entering main loop..." << std::endl;
+	//this means using a custom projection and view matrix!
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
 
 	glutMainLoop();
 	

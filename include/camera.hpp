@@ -1,6 +1,7 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
 
+#include "matrix4x4.hpp"
 #include "vector3.hpp"
 
 #include <iostream>
@@ -59,7 +60,7 @@ class camera {
         /**
          * Camera sets view matrix based on it's parameters.
          */
-        void camera_glu_lookat();
+        matrix4x4 get_view_matrix();
 
         /**
          * Switches between fixed camera mode and free camera mode. Small easing animation will play on transition from free camera mode to fixed camera mode, taking control away for 0.5 sec.

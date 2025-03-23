@@ -337,12 +337,12 @@ void camera::animate_radius_change(int delta_time_ms) {
 
 //render important
 
-void camera::camera_glu_lookat() {
-    glLoadIdentity();
+matrix4x4 camera::get_view_matrix() {
     if(is_free_camera) {
         target_point = pos + dir;
     }
-    gluLookAt(pos.x, pos.y, pos.z, target_point.x, target_point.y, target_point.z, up.x, up.y, up.z);
+    //gluLookAt(pos.x, pos.y, pos.z, target_point.x, target_point.y, target_point.z, up.x, up.y, up.z);
+    return matrix4x4::View(pos, target_point, up);
 }
 
 //AUXILIARY FUNCTIONS

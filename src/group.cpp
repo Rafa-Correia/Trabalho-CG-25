@@ -73,7 +73,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 child->QueryFloatAttribute("y", &t_y);
                 child->QueryFloatAttribute("z", &t_z);
 
-                matrix4x4 T = matrix4x4::Translate(t_x, t_y, t_z);
+                matrix4x4 T = matrix4x4::Translate(vector3(t_x, t_y, t_z));
                 model_matrix = model_matrix * T;
             }
             else if(tag == "rotate") {
@@ -84,7 +84,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 child->QueryFloatAttribute("y", &r_y);
                 child->QueryFloatAttribute("z", &r_z);
                 
-                matrix4x4 R = matrix4x4::Rotate(angle * (M_PI / 180.0f), r_x, r_y, r_z);
+                matrix4x4 R = matrix4x4::Rotate(angle * (M_PI / 180.0f), vector3(r_x, r_y, r_z));
 
                 model_matrix = model_matrix * R;
             } 
@@ -96,7 +96,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 child->QueryFloatAttribute("y", &s_y);
                 child->QueryFloatAttribute("z", &s_z);
 
-                matrix4x4 S = matrix4x4::Scale(s_x, s_y, s_z);
+                matrix4x4 S = matrix4x4::Scale(vector3(s_x, s_y, s_z));
 
                 model_matrix = model_matrix * S;
             }
@@ -269,7 +269,7 @@ std::vector<vector3> group::lock_positions(matrix4x4 parent_transform) {
     
     matrix4x4 current_full_transform = parent_transform * model_matrix;
     
-    vector3 resulting_origin = current_full_transform.apply_to_point(0, 0, 0);
+    vector3 resulting_origin = current_full_transform.apply_to_point(vector3());
     
     std::vector<vector3> lock_pos;
     lock_pos.push_back(resulting_origin);

@@ -27,36 +27,40 @@ class matrix4x4 {
         /**
          * Creates transformation matrix for a translation. 
          * 
-         * @param x x component of translation vector. 
-         * @param y y component of translation vector. 
-         * @param z z component of translation vector. 
+         * @param translation_vector Vector to translate by. 
          * 
          * @returns Representation of 4 by 4 translation matrix. 
          */
-        static matrix4x4 Translate(float x, float y, float z);
+        static matrix4x4 Translate(vector3 translation_vector);
 
         /**
          * Creates transformation matrix for a rotation. 
          * 
          * @param theta Angle to rotate around the rotation vector. In radians. 
-         * @param x x component of rotation vector. 
-         * @param y y component of rotation vector. 
-         * @param z z component of rotation vector. 
+         * @param rotation_vector Vector to rotate around.
          * 
          * @returns Representation of 4 by 4 rotation matrix. 
          */
-        static matrix4x4 Rotate(float theta, float x, float y, float z);
+        static matrix4x4 Rotate(float theta, vector3 rotation_vector);
 
         /**
          * Creates transformation matrix for scaling. 
          * 
-         * @param x x axis scaling. 
-         * @param y y axis scaling. 
-         * @param z z axis scaling. 
+         * @param scale_vector Vector containing scaling information. 
          * 
          * @returns Representation of 4 by 4 scaling matrix.
          */
-        static matrix4x4 Scale(float x, float y, float z);
+        static matrix4x4 Scale(vector3 scale_vector);
+
+        /**
+         * 
+         */
+        static matrix4x4 View(vector3 eye, vector3 center, vector3 up);
+
+        /**
+         * 
+         */
+        static matrix4x4 Projection(float fov, float aspect_ratio, float near_plane, float far_plane);
         
         /**
          * Getter for matrix data, in a float[16] representation. 
@@ -72,7 +76,7 @@ class matrix4x4 {
          * @param y y component of point. 
          * @param z z component of point.
          */
-        vector3 apply_to_point(float x, float y, float z);
+        vector3 apply_to_point(vector3 point);
 
 
         matrix4x4 operator * (const matrix4x4& other) const;
