@@ -8,7 +8,7 @@ group::group(tinyxml2::XMLElement *root) {
     }
 }
 
-void group::render_group(frustum view_frustum, bool render_bounding_spheres) {
+void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
     //rendering a group should render all subgroups
     glColor3f(color.x, color.y, color.z);
 
@@ -26,8 +26,8 @@ void group::render_group(frustum view_frustum, bool render_bounding_spheres) {
         }
 
         for(unsigned int j = 0; j < mesh_count; j++) {
-            if(!view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w)) continue;
-            
+            if(frustum_cull && !view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w)) continue;
+
             GLuint VBO = group_vbos.at(j);
             std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
             int obj_count = vertex_or_index_count.at(j);
@@ -48,7 +48,7 @@ void group::render_group(frustum view_frustum, bool render_bounding_spheres) {
         }
 
         for(size_t i = 0; i < sub_groups.size(); i++) {
-            sub_groups.at(i).render_group(view_frustum, render_bounding_spheres);
+            sub_groups.at(i).render_group(view_frustum, frustum_cull, render_bounding_spheres);
         }
 
     glPopMatrix();

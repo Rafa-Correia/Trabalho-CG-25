@@ -52,6 +52,7 @@ bool draw_axis = true;
 bool wire_mode = true;
 bool draw_bounding_spheres = false;
 bool draw_frustum = false;
+bool frustum_cull = true;
 
 bool key_states[256] = {false}; //array storing all keystates (if theyre being held down)
 
@@ -156,14 +157,14 @@ void render_scene(void) {
 
 	if(cam->update_frustum())
 		view_frustum = new frustum(projection_view);
-		
+
 	if(draw_frustum)
 		view_frustum->draw_frustum();
 
 
 	//render all meshes loaded in groups
 
-	cfg_obj->render_all_groups(*view_frustum, draw_bounding_spheres);
+	cfg_obj->render_all_groups(*view_frustum, frustum_cull, draw_bounding_spheres);
 	
 	
 	//fps counter
@@ -212,6 +213,10 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 
 		case '4':
 			draw_frustum = !draw_frustum;
+			break;
+
+		case '5':
+			frustum_cull = !frustum_cull;
 			break;
 
 		case 'f':

@@ -34,7 +34,7 @@ class group {
          * @param view_frustum View frustum to be used in frustum culling. 
          * @param render_bounding_spheres Determines if bounding spheres are rendered.
          */
-        void render_group(frustum view_frustum, bool render_bounding_spheres = false);
+        void render_group(frustum view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
         
         /**
          * Returns camera lock positions for this group and calls itself for all subgroups.

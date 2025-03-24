@@ -1,14 +1,5 @@
 #include "frustum.hpp"
 
-frustum::frustum(vector4 left_plane, vector4 right_plane, vector4 top_plane, vector4 bottom_plane, vector4 near_plane, vector4 far_plane) {
-    this->left_plane = left_plane;
-    this->right_plane = right_plane;
-    this->top_plane = top_plane;
-    this->bottom_plane = bottom_plane;
-    this->near_plane = near_plane;
-    this->far_plane = far_plane;
-}
-
 frustum::frustum(matrix4x4 projection_view_matrix) {
     float left[4], right[4], top[4], bottom[4], near[4], far[4];
 
