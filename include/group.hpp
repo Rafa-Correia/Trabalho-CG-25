@@ -4,6 +4,8 @@
 #include "tinyxml2.h"
 #include "matrix4x4.hpp"
 #include "vector3.hpp"
+#include "vector4.hpp"
+#include "frustum.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -28,8 +30,11 @@ class group {
         
         /**
          * Function that renders this group, as well as call itself for all subgroups.
+         * 
+         * @param view_frustum View frustum to be used in frustum culling. 
+         * @param render_bounding_spheres Determines if bounding spheres are rendered.
          */
-        void render_group();
+        void render_group(frustum view_frustum, bool render_bounding_spheres = false);
         
         /**
          * Returns camera lock positions for this group and calls itself for all subgroups.
@@ -52,14 +57,13 @@ class group {
         vector3 color;                                                              // < -- group color, doesnt apply to subgroups.
 
         vector3 position;                                                           // < -- group position in 3D space.
-
-        bool is_ready_to_render = false;
         
         std::vector<group> sub_groups;                      // < -- All loaded subgroups
         
         std::vector<GLuint> group_vbos;                     // < -- VBOs of all group meshes
         std::vector<std::tuple<bool, GLuint>> group_ebos;   // < -- Pair of boolean and EBO for all group meshes. boolean = false -> no EBO
         std::vector<size_t> vertex_or_index_count;          // < -- Vertex count if no EBO, index count if EBO
+        std::vector<vector4> mesh_bounding_spheres;
         
         /**
          * Function responsible for creating and loading data into all VBOs and EBOs when applicable.

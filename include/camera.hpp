@@ -96,6 +96,13 @@ class camera {
          */
         void add_to_target_radius(float delta);
 
+        /**
+         * Determines if view frustum needs to be updated.
+         * 
+         * @returns Boolean determining if frustum needs updating.
+         */
+        bool update_frustum();
+
     private:
         vector3 pos;                                    // < -- position of the camera
         vector3 up;                                     // < -- camera's "up" vector (vector pointing up)

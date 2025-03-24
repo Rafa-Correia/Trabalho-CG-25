@@ -156,5 +156,9 @@ vector3 matrix4x4::apply_to_point(vector3 point) {
 }
 
 float* matrix4x4::get_data() {
-    return this->m_data;
+    return this->m_data; 
+}
+
+float matrix4x4::get_data_at_point(int row, int column) {
+    return m_data[row * 4 + column];
 }

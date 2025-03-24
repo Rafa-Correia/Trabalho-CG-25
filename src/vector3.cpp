@@ -24,6 +24,10 @@ vector3 vector3::cross(const vector3& v1, const vector3& v2) {
     );
 }
 
+float vector3::magnitude() const {
+    return sqrtf(x * x + y * y + z * z);
+}
+
 void vector3::normalize() {
     float len = sqrtf(x * x + y * y + z * z);
 
@@ -88,18 +92,18 @@ vector3& vector3::operator-=(const vector3& other) {
     return *this;
 }
 
-vector3& vector3::operator*=(const vector3& other) {
-    x *= other.x;
-    y *= other.y;
-    z *= other.z;
+vector3& vector3::operator*=(const float& other) {
+    x *= other;
+    y *= other;
+    z *= other;
 
     return *this;
 }
 
-vector3& vector3::operator/=(const vector3& other) {
-    x /= other.x;
-    y /= other.y;
-    z /= other.z;
+vector3& vector3::operator/=(const float& other) {
+    x /= other;
+    y /= other;
+    z /= other;
 
     return *this;
 }

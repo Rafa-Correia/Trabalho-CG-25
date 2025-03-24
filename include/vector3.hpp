@@ -61,8 +61,8 @@ class vector3  {
         
         vector3& operator+=(const vector3& other);
         vector3& operator-=(const vector3& other);
-        vector3& operator*=(const vector3& other);
-        vector3& operator/=(const vector3& other);
+        vector3& operator*=(const float& other);
+        vector3& operator/=(const float& other);
     private:
 };
 

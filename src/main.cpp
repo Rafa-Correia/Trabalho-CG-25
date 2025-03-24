@@ -41,6 +41,7 @@ config *cfg_obj = NULL;
 camera *cam = NULL;
 
 matrix4x4 projection_matrix;
+frustum *view_frustum = NULL;
 
 //window options
 int win_width = 10, win_height = 10;
@@ -49,6 +50,8 @@ float cam_fov, cam_near, cam_far;
 //flag
 bool draw_axis = true;
 bool wire_mode = true;
+bool draw_bounding_spheres = false;
+bool draw_frustum = false;
 
 bool key_states[256] = {false}; //array storing all keystates (if theyre being held down)
 
@@ -150,8 +153,17 @@ void render_scene(void) {
 		glPolygonMode(GL_FRONT, GL_FILL);
 	}
 
+
+	if(cam->update_frustum())
+		view_frustum = new frustum(projection_view);
+		
+	if(draw_frustum)
+		view_frustum->draw_frustum();
+
+
 	//render all meshes loaded in groups
-	cfg_obj->render_all_groups();
+
+	cfg_obj->render_all_groups(*view_frustum, draw_bounding_spheres);
 	
 	
 	//fps counter
@@ -192,6 +204,14 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 
 		case '2':
 			wire_mode = !wire_mode;
+			break;
+
+		case '3':
+			draw_bounding_spheres = !draw_bounding_spheres;
+			break;
+
+		case '4':
+			draw_frustum = !draw_frustum;
 			break;
 
 		case 'f':

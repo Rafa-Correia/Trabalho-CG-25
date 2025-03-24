@@ -8,7 +8,7 @@ group::group(tinyxml2::XMLElement *root) {
     }
 }
 
-void group::render_group() {
+void group::render_group(frustum view_frustum, bool render_bounding_spheres) {
     //rendering a group should render all subgroups
     glColor3f(color.x, color.y, color.z);
 
@@ -16,7 +16,18 @@ void group::render_group() {
 
         glMultMatrixf(model_matrix.get_data());
 
+        if(render_bounding_spheres) {
+            for(size_t i = 0; i < mesh_bounding_spheres.size(); i++) {
+                vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
+                glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
+                glutWireSphere(bounding_sphere_info.w, 10, 10);
+                glTranslatef(-bounding_sphere_info.x, -bounding_sphere_info.y, -bounding_sphere_info.z);
+            }
+        }
+
         for(unsigned int j = 0; j < mesh_count; j++) {
+            if(!view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w)) continue;
+            
             GLuint VBO = group_vbos.at(j);
             std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
             int obj_count = vertex_or_index_count.at(j);
@@ -37,7 +48,7 @@ void group::render_group() {
         }
 
         for(size_t i = 0; i < sub_groups.size(); i++) {
-            sub_groups.at(i).render_group();
+            sub_groups.at(i).render_group(view_frustum, render_bounding_spheres);
         }
 
     glPopMatrix();
@@ -203,7 +214,16 @@ bool group::parse_model_file(const char *filepath) {
                 data_order.push_back('t');
             }
         }
-        else if (line_index == 1) {  //vertices
+        else if (line_index == 1) {
+            std::vector<float> bounding_sphere_info_vector;
+            while (std::getline(ss, token, ';')) {
+				float bounding_info_token = std::stof(token);
+				bounding_sphere_info_vector.push_back(bounding_info_token);
+        	}
+
+            mesh_bounding_spheres.push_back(vector4(bounding_sphere_info_vector.at(0), bounding_sphere_info_vector.at(1), bounding_sphere_info_vector.at(2), bounding_sphere_info_vector.at(3)));
+        }
+        else if (line_index == 2) {  //vertices
             while (std::getline(ss, token, ';')) {
 				float vertex_float = std::stof(token);
 				vertices.push_back(vertex_float);
@@ -228,7 +248,7 @@ bool group::parse_model_file(const char *filepath) {
         }
         else {  //all the others
             if(data_order.size() == 0) break; //only indices
-            if(data_order.at(line_index - 2) == 'i') {
+            if(data_order.at(line_index - 3) == 'i') {
                 //read indices
                 while (std::getline(ss, token, ';')) {
                     int index = std::stoi(token);
@@ -247,11 +267,11 @@ bool group::parse_model_file(const char *filepath) {
 
                 vertex_or_index_count.push_back(indices.size());
             }
-            else if(data_order.at(line_index - 2) == 'n') {
+            else if(data_order.at(line_index - 3) == 'n') {
                 //read normals 
                 //unused for now
             }
-            else if(data_order.at(line_index - 2) == 't') {
+            else if(data_order.at(line_index - 3) == 't') {
                 //read texture coordinates
                 //unused for now
             }

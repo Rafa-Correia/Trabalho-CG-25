@@ -53,12 +53,23 @@ class matrix4x4 {
         static matrix4x4 Scale(vector3 scale_vector);
 
         /**
+         * Creates view matrix from camera parameters. 
          * 
+         * @param eye Camera position (eye). 
+         * @param center Camera target (center). 
+         * @param up Camera's up vector. 
+         * 
+         * @returns Representation of 4 by 4 View matrix.
          */
         static matrix4x4 View(vector3 eye, vector3 center, vector3 up);
 
         /**
+         * Creates projection matrix from projection attributes. 
          * 
+         * @param fov Field of view. 
+         * @param aspect_ratio Aspect ratio of viewport. 
+         * @param near_plane Near plane distance. 
+         * @param far_plane Far plane distance.
          */
         static matrix4x4 Projection(float fov, float aspect_ratio, float near_plane, float far_plane);
         
@@ -68,6 +79,16 @@ class matrix4x4 {
          * @returns Matrix data in a float[16] format. Always has 16 elements.
          */
         float *get_data();
+
+        /**
+         * Getter for matrix data in specific position. 
+         * 
+         * @param row Row of intended value. 
+         * @param column Column of intented value. 
+         * 
+         * @returns Value at row and column.
+         */
+        float get_data_at_point(int row, int column);
         
         /**
          * Applies transformation to a point in 3D space. 

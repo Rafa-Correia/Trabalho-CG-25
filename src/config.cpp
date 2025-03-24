@@ -178,9 +178,9 @@ bool config::load(const char *filepath) {
 	}
 }
 
-void config::render_all_groups() {
+void config::render_all_groups(frustum view_frustum, bool render_bounding_spheres) {
 	for(size_t i = 0; i < root_groups.size(); i++) {
-		root_groups.at(i).render_group();
+		root_groups.at(i).render_group(view_frustum, render_bounding_spheres);
 	}
 }
 

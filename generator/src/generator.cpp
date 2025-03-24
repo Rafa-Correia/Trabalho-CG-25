@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define UNIT_SIZE 1.0f
-#define RIGHT_ANGLE ((1.0f / 2.0f) * M_PI)
+#define RIGHT_ANGLE (float)((1.0f / 2.0f) * M_PI)
 
 using namespace std;
 
@@ -151,7 +151,7 @@ bool generate_cone(int argc, char **argv)
         std::vector<float> vertices;
         std::vector<size_t> indices;
 
-        float angle_delta = 2 * M_PI / slices;
+        float angle_delta = (float)(2 * M_PI / slices);
         int i = 0;
         float alpha = angle_delta * i;
 
@@ -262,6 +262,10 @@ bool generate_cone(int argc, char **argv)
         //always generating with indices, with no normals and no tex coords
         file << "100\n";
         
+        float bound_radius;
+        radius > height ? bound_radius = radius : bound_radius = height;
+
+        file << "0;0;0;" << bound_radius << "\n";
 
         // vertices
         float *vertices_array = vertices.data();
@@ -396,8 +400,8 @@ bool generate_sphere(int argc, char **argv)
         std::vector<float> vertices;
         std::vector<size_t> indices;
 
-        float angle_delta = 2 * M_PI / slices;
-        float beta_delta = M_PI / (stacks + 1);
+        float angle_delta = (float)(2 * M_PI / slices);
+        float beta_delta = (float)(M_PI / (stacks + 1));
         int i = 0;
         int j = 0;
         int k = 0;
@@ -410,9 +414,9 @@ bool generate_sphere(int argc, char **argv)
         vertices.push_back(0.0f); // z
 
         // vertex 1 (first)
-        vertices.push_back(std::sin(alpha) * std::cos(beta - RIGHT_ANGLE) * radius);       // x
-        vertices.push_back(std::sin(beta - RIGHT_ANGLE) * radius);   // y
-        vertices.push_back(std::cos(alpha) * std::cos(beta - RIGHT_ANGLE) * radius);       // z
+        vertices.push_back(sinf(alpha) * cosf(beta - RIGHT_ANGLE) * radius);       // x
+        vertices.push_back(sinf(beta - RIGHT_ANGLE) * radius);   // y
+        vertices.push_back(cosf(alpha) * cosf(beta - RIGHT_ANGLE) * radius);       // z
 
         for (i = 2; i < slices + 1; i++)
         {
@@ -441,7 +445,7 @@ bool generate_sphere(int argc, char **argv)
         float radius_delta, height_delta;
         float cur_radius, cur_height;
         radius_delta = radius / stacks;
-        height_delta = 1 / stacks;
+        height_delta = (float)((float) 1 / stacks);
 
         for (j = 1; j < stacks + 1; j++)
         {
@@ -508,6 +512,7 @@ bool generate_sphere(int argc, char **argv)
         // settings
         file << "100\n";
         
+        file << "0;0;0;" << radius << "\n";
 
         // vertices
         float *vertices_array = vertices.data();
@@ -666,7 +671,7 @@ bool generate_cylinder(int argc, char **argv)
         std::vector<float> vertices;
         std::vector<size_t> indices;
 
-        float angle_delta = 2 * M_PI / slices;
+        float angle_delta = (float)(2 * M_PI / slices);
         int i = 0;
         float alpha = angle_delta * i;
 
@@ -696,7 +701,7 @@ bool generate_cylinder(int argc, char **argv)
 
         // last triangle, not built by loop, all vertices are there, just need to add indices
         i--; // dont question it
-        indices.push_back(0);
+        indices.push_back((size_t) 0);
         indices.push_back(1);
         indices.push_back(i);
 
@@ -707,8 +712,8 @@ bool generate_cylinder(int argc, char **argv)
         int j;
         int k;
 
-        float radius_delta, height_delta;
-        float cur_radius, cur_height;
+        float height_delta;
+        float cur_height;
         //radius_delta = radius / stacks;
         height_delta = height / stacks;
 
@@ -777,6 +782,9 @@ bool generate_cylinder(int argc, char **argv)
         //always generating with indices, with no normals and no tex coords
         file << "100\n";
         
+        float sphere_radius = sqrtf(radius * radius + (height / 2.0f) * (height / 2.0f));
+
+        file << "0;0;0;" << sphere_radius << "\n";
 
         // vertices
         float *vertices_array = vertices.data();
@@ -887,6 +895,7 @@ bool generate_plane(int argc, char** argv)
             };
             file << "100\n"; // Placeholder de settings, pode ajustar se necessário
             
+            file << "0;0;0;" << (length * sqrtf(2)) / 2.0f << "\n";
 
             float* vertices_array = vertices.data();
             // Escreve vértices
@@ -1026,7 +1035,7 @@ bool generate_cube(int argc, char **argv)
     // Escreve no ficheiro
     file << "100\n"; // Placeholder de settings, pode ajustar se necessário
 
-    
+    file << "0;0;0;" << (size * sqrtf(3)) / 2.0f << "\n";
 
     // Escreve vértices
     for (size_t i = 0; i < vertices.size(); i++)

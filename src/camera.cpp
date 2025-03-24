@@ -390,3 +390,7 @@ void camera::print_info() {
 float camera::radian_to_degree(float ang_r) {
     return ang_r * (180.0f / M_PI);
 }
+
+bool camera::update_frustum() {
+    return !is_free_camera;
+}
