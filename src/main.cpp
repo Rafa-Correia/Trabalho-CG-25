@@ -329,6 +329,7 @@ int main(int argc, char **argv) {
 	#endif
 	
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
 
 	glPolygonMode(GL_FRONT, GL_LINE);
