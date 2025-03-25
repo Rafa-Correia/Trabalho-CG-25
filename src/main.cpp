@@ -33,8 +33,11 @@
 #include "tinyxml2.h"
 #include "config.hpp"
 #include "group.hpp"
+#include "camera.hpp"
 #include "matrix4x4.hpp"
 #include "vector3.hpp"
+#include "vector4.hpp"
+#include "frustum.hpp"
 
 
 config *cfg_obj = NULL;
@@ -48,11 +51,12 @@ int win_width = 10, win_height = 10;
 float cam_fov, cam_near, cam_far;
 
 //flag
-bool draw_axis = true;
-bool wire_mode = true;
+bool draw_axis = false;
+bool wire_mode = false;
 bool draw_bounding_spheres = false;
 bool draw_frustum = false;
 bool frustum_cull = true;
+bool update_on_free_cam = true;
 
 bool key_states[256] = {false}; //array storing all keystates (if theyre being held down)
 
@@ -155,7 +159,7 @@ void render_scene(void) {
 	}
 
 
-	if(cam->update_frustum())
+	if(cam->update_frustum() || update_on_free_cam)
 		view_frustum = new frustum(projection_view);
 
 	if(draw_frustum)
@@ -217,6 +221,10 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 
 		case '5':
 			frustum_cull = !frustum_cull;
+			break;
+
+		case '6':
+			update_on_free_cam = !update_on_free_cam;
 			break;
 
 		case 'f':
