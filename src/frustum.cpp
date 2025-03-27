@@ -19,7 +19,6 @@ frustum::frustum(matrix4x4 projection_view_matrix) {
 }
 
 bool frustum::inside_frustum(vector3 position, float radius) {
-    //var dist = dot3(world_space_point.xyz, p_planes[i].xyz) + p_planes[i].d + sphere_radius;
     float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w + radius;
     if(dist < 0) return false; // sphere culled
 
@@ -64,7 +63,7 @@ vector3 frustum::intersect_planes(const vector4& p1, const vector4& p2, const ve
     vector3 cross12 = vector3::cross(n1, n2);
 
     float denom = vector3::dot(n1, cross23);
-    if (denom == 0.0f) return vector3(0,0,0); // Planes don't intersect at a point
+    if (denom == 0.0f) return vector3(0,0,0);
 
     vector3 result = (
         cross23 * (-p1.w) +
@@ -76,10 +75,9 @@ vector3 frustum::intersect_planes(const vector4& p1, const vector4& p2, const ve
 }
 
 void frustum::draw_frustum_private(const vector4 planes[6]) {
-    // Plane indices
     const int LEFT = 0, RIGHT = 1, BOTTOM = 2, TOP = 3, NEAR = 4, FAR = 5;
 
-    // Compute 8 corners
+    //frustum corners
     vector3 ntl = intersect_planes(planes[NEAR], planes[TOP],    planes[LEFT]);
     vector3 ntr = intersect_planes(planes[NEAR], planes[TOP],    planes[RIGHT]);
     vector3 nbl = intersect_planes(planes[NEAR], planes[BOTTOM], planes[LEFT]);
@@ -89,7 +87,7 @@ void frustum::draw_frustum_private(const vector4 planes[6]) {
     vector3 fbl = intersect_planes(planes[FAR],  planes[BOTTOM], planes[LEFT]);
     vector3 fbr = intersect_planes(planes[FAR],  planes[BOTTOM], planes[RIGHT]);
 
-    glColor3f(1.0f, 1.0f, 0.0f); // Yellow frustum lines
+    glColor3f(1.0f, 1.0f, 0.0f);
         glBegin(GL_LINES);
         // Near plane
         glVertex3f(ntl.x, ntl.y, ntl.z); glVertex3f(ntr.x, ntr.y, ntr.z);
