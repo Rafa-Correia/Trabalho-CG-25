@@ -6,13 +6,14 @@ PROJECT(trabalhocg25)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/generator/include)
 
 # Add source files
 set(SOURCES src/main.cpp src/tinyxml2.cpp src/config.cpp src/group.cpp src/camera.cpp src/matrix4x4.cpp src/vector3.cpp src/vector4.cpp src/frustum.cpp)
 
 # Create the executable
-	add_executable(${PROJECT_NAME} ${SOURCES})
-	add_executable("generator" generator/src/generator.cpp)
+add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable("generator" generator/src/generator.cpp generator/src/shapes/cone.cpp generator/src/shapes/sphere.cpp generator/src/shapes/box.cpp generator/src/shapes/plane.cpp generator/src/shapes/cylinder.cpp)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
