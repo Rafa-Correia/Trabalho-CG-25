@@ -67,7 +67,21 @@ int prev_time;
 int frames;
 float fps;
 
+void printRedException(const std::string& message) {
+#ifdef _WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+    // Print "Exception" in red
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    std::cout << "Exception: ";
+
+    // Reset color to default
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    std::cout << " " << message << std::endl;
+#else
+    std::cout << "\033[31mException: \033[0m " << message << std::endl;
+#endif
+}
 
 void disable_vsync() {
 	#ifdef _WIN32
@@ -338,7 +352,12 @@ int main(int argc, char **argv) {
 	
 	printInfo();
 	
-	cfg_obj = new config(argv[1]);
+	try {
+		cfg_obj = new config(argv[1]);
+	}
+	catch (const std::exception& exc) {
+		printRedException(exc.what());
+	}
 
 	cam = cfg_obj->get_config_camera_init();
 

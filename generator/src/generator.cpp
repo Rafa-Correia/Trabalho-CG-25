@@ -14,6 +14,7 @@
 #include "cylinder.hpp"
 #include "box.hpp"
 #include "plane.hpp"
+#include "torus.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -59,6 +60,9 @@ int main(int argc, char **argv)
     else if (model_type.compare("cylinder") == 0) 
     {
         generator = new cylinder_generator();
+    }
+    else if (model_type.compare("torus") == 0) {
+        generator = new torus_generator();
     }
     else
     {

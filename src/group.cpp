@@ -1,7 +1,10 @@
 #include "group.hpp"
 
+unsigned int group::counter = 0;
+
 group::group(tinyxml2::XMLElement *root) {
     model_matrix = matrix4x4::Identity();
+    id = counter++;
 
     if(!group::parse_group(root)) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
@@ -9,6 +12,7 @@ group::group(tinyxml2::XMLElement *root) {
 }
 
 void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
+    //std::cout << "Rendering group " << id << "..." << std::endl;
     //rendering a group should render all subgroups
     glColor3f(color.x, color.y, color.z);
 

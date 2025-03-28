@@ -13,7 +13,7 @@ set(SOURCES src/main.cpp src/tinyxml2.cpp src/config.cpp src/group.cpp src/camer
 
 # Create the executable
 add_executable(${PROJECT_NAME} ${SOURCES})
-add_executable("generator" generator/src/generator.cpp generator/src/shapes/cone.cpp generator/src/shapes/sphere.cpp generator/src/shapes/box.cpp generator/src/shapes/plane.cpp generator/src/shapes/cylinder.cpp)
+add_executable("generator" generator/src/generator.cpp generator/src/shapes/cone.cpp generator/src/shapes/sphere.cpp generator/src/shapes/box.cpp generator/src/shapes/plane.cpp generator/src/shapes/cylinder.cpp generator/src/shapes/torus.cpp)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
