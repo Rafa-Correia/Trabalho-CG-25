@@ -304,15 +304,40 @@ void processSpecialKeys(int key, int xx, int yy) {
 
 void printInfo() {
 
+	std::cout << "\n>------------------------------------------------------------------------------------------<\n" << std::endl;
+
+	std::cout << "\n\n> ! - - - - - General Info - - - - - ! <\n" << std::endl;
 	std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
 	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "Version: " << glGetString(GL_VERSION) << "\n" << std::endl;
+	std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+
+	std::cout << "\n\n> ! - - - - - Debug options - - - - - ! <\n" << std::endl;
 
 	std::cout << "Press 1 to toggle axis rendering." << std::endl;
 	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
-	std::cout << "Press f/F to switch between fixed camera and free camera mode." << std::endl;
-	std::cout << "Press c/C to change camera target (in fixed mode)." << std::endl;
-	std::cout << "Press r/R to reset camera to first target." << std::endl;
+	std::cout << "Press 3 to toggle bounding sphere rendering." << std::endl;
+	std::cout << "Press 4 to toggle view frustum rendering." << std::endl;
+	std::cout << "Press 5 to toggle view frustum culling." << std::endl;
+	std::cout << "Press 6 to toggle frustum update on free camera mode." << std::endl;
+
+	std::cout << "\n\n> ! - - - - - Keyboard / mouse controls - - - - - ! <\n" << std::endl;
+
+	std::cout << ">- - - Fixed camera - - -<\n" << std::endl;
+	std::cout << "W/A/S/D to rotate camera around target." << std::endl;
+	std::cout << "Press Z to zoom into target." << std::endl;
+	std::cout << "Press X to zoom out of target." << std::endl;
+	std::cout << "Press C to change camera target." << std::endl;
+	std::cout << "Press R to reset camera to first target." << std::endl;
+
+	std::cout << "\n>- - - Free camera - - -<\n" << std::endl;
+	std::cout << "Use mouse to look around / change camera direction." << std::endl;
+	std::cout << "W/A/S/D to move camera relative to it's direction." << std::endl;
+
+	std::cout << "\n>- - - General / Common - - -<\n" << std::endl;
+ 	std::cout << "Press F to switch between fixed camera and free camera mode." << std::endl;
+	std::cout << "Press ESC to exit." << std::endl;
+
+	std::cout << "\n>------------------------------------------------------------------------------------------<\n" << std::endl;
 }
 
 
@@ -345,6 +370,9 @@ int main(int argc, char **argv) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
 
 	glPolygonMode(GL_FRONT, GL_LINE);
 	

@@ -103,6 +103,15 @@
             <models>
                 <model file="sphere.3d" />
             </models>
+            <group>
+                <transform>
+                    <scale x = "1.2" y="0" z="1.2"/>
+                </transform>
+                <models>
+                    <model file="torus.3d" />
+                </models>
+                <color r="0.7"  g="0.6" b="0.55" a="0.5" />
+            </group>
             <color r="0.7"  g="0.6" b="0.55" />
         </group>
 

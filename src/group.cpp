@@ -13,8 +13,9 @@ group::group(tinyxml2::XMLElement *root) {
 
 void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
     //std::cout << "Rendering group " << id << "..." << std::endl;
+    //std::cout << id << " " << color.w << std::endl;
     //rendering a group should render all subgroups
-    glColor3f(color.x, color.y, color.z);
+    glColor4f(color.x, color.y, color.z, color.w);
 
     glPushMatrix();
 
@@ -156,17 +157,22 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 
     tinyxml2::XMLElement *color_element = root->FirstChildElement("color");
     if(color_element) {
-        float r = 1.0f, g = 1.0f, b = 1.0f;
+        float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
 
         color_element->QueryFloatAttribute("r", &r);
         color_element->QueryFloatAttribute("g", &g);
         color_element->QueryFloatAttribute("b", &b);
+        color_element->QueryFloatAttribute("a", &a);
 
-        color = vector3(r, g, b);
+        
+        if(a <= 0.0f || a > 1.0f )
+            a = 1.0f;
+
+        color = vector4(r, g, b, a);
     } 
     else {
         //if no color element random generate the color.
-        color = vector3(1.0f, 1.0f, 1.0f);
+        color = vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
     //loop through all subgroups

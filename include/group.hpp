@@ -56,7 +56,7 @@ class group {
 
         matrix4x4 model_matrix;                                                     // < -- 4 by 4 matrix storing transformations
         
-        vector3 color;                                                              // < -- group color, doesnt apply to subgroups.
+        vector4 color;                                                              // < -- group color, doesnt apply to subgroups.
 
         vector3 position;                                                           // < -- group position in 3D space.
         
