@@ -16,26 +16,33 @@ frustum::frustum(matrix4x4 projection_view_matrix) {
     bottom_plane = vector4(bottom[0], bottom[1], bottom[2], bottom[3]);
     near_plane = vector4(near[0], near[1], near[2], near[3]);
     far_plane = vector4(far[0], far[1], far[2], far[3]);
+
+    left_plane.normalize();
+    right_plane.normalize();
+    top_plane.normalize();
+    bottom_plane.normalize();
+    near_plane.normalize();
+    far_plane.normalize();
 }
 
 bool frustum::inside_frustum(vector3 position, float radius) {
-    float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
-    dist = vector3::dot(position, vector3(right_plane.x, right_plane.y, right_plane.z)) + right_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    dist = vector3::dot(position, vector3(right_plane.x, right_plane.y, right_plane.z)) + right_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
-    dist = vector3::dot(position, vector3(top_plane.x, top_plane.y, top_plane.z)) + top_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    dist = vector3::dot(position, vector3(top_plane.x, top_plane.y, top_plane.z)) + top_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
-    dist = vector3::dot(position, vector3(bottom_plane.x, bottom_plane.y, bottom_plane.z)) + bottom_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    dist = vector3::dot(position, vector3(bottom_plane.x, bottom_plane.y, bottom_plane.z)) + bottom_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
-    dist = vector3::dot(position, vector3(near_plane.x, near_plane.y, near_plane.z)) + near_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    dist = vector3::dot(position, vector3(near_plane.x, near_plane.y, near_plane.z)) + near_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
-    dist = vector3::dot(position, vector3(far_plane.x, far_plane.y, far_plane.z)) + far_plane.w + radius;
-    if(dist < 0) return false; // sphere culled
+    dist = vector3::dot(position, vector3(far_plane.x, far_plane.y, far_plane.z)) + far_plane.w;
+    if(dist + radius < 0) return false; // sphere culled
 
     return true;
 }

@@ -178,9 +178,9 @@ bool config::load(const char *filepath) {
 	}
 }
 
-void config::render_all_groups(frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
+void config::render_all_groups(matrix4x4 camera_transform, frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
 	for(size_t i = 0; i < root_groups.size(); i++) {
-		root_groups.at(i).render_group(view_frustum, frustum_cull, render_bounding_spheres);
+		root_groups.at(i).render_group(camera_transform ,view_frustum, frustum_cull, render_bounding_spheres);
 	}
 }
 

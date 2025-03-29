@@ -182,7 +182,7 @@ void render_scene(void) {
 
 	//render all meshes loaded in groups
 
-	cfg_obj->render_all_groups(*view_frustum, frustum_cull, draw_bounding_spheres);
+	cfg_obj->render_all_groups(projection_view, *view_frustum, frustum_cull, draw_bounding_spheres);
 	
 	
 	//fps counter

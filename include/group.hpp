@@ -26,7 +26,7 @@
 class group {
     public:
         group() = delete;
-        group(tinyxml2::XMLElement *root);
+        group(tinyxml2::XMLElement *root, float parent_scale = 1.0f);
         
         /**
          * Function that renders this group, as well as call itself for all subgroups.
@@ -34,7 +34,7 @@ class group {
          * @param view_frustum View frustum to be used in frustum culling. 
          * @param render_bounding_spheres Determines if bounding spheres are rendered.
          */
-        void render_group(frustum view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
+        void render_group(matrix4x4& camera_transform, frustum& view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
         
         /**
          * Returns camera lock positions for this group and calls itself for all subgroups.
@@ -46,7 +46,7 @@ class group {
         /**
          * Updates all groups' positions.
          */
-        void update_group_positions(matrix4x4 parent_transform);
+        void update_group_positions(matrix4x4 parent_transform, vector3 parent_position = vector3());
 
     private:
         static unsigned int counter; 
@@ -79,7 +79,7 @@ class group {
          * 
          * @returns Boolean indicating if parsing was successful.
          */
-        bool parse_group(tinyxml2::XMLElement *root);
+        bool parse_group(tinyxml2::XMLElement *root, float parent_scale = 1.0f);
 
         /**
          * Function responsible for loading model file (*.3d).

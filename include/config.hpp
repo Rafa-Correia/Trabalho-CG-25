@@ -61,7 +61,7 @@ class config {
          * @param view_frustum View frustum to be passed to group rendering. Used in frustum rendering.
          * @param render_bounding_spheres Determines if bounding spheres are to be rendered.
          */
-        void render_all_groups(frustum view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
+        void render_all_groups(matrix4x4 camera_transform, frustum view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
 
         /**
          * Calls print_group() for all root groups.

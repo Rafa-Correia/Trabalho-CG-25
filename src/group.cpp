@@ -2,34 +2,39 @@
 
 unsigned int group::counter = 0;
 
-group::group(tinyxml2::XMLElement *root) {
+group::group(tinyxml2::XMLElement *root, float parent_scale) {
     model_matrix = matrix4x4::Identity();
     id = counter++;
 
-    if(!group::parse_group(root)) {
+    if(!group::parse_group(root, parent_scale)) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
 }
 
-void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bounding_spheres) {
+void group::render_group(matrix4x4& camera_transform, frustum& view_frustum, bool frustum_cull, bool render_bounding_spheres) {
     //std::cout << "Rendering group " << id << "..." << std::endl;
     //std::cout << id << " " << color.w << std::endl;
     //rendering a group should render all subgroups
-    glColor4f(color.x, color.y, color.z, color.w);
+    
 
     glPushMatrix();
-
         glMultMatrixf(model_matrix.get_data());
 
         if(render_bounding_spheres) {
+            glColor3f(1.0f, 0.0f, 0.0f);
             for(size_t i = 0; i < mesh_bounding_spheres.size(); i++) {
-                vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
-                glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
-                glutWireSphere(bounding_sphere_info.w, 10, 10);
-                glTranslatef(-bounding_sphere_info.x, -bounding_sphere_info.y, -bounding_sphere_info.z);
+                glPushMatrix();
+                    glLoadIdentity();
+                    glMultMatrixf(camera_transform.get_data());
+                    glTranslatef(position.x, position.y, position.z);
+                    vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
+                    glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
+                    glutWireSphere(bounding_sphere_info.w, 10, 10);
+                glPopMatrix();
             }
         }
 
+        glColor4f(color.x, color.y, color.z, color.w);
         for(unsigned int j = 0; j < mesh_count; j++) {
             if(frustum_cull && !view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w)) continue;
 
@@ -53,7 +58,7 @@ void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bo
         }
 
         for(size_t i = 0; i < sub_groups.size(); i++) {
-            sub_groups.at(i).render_group(view_frustum, frustum_cull, render_bounding_spheres);
+            sub_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres);
         }
 
     glPopMatrix();
@@ -61,7 +66,8 @@ void group::render_group(frustum view_frustum, bool frustum_cull, bool render_bo
     //todo
 }
 
-bool group::parse_group(tinyxml2::XMLElement *root) {
+bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
+    float bound_scaling = parent_scale;
     tinyxml2::XMLElement *transform = root->FirstChildElement("transform");
     if(transform) {
 
@@ -112,6 +118,13 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                 child->QueryFloatAttribute("y", &s_y);
                 child->QueryFloatAttribute("z", &s_z);
 
+                if(s_x >= s_y && s_x >= s_z)
+                    bound_scaling *= s_x;
+                else if(s_y >= s_z && s_y >= s_z)
+                    bound_scaling *= s_y;
+                else if(s_z >= s_y && s_z >= s_x)
+                    bound_scaling *= s_z;
+
                 matrix4x4 S = matrix4x4::Scale(vector3(s_x, s_y, s_z));
 
                 model_matrix = model_matrix * S;
@@ -137,6 +150,9 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
                     std::cout << "Model file is invalid: " << filepath << std::endl;
                     return false;
                 }
+
+                mesh_bounding_spheres.at(mesh_count).w *= bound_scaling;
+
                 mesh_count++;
 
 			} else {
@@ -179,7 +195,7 @@ bool group::parse_group(tinyxml2::XMLElement *root) {
 
     tinyxml2::XMLElement *subgroup = root->FirstChildElement("group");
     for(subgroup; subgroup; subgroup = subgroup->NextSiblingElement("group")) {
-        group sub(subgroup);
+        group sub(subgroup, bound_scaling);
         sub_groups.push_back(sub);
     }
     
@@ -307,9 +323,11 @@ std::vector<vector3> group::query_group_positions() {
     return lock_pos;
 }
 
-void group::update_group_positions(matrix4x4 parent_transform) {
-    matrix4x4 full_transform = parent_transform * model_matrix;
-    position = full_transform.apply_to_point(vector3());
+void group::update_group_positions(matrix4x4 parent_transform, vector3 parent_position) {
+    matrix4x4 full_transform =  parent_transform * model_matrix;
+    position.x = full_transform.get_data_at_point(3, 0);
+    position.y = full_transform.get_data_at_point(3, 1);
+    position.z = full_transform.get_data_at_point(3, 2);
 
     for(size_t i = 0; i < sub_groups.size(); i++) {
         sub_groups.at(i).update_group_positions(full_transform);
