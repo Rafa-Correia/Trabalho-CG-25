@@ -1,6 +1,8 @@
 #ifndef VECTOR4_HPP
 #define VECTOR4_HPP
 
+#include <iostream>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -33,7 +35,7 @@ class vector4  {
         /**
          * Normalizes vector (so magnitude becomes 1).
          */
-        void normalize();
+        void normalize(bool include_w = true);
         
         vector4 operator+(const vector4& other) const;
         vector4 operator-(const vector4& other) const;
@@ -44,6 +46,8 @@ class vector4  {
         vector4& operator-=(const vector4& other);
         vector4& operator*=(const float& scalar);
         vector4& operator/=(const float& scalar);
+
+        friend std::ostream& operator<<(std::ostream& os, const vector4& obj);
     private:
 };
 

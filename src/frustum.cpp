@@ -17,34 +17,36 @@ frustum::frustum(matrix4x4 projection_view_matrix) {
     near_plane = vector4(near[0], near[1], near[2], near[3]);
     far_plane = vector4(far[0], far[1], far[2], far[3]);
 
-    left_plane.normalize();
-    right_plane.normalize();
-    top_plane.normalize();
-    bottom_plane.normalize();
-    near_plane.normalize();
-    far_plane.normalize();
+    left_plane.normalize(false);
+    right_plane.normalize(false);
+    top_plane.normalize(false);
+    bottom_plane.normalize(false);
+    near_plane.normalize(false);
+    far_plane.normalize(false);
 }
 
 bool frustum::inside_frustum(vector3 position, float radius) {
+    bool is_inside = true;
+    
     float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
     dist = vector3::dot(position, vector3(right_plane.x, right_plane.y, right_plane.z)) + right_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
     dist = vector3::dot(position, vector3(top_plane.x, top_plane.y, top_plane.z)) + top_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
     dist = vector3::dot(position, vector3(bottom_plane.x, bottom_plane.y, bottom_plane.z)) + bottom_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
     dist = vector3::dot(position, vector3(near_plane.x, near_plane.y, near_plane.z)) + near_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
     dist = vector3::dot(position, vector3(far_plane.x, far_plane.y, far_plane.z)) + far_plane.w;
-    if(dist + radius < 0) return false; // sphere culled
+    if(dist + radius < 0) is_inside = false;
 
-    return true;
+    return is_inside;
 }
 
 void frustum::draw_frustum() {

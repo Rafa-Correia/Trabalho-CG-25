@@ -5,6 +5,8 @@
 #include "vector4.hpp"
 #include "matrix4x4.hpp"
 
+#include <iostream>
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else

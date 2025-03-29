@@ -17,13 +17,23 @@ float vector4::magnitude() const {
     return sqrtf(x * x + y * y + z * z + w * w);
 }
 
-void vector4::normalize() {
-    float len = sqrtf(x * x + y * y + z * z + w * w);
-
-    x /= len;
-    y /= len;
-    z /= len;
-    w /= len;
+void vector4::normalize(bool include_w) {
+    if(include_w) {
+        float len = sqrtf(x * x + y * y + z * z + w * w);
+    
+        x /= len;
+        y /= len;
+        z /= len;
+        w /= len;
+    }
+    else {
+        float len = sqrtf(x * x + y * y + z * z);
+    
+        x /= len;
+        y /= len;
+        z /= len;
+        w /= len;
+    }
 }
 
 vector4 vector4::operator+(const vector4& other) const {
@@ -104,4 +114,9 @@ vector4& vector4::operator/=(const float& scalar) {
     w /= scalar;
 
     return *this;
+}
+
+std::ostream& operator<<(std::ostream& os, const vector4& obj) {
+    os << "(" << obj.x << " , " << obj.y << " , " << obj.z << " , " << obj.w << ")";
+    return os;
 }
