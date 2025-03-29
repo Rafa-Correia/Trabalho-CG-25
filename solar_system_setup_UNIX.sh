@@ -1,0 +1,11 @@
+#!/bin/sh
+
+SUBFOLDER="bin"
+EXECUTABLE="generator"
+
+SPHERE_ARGS="sphere 1 20 20 sphere.3d"
+TORUS_ARGS="torus 1.0 1.25 20 20 torus.3d"
+
+
+"./$SUBFOLDER/$EXECUTABLE" $SPHERE_ARGS
+"./$SUBFOLDER/$EXECUTABLE" $TORUS_ARGS
