@@ -44,21 +44,24 @@ config *cfg_obj = NULL;
 camera *cam = NULL;
 
 matrix4x4 projection_matrix;
-frustum *view_frustum = NULL;
+frustum view_frustum = frustum();
 
 //window options
 int win_width = 10, win_height = 10;
 float cam_fov, cam_near, cam_far;
 
-//flag
+//flags
+bool is_first_frame = true;
+
 bool draw_axis = false;
 bool wire_mode = false;
 bool draw_bounding_spheres = false;
+
 bool draw_frustum = false;
 bool frustum_cull = true;
-bool update_on_free_cam = true;
+bool update_frustum_on_free_cam = true;
 
-bool key_states[256] = {false}; //array storing all keystates (if theyre being held down)
+bool key_states[256] = {false}; //array storing all keystates (if they're being held down)
 
 //timers, clock times, fps, etc
 int timebase;
@@ -68,19 +71,17 @@ int frames;
 float fps;
 
 void printRedException(const std::string& message) {
-#ifdef _WIN32
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	#ifdef _WIN32
+	    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    // Print "Exception" in red
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-    std::cout << "Exception: ";
+	    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+	    std::cout << "Exception: ";
 
-    // Reset color to default
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    std::cout << " " << message << std::endl;
-#else
-    std::cout << "\033[31mException: \033[0m " << message << std::endl;
-#endif
+	    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	    std::cout << " " << message << std::endl;
+	#else
+	    std::cout << "\033[31mException: \033[0m " << message << std::endl;
+	#endif
 }
 
 void disable_vsync() {
@@ -89,7 +90,7 @@ void disable_vsync() {
 			(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
 	
 		if (wglSwapIntervalEXT) {
-			wglSwapIntervalEXT(0); // Disable VSync
+			wglSwapIntervalEXT(0);
 		}
 	#elif defined(__linux__)
 		Display* dpy = glXGetCurrentDisplay();
@@ -100,14 +101,14 @@ void disable_vsync() {
 				(PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
 	
 			if (glXSwapIntervalSGI) {
-				glXSwapIntervalSGI(0); // Disable VSync
+				glXSwapIntervalSGI(0);
 			}
 		}
 	#elif defined(__APPLE__)
 		CGLContextObj ctx = CGLGetCurrentContext();
 		if (ctx) {
 			GLint sync = 0;
-			CGLSetParameter(ctx, kCGLCPSwapInterval, &sync); // Disable VSync
+			CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
 		}
 	#endif
 }
@@ -123,13 +124,6 @@ void change_window_size(int w, int h) {
 	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
 
     glViewport(0, 0, w, h);
-
-	glMatrixMode(GL_PROJECTION);
-
-	glLoadIdentity();
-	//glMultMatrixf(projection_matrix.get_data());
-
-	glMatrixMode(GL_MODELVIEW);
 }
 
 
@@ -143,8 +137,6 @@ void render_scene(void) {
 	matrix4x4 projection_view = projection_matrix * view_matrix;
 	
 	glMultMatrixf(projection_view.get_data());
-	//glMultMatrixf(view_matrix.get_data());
-
 	if(draw_axis) {
 		glBegin(GL_LINES);
 			//x axis
@@ -172,18 +164,16 @@ void render_scene(void) {
 		glPolygonMode(GL_FRONT, GL_FILL);
 	}
 
-
-	if(cam->update_frustum() || update_on_free_cam)
-		view_frustum = new frustum(projection_view);
+	
+	if(is_first_frame || cam->update_frustum() || update_frustum_on_free_cam)
+		view_frustum.update_frustum(projection_view);
 
 	if(draw_frustum)
-		view_frustum->draw_frustum();
+		view_frustum.draw_frustum();
 
 
 	//render all meshes loaded in groups
-
-	cfg_obj->render_all_groups(projection_view, *view_frustum, frustum_cull, draw_bounding_spheres);
-	
+	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres);
 	
 	//fps counter
 	char str[20];
@@ -201,6 +191,7 @@ void render_scene(void) {
 	}
 	
 
+	is_first_frame = false;
 	// End of frame
 	glutSwapBuffers();
 }
@@ -238,7 +229,7 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 			break;
 
 		case '6':
-			update_on_free_cam = !update_on_free_cam;
+			update_frustum_on_free_cam = !update_frustum_on_free_cam;
 			break;
 
 		case 'f':
@@ -252,7 +243,6 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 			//was used to print info, now unused
 			break;
 		*/
-
 
 		case 'r':
 		case 'R':
@@ -285,12 +275,7 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 }
 
 void processKeyRelease(unsigned char c, int mouse_x, int mouse_y) {
-	if(false) {
-		//skip for now
-	}
-	else {
-		key_states[c] = false;
-	}
+	key_states[c] = false;
 }
 
 void processMouse(int x, int y) {
@@ -298,7 +283,7 @@ void processMouse(int x, int y) {
 }
 
 void processSpecialKeys(int key, int xx, int yy) {
-
+	//no special keys are used
 }
 
 
@@ -369,17 +354,16 @@ int main(int argc, char **argv) {
 	
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
 	glEnable(GL_CULL_FACE);
+	glPolygonMode(GL_FRONT, GL_LINE);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 
-	glPolygonMode(GL_FRONT, GL_LINE);
-	
 	glEnableClientState(GL_VERTEX_ARRAY);
 	
 	printInfo();
-	
 	try {
 		cfg_obj = new config(argv[1]);
 	}

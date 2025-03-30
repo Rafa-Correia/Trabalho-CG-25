@@ -122,7 +122,7 @@ void camera::update_camera_direction(int x, int y) {
     yaw += x_offset;
     pitch += y_offset;
 
-    // Clamp pitch to avoid flipping
+    //dont want the camera to turn upside down :)
     if (pitch > 89.0f) pitch = 89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
 
@@ -341,7 +341,6 @@ matrix4x4 camera::get_view_matrix() {
     if(is_free_camera) {
         lock_point = pos + dir;
     }
-    //gluLookAt(pos.x, pos.y, pos.z, lock_point.x, lock_point.y, lock_point.z, up.x, up.y, up.z);
     return matrix4x4::View(pos, lock_point, up);
 }
 

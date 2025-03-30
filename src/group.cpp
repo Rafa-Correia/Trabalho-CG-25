@@ -1,22 +1,13 @@
 #include "group.hpp"
 
-unsigned int group::counter = 0;
-
 group::group(tinyxml2::XMLElement *root, float parent_scale) {
     model_matrix = matrix4x4::Identity();
-    id = counter++;
-
     if(!group::parse_group(root, parent_scale)) {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
 }
 
 void group::render_group(matrix4x4& camera_transform, frustum& view_frustum, bool frustum_cull, bool render_bounding_spheres) {
-    //std::cout << "Rendering group " << id << "..." << std::endl;
-    //std::cout << id << " " << color.w << std::endl;
-    //rendering a group should render all subgroups
-    
-
     glPushMatrix();
         glMultMatrixf(model_matrix.get_data());
 
@@ -62,8 +53,6 @@ void group::render_group(matrix4x4& camera_transform, frustum& view_frustum, boo
         }
 
     glPopMatrix();
-
-    //todo
 }
 
 bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
@@ -187,7 +176,7 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
         color = vector4(r, g, b, a);
     } 
     else {
-        //if no color element random generate the color.
+        //if no color element then mesh is white.
         color = vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
@@ -221,8 +210,8 @@ bool group::parse_model_file(const char *filepath) {
     std::string line;
     std::vector<char> data_order;
 	int line_index = 0;
-    while (std::getline(file, line)) { // Read file line by line
-        std::stringstream ss(line);  // Use stringstream to parse the line
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
         std::string token;
 
 		if (line_index == 0) {
@@ -274,6 +263,7 @@ bool group::parse_model_file(const char *filepath) {
         }
         else {  //all the others
             if(data_order.size() == 0) break; //only indices
+
             if(data_order.at(line_index - 3) == 'i') {
                 //read indices
                 while (std::getline(ss, token, ';')) {

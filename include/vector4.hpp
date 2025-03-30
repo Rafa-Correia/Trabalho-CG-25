@@ -46,8 +46,6 @@ class vector4  {
         vector4& operator-=(const vector4& other);
         vector4& operator*=(const float& scalar);
         vector4& operator/=(const float& scalar);
-
-        friend std::ostream& operator<<(std::ostream& os, const vector4& obj);
     private:
 };
 

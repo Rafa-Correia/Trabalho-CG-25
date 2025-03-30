@@ -49,9 +49,6 @@ class group {
         void update_group_positions(matrix4x4 parent_transform, vector3 parent_position = vector3());
 
     private:
-        static unsigned int counter; 
-        unsigned int id;
-
         unsigned int mesh_count = 0;                                                // < -- number of loaded meshes
 
         matrix4x4 model_matrix;                                                     // < -- 4 by 4 matrix storing transformations

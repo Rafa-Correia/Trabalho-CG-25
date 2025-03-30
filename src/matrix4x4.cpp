@@ -115,16 +115,16 @@ matrix4x4 matrix4x4::Projection(float fov, float aspect_ratio, float near_plane,
     float f = 1/tanf(fov_rad / 2.0f);
 
     matrix4x4 result;
-                                                            //row - col (starting at 0)
-    result.m_data[0] = f / aspect_ratio;                    //00
+                                                                                    //row - col (starting at 0)
+    result.m_data[0] = f / aspect_ratio;                                            //00
 
-    result.m_data[5] = f;                                   //11
+    result.m_data[5] = f;                                                           //11
 
-    result.m_data[10] = (far_plane + near_plane) / (near_plane - far_plane);      //22
-    result.m_data[11] = -1;                                 //32
+    result.m_data[10] = (far_plane + near_plane) / (near_plane - far_plane);        //22
+    result.m_data[11] = -1;                                                         //32
     
-    result.m_data[14] = (2 * far_plane * near_plane) / (near_plane - far_plane);  //23
-    result.m_data[15] = 0;                                  //33
+    result.m_data[14] = (2 * far_plane * near_plane) / (near_plane - far_plane);    //23
+    result.m_data[15] = 0;                                                          //33
 
     return result;
 }

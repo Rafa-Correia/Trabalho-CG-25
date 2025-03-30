@@ -115,8 +115,3 @@ vector4& vector4::operator/=(const float& scalar) {
 
     return *this;
 }
-
-std::ostream& operator<<(std::ostream& os, const vector4& obj) {
-    os << "(" << obj.x << " , " << obj.y << " , " << obj.z << " , " << obj.w << ")";
-    return os;
-}

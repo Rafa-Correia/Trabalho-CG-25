@@ -1,6 +1,33 @@
 #include "frustum.hpp"
 
-frustum::frustum(matrix4x4 projection_view_matrix) {
+frustum::frustum() {
+    left_plane = right_plane = top_plane = bottom_plane = near_plane = far_plane = vector4();
+}
+
+bool frustum::inside_frustum(vector3 position, float radius) {
+    
+    float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w;
+    if(dist + radius < 0) return false;
+
+    dist = vector3::dot(position, vector3(right_plane.x, right_plane.y, right_plane.z)) + right_plane.w;
+    if(dist + radius < 0) return false;
+
+    dist = vector3::dot(position, vector3(top_plane.x, top_plane.y, top_plane.z)) + top_plane.w;
+    if(dist + radius < 0) return false;
+
+    dist = vector3::dot(position, vector3(bottom_plane.x, bottom_plane.y, bottom_plane.z)) + bottom_plane.w;
+    if(dist + radius < 0) return false;
+
+    dist = vector3::dot(position, vector3(near_plane.x, near_plane.y, near_plane.z)) + near_plane.w;
+    if(dist + radius < 0) return false;
+
+    dist = vector3::dot(position, vector3(far_plane.x, far_plane.y, far_plane.z)) + far_plane.w;
+    if(dist + radius < 0) return false;
+
+    return true;
+}
+
+void frustum::update_frustum(matrix4x4& projection_view_matrix) {
     float left[4], right[4], top[4], bottom[4], near[4], far[4];
 
     for (int i = 4; i--; ) { left[i]   = projection_view_matrix.get_data_at_point(i, 3) + projection_view_matrix.get_data_at_point(i, 0); }
@@ -23,30 +50,6 @@ frustum::frustum(matrix4x4 projection_view_matrix) {
     bottom_plane.normalize(false);
     near_plane.normalize(false);
     far_plane.normalize(false);
-}
-
-bool frustum::inside_frustum(vector3 position, float radius) {
-    bool is_inside = true;
-    
-    float dist = vector3::dot(position, vector3(left_plane.x, left_plane.y, left_plane.z)) + left_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    dist = vector3::dot(position, vector3(right_plane.x, right_plane.y, right_plane.z)) + right_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    dist = vector3::dot(position, vector3(top_plane.x, top_plane.y, top_plane.z)) + top_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    dist = vector3::dot(position, vector3(bottom_plane.x, bottom_plane.y, bottom_plane.z)) + bottom_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    dist = vector3::dot(position, vector3(near_plane.x, near_plane.y, near_plane.z)) + near_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    dist = vector3::dot(position, vector3(far_plane.x, far_plane.y, far_plane.z)) + far_plane.w;
-    if(dist + radius < 0) is_inside = false;
-
-    return is_inside;
 }
 
 void frustum::draw_frustum() {
@@ -84,36 +87,60 @@ vector3 frustum::intersect_planes(const vector4& p1, const vector4& p2, const ve
 }
 
 void frustum::draw_frustum_private(const vector4 planes[6]) {
-    const int LEFT = 0, RIGHT = 1, BOTTOM = 2, TOP = 3, NEAR = 4, FAR = 5;
+    const int left = 0, right = 1, bottom = 2, top = 3, near = 4, far = 5;
 
     //frustum corners
-    vector3 ntl = intersect_planes(planes[NEAR], planes[TOP],    planes[LEFT]);
-    vector3 ntr = intersect_planes(planes[NEAR], planes[TOP],    planes[RIGHT]);
-    vector3 nbl = intersect_planes(planes[NEAR], planes[BOTTOM], planes[LEFT]);
-    vector3 nbr = intersect_planes(planes[NEAR], planes[BOTTOM], planes[RIGHT]);
-    vector3 ftl = intersect_planes(planes[FAR],  planes[TOP],    planes[LEFT]);
-    vector3 ftr = intersect_planes(planes[FAR],  planes[TOP],    planes[RIGHT]);
-    vector3 fbl = intersect_planes(planes[FAR],  planes[BOTTOM], planes[LEFT]);
-    vector3 fbr = intersect_planes(planes[FAR],  planes[BOTTOM], planes[RIGHT]);
+    vector3 near_top_left = intersect_planes(planes[near], planes[top],    planes[left]);
+    vector3 near_top_right = intersect_planes(planes[near], planes[top],    planes[right]);
+    vector3 near_bottom_left = intersect_planes(planes[near], planes[bottom], planes[left]);
+    vector3 near_bottom_right = intersect_planes(planes[near], planes[bottom], planes[right]);
+    vector3 far_top_left = intersect_planes(planes[far],  planes[top],    planes[left]);
+    vector3 far_top_right = intersect_planes(planes[far],  planes[top],    planes[right]);
+    vector3 far_bottom_left = intersect_planes(planes[far],  planes[bottom], planes[left]);
+    vector3 far_bottom_right = intersect_planes(planes[far],  planes[bottom], planes[right]);
 
     glColor3f(1.0f, 1.0f, 0.0f);
-        glBegin(GL_LINES);
-        // Near plane
-        glVertex3f(ntl.x, ntl.y, ntl.z); glVertex3f(ntr.x, ntr.y, ntr.z);
-        glVertex3f(ntr.x, ntr.y, ntr.z); glVertex3f(nbr.x, nbr.y, nbr.z);
-        glVertex3f(nbr.x, nbr.y, nbr.z); glVertex3f(nbl.x, nbl.y, nbl.z);
-        glVertex3f(nbl.x, nbl.y, nbl.z); glVertex3f(ntl.x, ntl.y, ntl.z);
+    glBegin(GL_LINES);
+        // near plane
+        glVertex3f(near_top_left.x, near_top_left.y, near_top_left.z); 
+        glVertex3f(near_top_right.x, near_top_right.y, near_top_right.z);
 
-        // Far plane
-        glVertex3f(ftl.x, ftl.y, ftl.z); glVertex3f(ftr.x, ftr.y, ftr.z);
-        glVertex3f(ftr.x, ftr.y, ftr.z); glVertex3f(fbr.x, fbr.y, fbr.z);
-        glVertex3f(fbr.x, fbr.y, fbr.z); glVertex3f(fbl.x, fbl.y, fbl.z);
-        glVertex3f(fbl.x, fbl.y, fbl.z); glVertex3f(ftl.x, ftl.y, ftl.z);
+        glVertex3f(near_top_right.x, near_top_right.y, near_top_right.z); 
+        glVertex3f(near_bottom_right.x, near_bottom_right.y, near_bottom_right.z);
 
-        // Connect near and far
-        glVertex3f(ntl.x, ntl.y, ntl.z); glVertex3f(ftl.x, ftl.y, ftl.z);
-        glVertex3f(ntr.x, ntr.y, ntr.z); glVertex3f(ftr.x, ftr.y, ftr.z);
-        glVertex3f(nbl.x, nbl.y, nbl.z); glVertex3f(fbl.x, fbl.y, fbl.z);
-        glVertex3f(nbr.x, nbr.y, nbr.z); glVertex3f(fbr.x, fbr.y, fbr.z);
+        glVertex3f(near_bottom_right.x, near_bottom_right.y, near_bottom_right.z); 
+        glVertex3f(near_bottom_left.x, near_bottom_left.y, near_bottom_left.z);
+
+        glVertex3f(near_bottom_left.x, near_bottom_left.y, near_bottom_left.z); 
+        glVertex3f(near_top_left.x, near_top_left.y, near_top_left.z);
+
+
+        // far plane
+        glVertex3f(far_top_left.x, far_top_left.y, far_top_left.z); 
+        glVertex3f(far_top_right.x, far_top_right.y, far_top_right.z);
+
+        glVertex3f(far_top_right.x, far_top_right.y, far_top_right.z); 
+        glVertex3f(far_bottom_right.x, far_bottom_right.y, far_bottom_right.z);
+
+        glVertex3f(far_bottom_right.x, far_bottom_right.y, far_bottom_right.z); 
+        glVertex3f(far_bottom_left.x, far_bottom_left.y, far_bottom_left.z);
+
+        glVertex3f(far_bottom_left.x, far_bottom_left.y, far_bottom_left.z); 
+        glVertex3f(far_top_left.x, far_top_left.y, far_top_left.z);
+
+
+        // connect near and far planes
+        glVertex3f(near_top_left.x, near_top_left.y, near_top_left.z); 
+        glVertex3f(far_top_left.x, far_top_left.y, far_top_left.z);
+
+        glVertex3f(near_top_right.x, near_top_right.y, near_top_right.z); 
+        glVertex3f(far_top_right.x, far_top_right.y, far_top_right.z);
+
+        glVertex3f(near_bottom_left.x, near_bottom_left.y, near_bottom_left.z); 
+        glVertex3f(far_bottom_left.x, far_bottom_left.y, far_bottom_left.z);
+
+        glVertex3f(near_bottom_right.x, near_bottom_right.y, near_bottom_right.z); 
+        glVertex3f(far_bottom_right.x, far_bottom_right.y, far_bottom_right.z);
+
     glEnd();
 }

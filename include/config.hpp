@@ -58,10 +58,12 @@ class config {
         /**
          * Calls render_group() for all root groups.
          * 
+         * @param camera_transform Projection and view transform to be able to properly render bounding sphere.
          * @param view_frustum View frustum to be passed to group rendering. Used in frustum rendering.
+         * @param frustum_cull Determines if frustum culling is enabled.
          * @param render_bounding_spheres Determines if bounding spheres are to be rendered.
          */
-        void render_all_groups(matrix4x4 camera_transform, frustum view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
+        void render_all_groups(matrix4x4& camera_transform, frustum& view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
 
         /**
          * Calls print_group() for all root groups.
@@ -99,7 +101,9 @@ class config {
         std::vector<vector3> query_group_postitions();
 
         /**
+         * Function responsible for updating all group positions.
          * 
+         * It isn't really needed right now, just need to call it once to make sure groups have correct positions.
          */
         void update_group_positions();
 };

@@ -16,7 +16,7 @@
 
 class frustum {
     public:
-        frustum(matrix4x4 projection_view_matrix);
+        frustum();
 
         /**
          * Checks if bounding sphere intersects view frustum.
@@ -27,6 +27,13 @@ class frustum {
          * @returns Boolean determining wether bounding sphere intersects view frustum.
          */
         bool inside_frustum(vector3 position, float radius);
+
+        /**
+         * Function responsible for updating frustum based on projection * view matrix.
+         * 
+         * @param projection_view_matrix  Projection * View matrix for frustum extraction.
+         */
+        void update_frustum(matrix4x4& projection_view_matrix);
 
         /**
          * Draws view frustum outline.
