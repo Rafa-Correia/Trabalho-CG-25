@@ -1,7 +1,7 @@
 <world>
     <window width="800" height="600" />
     <camera>
-        <position x="" y="1" z="20" />
+        <position x="0" y="1" z="20" />
         <lookAt x="0" y="0" z="0" />
         <up x="0" y="1" z="0" />
         <projection fov="60" near="1" far="1000" />
@@ -10,7 +10,10 @@
     <group>
         <transform> 
             <translate x="0" y="0" z="0" />
+            <rotate angle="0" x="0" y="1" z="0" />
+            <scale x="1" y="1" z="1" />
         </transform>
+
         <models>
             <model file="torus.3d"/>
         </models>

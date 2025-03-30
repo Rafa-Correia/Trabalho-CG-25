@@ -24,11 +24,9 @@ void printRedException(const std::string& message) {
 #ifdef _WIN32
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    // Print "Exception" in red
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
     std::cout << "Exception: ";
 
-    // Reset color to default
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
     std::cout << " " << message << std::endl;
 #else
