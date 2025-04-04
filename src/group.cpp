@@ -1,83 +1,117 @@
 #include "group.hpp"
 
-group::group(tinyxml2::XMLElement *root, float parent_scale) {
+group::group(tinyxml2::XMLElement *root, float parent_scale)
+{
     model_matrix = matrix4x4::Identity();
-    if(!group::parse_group(root, parent_scale)) {
+    if (!group::parse_group(root, parent_scale))
+    {
         throw FailedToParseGroupException(std::string("Failed to parse group element!"));
     }
 }
 
-void group::render_group(matrix4x4& camera_transform, frustum& view_frustum, bool frustum_cull, bool render_bounding_spheres) {
+// render / update
+
+void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres)
+{
     glPushMatrix();
-        glMultMatrixf(model_matrix.get_data());
+    glMultMatrixf(model_matrix.get_data());
 
-        if(render_bounding_spheres) {
-            glColor3f(1.0f, 0.0f, 0.0f);
-            for(size_t i = 0; i < mesh_bounding_spheres.size(); i++) {
-                glPushMatrix();
-                    glLoadIdentity();
-                    glMultMatrixf(camera_transform.get_data());
-                    glTranslatef(position.x, position.y, position.z);
-                    vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
-                    glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
-                    glutWireSphere(bounding_sphere_info.w, 10, 10);
-                glPopMatrix();
-            }
+    if (render_bounding_spheres)
+    {
+        glColor3f(1.0f, 0.0f, 0.0f);
+        for (size_t i = 0; i < mesh_bounding_spheres.size(); i++)
+        {
+            glPushMatrix();
+            glLoadIdentity();
+            glMultMatrixf(camera_transform.get_data());
+            glTranslatef(position.x, position.y, position.z);
+            vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
+            glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
+            glutWireSphere(bounding_sphere_info.w, 10, 10);
+            glPopMatrix();
         }
+    }
 
-        glColor4f(color.x, color.y, color.z, color.w);
-        for(unsigned int j = 0; j < mesh_count; j++) {
-            if(frustum_cull && !view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w)) continue;
+    glColor4f(color.x, color.y, color.z, color.w);
+    for (unsigned int j = 0; j < mesh_count; j++)
+    {
+        if (frustum_cull && !view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w))
+            continue;
 
-            GLuint VBO = group_vbos.at(j);
-            std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
-            int obj_count = vertex_or_index_count.at(j);
+        GLuint VBO = group_vbos.at(j);
+        std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
+        int obj_count = vertex_or_index_count.at(j);
 
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glVertexPointer(3, GL_FLOAT, 0, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
 
-            if(!std::get<0>(EBO_t)) {
-                glDrawArrays(GL_TRIANGLES, 0, obj_count);
-            } 
-            else {
-
-                GLuint EBO = std::get<1>(EBO_t);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-                glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
-            }
+        if (!std::get<0>(EBO_t))
+        {
+            glDrawArrays(GL_TRIANGLES, 0, obj_count);
         }
+        else
+        {
 
-        for(size_t i = 0; i < sub_groups.size(); i++) {
-            sub_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres);
+            GLuint EBO = std::get<1>(EBO_t);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
         }
+    }
+
+    for (size_t i = 0; i < sub_groups.size(); i++)
+    {
+        sub_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres);
+    }
 
     glPopMatrix();
 }
 
-bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
+void group::update_group_positions(matrix4x4 parent_transform, vector3 parent_position)
+{
+    matrix4x4 full_transform = parent_transform * model_matrix;
+    position.x = full_transform.get_data_at_point(3, 0);
+    position.y = full_transform.get_data_at_point(3, 1);
+    position.z = full_transform.get_data_at_point(3, 2);
+
+    for (size_t i = 0; i < sub_groups.size(); i++)
+    {
+        sub_groups.at(i).update_group_positions(full_transform);
+    }
+}
+
+// parsing / loading
+
+bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
+{
     float bound_scaling = parent_scale;
     tinyxml2::XMLElement *transform = root->FirstChildElement("transform");
-    if(transform) {
+    if (transform)
+    {
 
         std::unordered_set<std::string> seen;
 
-        for(tinyxml2::XMLElement *child = transform->FirstChildElement(); child; child = child->NextSiblingElement()) {
+        for (tinyxml2::XMLElement *child = transform->FirstChildElement(); child; child = child->NextSiblingElement())
+        {
             std::string tag = child->Name();
 
-            if(tag == "translate" || tag == "rotate" || tag == "scale") {
-                if(seen.count(tag)) {
+            if (tag == "translate" || tag == "rotate" || tag == "scale")
+            {
+                if (seen.count(tag))
+                {
                     std::cout << "Duplicate element inside transform: " << tag << std::endl;
                     return false;
                 }
                 seen.insert(tag);
             }
-            else {
+            else
+            {
                 std::cout << "Invalid element inside transform: " << tag << std::endl;
                 return false;
             }
 
-            if(tag == "translate") {
+            if (tag == "translate")
+            {
 
                 float t_x = 0, t_y = 0, t_z = 0;
                 child->QueryFloatAttribute("x", &t_x);
@@ -87,31 +121,33 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
                 matrix4x4 T = matrix4x4::Translate(vector3(t_x, t_y, t_z));
                 model_matrix = model_matrix * T;
             }
-            else if(tag == "rotate") {
+            else if (tag == "rotate")
+            {
 
                 float angle = 0, r_x = 0, r_y = 0, r_z = 0;
                 child->QueryFloatAttribute("angle", &angle);
                 child->QueryFloatAttribute("x", &r_x);
                 child->QueryFloatAttribute("y", &r_y);
                 child->QueryFloatAttribute("z", &r_z);
-                
+
                 matrix4x4 R = matrix4x4::Rotate(angle * (M_PI / 180.0f), vector3(r_x, r_y, r_z));
 
                 model_matrix = model_matrix * R;
-            } 
-            else if(tag == "scale") {
-                //transform_order.push_back('s');
+            }
+            else if (tag == "scale")
+            {
+                // transform_order.push_back('s');
 
                 float s_x = 1, s_y = 1, s_z = 1;
                 child->QueryFloatAttribute("x", &s_x);
                 child->QueryFloatAttribute("y", &s_y);
                 child->QueryFloatAttribute("z", &s_z);
 
-                if(s_x >= s_y && s_x >= s_z)
+                if (s_x >= s_y && s_x >= s_z)
                     bound_scaling *= s_x;
-                else if(s_y >= s_z && s_y >= s_z)
+                else if (s_y >= s_z && s_y >= s_z)
                     bound_scaling *= s_y;
-                else if(s_z >= s_y && s_z >= s_x)
+                else if (s_z >= s_y && s_z >= s_x)
                     bound_scaling *= s_z;
 
                 matrix4x4 S = matrix4x4::Scale(vector3(s_x, s_y, s_z));
@@ -119,23 +155,26 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
                 model_matrix = model_matrix * S;
             }
         }
-
     }
-    else {
-        //no transform
-        //do nothing?
+    else
+    {
+        // no transform
+        // do nothing?
     }
-
 
     tinyxml2::XMLElement *models = root->FirstChildElement("models");
-	if(models) {
-		bool loaded_model_at_least_once = false;
-		tinyxml2::XMLElement *model = models->FirstChildElement("model");
-		while(model) {
-			loaded_model_at_least_once = true;
-			const char* filepath = model->Attribute("file");
-			if(filepath) {
-				if(!parse_model_file(filepath)) {
+    if (models)
+    {
+        bool loaded_model_at_least_once = false;
+        tinyxml2::XMLElement *model = models->FirstChildElement("model");
+        while (model)
+        {
+            loaded_model_at_least_once = true;
+            const char *filepath = model->Attribute("file");
+            if (filepath)
+            {
+                if (!parse_model_file(filepath))
+                {
                     std::cout << "Model file is invalid: " << filepath << std::endl;
                     return false;
                 }
@@ -143,25 +182,29 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
                 mesh_bounding_spheres.at(mesh_count).w *= bound_scaling;
 
                 mesh_count++;
-
-			} else {
-				std::cout << "A model element must have a file attribute!" << std::endl;
-				return false;
-			}
-			model = model->NextSiblingElement("model");
-		}
-		if(!loaded_model_at_least_once) {
-			std::cout << "A models element must have at least one model child element!" << std::endl;
-			return false;
-		}
-	} 
-    else {
-		//std::cout << "A group element must have models child element!" << std::endl;
-		//return false;
-	}
+            }
+            else
+            {
+                std::cout << "A model element must have a file attribute!" << std::endl;
+                return false;
+            }
+            model = model->NextSiblingElement("model");
+        }
+        if (!loaded_model_at_least_once)
+        {
+            std::cout << "A models element must have at least one model child element!" << std::endl;
+            return false;
+        }
+    }
+    else
+    {
+        // std::cout << "A group element must have models child element!" << std::endl;
+        // return false;
+    }
 
     tinyxml2::XMLElement *color_element = root->FirstChildElement("color");
-    if(color_element) {
+    if (color_element)
+    {
         float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
 
         color_element->QueryFloatAttribute("r", &r);
@@ -169,33 +212,35 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale) {
         color_element->QueryFloatAttribute("b", &b);
         color_element->QueryFloatAttribute("a", &a);
 
-        
-        if(a <= 0.0f || a > 1.0f )
+        if (a <= 0.0f || a > 1.0f)
             a = 1.0f;
 
         color = vector4(r, g, b, a);
-    } 
-    else {
-        //if no color element then mesh is white.
+    }
+    else
+    {
+        // if no color element then mesh is white.
         color = vector4(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    //loop through all subgroups
+    // loop through all subgroups
 
     tinyxml2::XMLElement *subgroup = root->FirstChildElement("group");
-    for(subgroup; subgroup; subgroup = subgroup->NextSiblingElement("group")) {
+    for (subgroup; subgroup; subgroup = subgroup->NextSiblingElement("group"))
+    {
         group sub(subgroup, bound_scaling);
         sub_groups.push_back(sub);
     }
-    
 
     return true;
 }
 
-bool group::parse_model_file(const char *filepath) {
+bool group::parse_model_file(const char *filepath)
+{
     std::ifstream file(filepath);
 
-    if(!file) {
+    if (!file)
+    {
         std::cout << "Failed to open file: " << filepath << std::endl;
         return false;
     }
@@ -209,40 +254,49 @@ bool group::parse_model_file(const char *filepath) {
 
     std::string line;
     std::vector<char> data_order;
-	int line_index = 0;
-    while (std::getline(file, line)) {
+    int line_index = 0;
+    while (std::getline(file, line))
+    {
         std::stringstream ss(line);
         std::string token;
 
-		if (line_index == 0) {
-			const char* line_data = line.data();
-            if(line_data[0] == '1') {
+        if (line_index == 0)
+        {
+            const char *line_data = line.data();
+            if (line_data[0] == '1')
+            {
                 i_flag = true;
                 data_order.push_back('i');
             }
-            if(line_data[1] == '1') {
+            if (line_data[1] == '1')
+            {
                 n_flag = true;
                 data_order.push_back('n');
             }
-            if(line_data[2] == '1') {
+            if (line_data[2] == '1')
+            {
                 t_flag = true;
                 data_order.push_back('t');
             }
         }
-        else if (line_index == 1) {
+        else if (line_index == 1)
+        {
             std::vector<float> bounding_sphere_info_vector;
-            while (std::getline(ss, token, ';')) {
-				float bounding_info_token = std::stof(token);
-				bounding_sphere_info_vector.push_back(bounding_info_token);
-        	}
+            while (std::getline(ss, token, ';'))
+            {
+                float bounding_info_token = std::stof(token);
+                bounding_sphere_info_vector.push_back(bounding_info_token);
+            }
 
             mesh_bounding_spheres.push_back(vector4(bounding_sphere_info_vector.at(0), bounding_sphere_info_vector.at(1), bounding_sphere_info_vector.at(2), bounding_sphere_info_vector.at(3)));
         }
-        else if (line_index == 2) {  //vertices
-            while (std::getline(ss, token, ';')) {
-				float vertex_float = std::stof(token);
-				vertices.push_back(vertex_float);
-        	}
+        else if (line_index == 2)
+        { // vertices
+            while (std::getline(ss, token, ';'))
+            {
+                float vertex_float = std::stof(token);
+                vertices.push_back(vertex_float);
+            }
 
             GLuint VBO;
             glGenBuffers(1, &VBO);
@@ -251,22 +305,27 @@ bool group::parse_model_file(const char *filepath) {
 
             group_vbos.push_back(VBO);
 
-            if(!i_flag) {
+            if (!i_flag)
+            {
                 group_ebos.push_back(std::tuple<bool, GLuint>(false, 0));
                 vertex_or_index_count.push_back(vertices.size() / 3);
             }
-            if(!n_flag) {
-                
+            if (!n_flag)
+            {
             }
 
-            //mesh_vertices_buffer.push_back(vertices);
+            // mesh_vertices_buffer.push_back(vertices);
         }
-        else {  //all the others
-            if(data_order.size() == 0) break; //only indices
+        else
+        { // all the others
+            if (data_order.size() == 0)
+                break; // only indices
 
-            if(data_order.at(line_index - 3) == 'i') {
-                //read indices
-                while (std::getline(ss, token, ';')) {
+            if (data_order.at(line_index - 3) == 'i')
+            {
+                // read indices
+                while (std::getline(ss, token, ';'))
+                {
                     int index = std::stoi(token);
                     indices.push_back(index);
                 }
@@ -283,16 +342,18 @@ bool group::parse_model_file(const char *filepath) {
 
                 vertex_or_index_count.push_back(indices.size());
             }
-            else if(data_order.at(line_index - 3) == 'n') {
-                //read normals 
-                //unused for now
+            else if (data_order.at(line_index - 3) == 'n')
+            {
+                // read normals
+                // unused for now
             }
-            else if(data_order.at(line_index - 3) == 't') {
-                //read texture coordinates
-                //unused for now
+            else if (data_order.at(line_index - 3) == 't')
+            {
+                // read texture coordinates
+                // unused for now
             }
         }
-        
+
         line_index++;
     }
 
@@ -301,25 +362,18 @@ bool group::parse_model_file(const char *filepath) {
     return true;
 }
 
-std::vector<vector3> group::query_group_positions() {
+// getters
+
+std::vector<vector3> group::query_group_positions()
+{
     std::vector<vector3> lock_pos;
     lock_pos.push_back(position);
 
-    for(size_t i = 0; i < sub_groups.size(); i++) {
+    for (size_t i = 0; i < sub_groups.size(); i++)
+    {
         std::vector<vector3> c_locks = sub_groups.at(i).query_group_positions();
         lock_pos.insert(lock_pos.end(), c_locks.begin(), c_locks.end());
     }
 
     return lock_pos;
-}
-
-void group::update_group_positions(matrix4x4 parent_transform, vector3 parent_position) {
-    matrix4x4 full_transform =  parent_transform * model_matrix;
-    position.x = full_transform.get_data_at_point(3, 0);
-    position.y = full_transform.get_data_at_point(3, 1);
-    position.z = full_transform.get_data_at_point(3, 2);
-
-    for(size_t i = 0; i < sub_groups.size(); i++) {
-        sub_groups.at(i).update_group_positions(full_transform);
-    }
 }

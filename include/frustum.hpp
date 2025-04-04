@@ -14,43 +14,44 @@
 #include <GL/glut.h>
 #endif
 
-class frustum {
-    public:
-        frustum();
+class frustum
+{
+public:
+    frustum();
 
-        /**
-         * Checks if bounding sphere intersects view frustum.
-         * 
-         * @param position Bounding sphere center. 
-         * @param radius Bounding sphere radius. 
-         * 
-         * @returns Boolean determining wether bounding sphere intersects view frustum.
-         */
-        bool inside_frustum(vector3 position, float radius);
+    /**
+     * Checks if bounding sphere intersects view frustum.
+     *
+     * @param position Bounding sphere center.
+     * @param radius Bounding sphere radius.
+     *
+     * @returns Boolean determining wether bounding sphere intersects view frustum.
+     */
+    bool inside_frustum(vector3 position, float radius);
 
-        /**
-         * Function responsible for updating frustum based on projection * view matrix.
-         * 
-         * @param projection_view_matrix  Projection * View matrix for frustum extraction.
-         */
-        void update_frustum(matrix4x4& projection_view_matrix);
+    /**
+     * Function responsible for updating frustum based on projection * view matrix.
+     *
+     * @param projection_view_matrix  Projection * View matrix for frustum extraction.
+     */
+    void update_frustum(matrix4x4 &projection_view_matrix);
 
-        /**
-         * Draws view frustum outline.
-         */
-        void draw_frustum();
-    private:
-        vector4 left_plane;
-        vector4 right_plane;
-        vector4 top_plane;
-        vector4 bottom_plane;
-        vector4 near_plane;
-        vector4 far_plane;
+    /**
+     * Draws view frustum outline.
+     */
+    void draw_frustum();
 
-        static vector3 frustum::intersect_planes(const vector4& p1, const vector4& p2, const vector4& p3);
+private:
+    vector4 left_plane;
+    vector4 right_plane;
+    vector4 top_plane;
+    vector4 bottom_plane;
+    vector4 near_plane;
+    vector4 far_plane;
 
-        void frustum::draw_frustum_private(const vector4 planes[6]);
+    static vector3 frustum::intersect_planes(const vector4 &p1, const vector4 &p2, const vector4 &p3);
 
+    void frustum::draw_frustum_private(const vector4 planes[6]);
 };
 
 #endif

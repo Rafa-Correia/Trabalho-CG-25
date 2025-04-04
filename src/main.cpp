@@ -15,17 +15,16 @@
 #include <GL/glut.h>
 #endif
 
-
-//PREPROCESSOR TO DISABLE VSYNC
+// PREPROCESSOR TO DISABLE VSYNC
 
 #ifdef _WIN32
-    #include <windows.h>
-    typedef BOOL(WINAPI *PFNWGLSWAPINTERVALEXTPROC)(int);
+#include <windows.h>
+typedef BOOL(WINAPI *PFNWGLSWAPINTERVALEXTPROC)(int);
 #elif defined(__linux__)
-    #include <GL/glx.h>
-    typedef int (*PFNGLXSWAPINTERVALSGIPROC)(int);
+#include <GL/glx.h>
+typedef int (*PFNGLXSWAPINTERVALSGIPROC)(int);
 #elif defined(__APPLE__)
-    #include <OpenGL/OpenGL.h>
+#include <OpenGL/OpenGL.h>
 #endif
 
 #include <vector>
@@ -39,6 +38,7 @@
 #include "vector4.hpp"
 #include "frustum.hpp"
 
+// important objects	----------------------------->>>
 
 config *cfg_obj = NULL;
 camera *cam = NULL;
@@ -46,75 +46,91 @@ camera *cam = NULL;
 matrix4x4 projection_matrix;
 frustum view_frustum = frustum();
 
-//window options
+// < -------------------------------------------------
+
+// window options	--------------------------------->>>
+
 int win_width = 10, win_height = 10;
 float cam_fov, cam_near, cam_far;
 
-//flags
-bool is_first_frame = true;
+// < -------------------------------------------------
+
+// flags	----------------------------------------->>>
 
 bool draw_axis = false;
 bool wire_mode = false;
-bool draw_bounding_spheres = false;
 
+// frustum cull debug
+bool draw_bounding_spheres = false;
 bool draw_frustum = false;
 bool frustum_cull = true;
 bool update_frustum_on_free_cam = true;
 
-bool key_states[256] = {false}; //array storing all keystates (if they're being held down)
+// keep pressed key state for camera movement
+bool key_states[256] = {false}; // array storing all keystates (if they're being held down)
 
-//timers, clock times, fps, etc
+// < -------------------------------------------------
+
+// timers, clock times, fps, etc	----------------->>>
 int timebase;
 int prev_time;
 
 int frames;
 float fps;
+// < -------------------------------------------------
 
-void printRedException(const std::string& message) {
-	#ifdef _WIN32
-	    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+void printRedException(const std::string &message)
+{
+#ifdef _WIN32
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-	    std::cout << "Exception: ";
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+	std::cout << "Exception: ";
 
-	    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-	    std::cout << " " << message << std::endl;
-	#else
-	    std::cout << "\033[31mException: \033[0m " << message << std::endl;
-	#endif
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	std::cout << " " << message << std::endl;
+#else
+	std::cout << "\033[31mException: \033[0m " << message << std::endl;
+#endif
 }
 
-void disable_vsync() {
-	#ifdef _WIN32
-		PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT =
-			(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-	
-		if (wglSwapIntervalEXT) {
-			wglSwapIntervalEXT(0);
+void disable_vsync()
+{
+#ifdef _WIN32
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT =
+		(PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+
+	if (wglSwapIntervalEXT)
+	{
+		wglSwapIntervalEXT(0);
+	}
+#elif defined(__linux__)
+	Display *dpy = glXGetCurrentDisplay();
+	GLXDrawable drawable = glXGetCurrentDrawable();
+
+	if (dpy && drawable)
+	{
+		PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI =
+			(PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
+
+		if (glXSwapIntervalSGI)
+		{
+			glXSwapIntervalSGI(0);
 		}
-	#elif defined(__linux__)
-		Display* dpy = glXGetCurrentDisplay();
-		GLXDrawable drawable = glXGetCurrentDrawable();
-	
-		if (dpy && drawable) {
-			PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI =
-				(PFNGLXSWAPINTERVALSGIPROC)glXGetProcAddress((const GLubyte*)"glXSwapIntervalSGI");
-	
-			if (glXSwapIntervalSGI) {
-				glXSwapIntervalSGI(0);
-			}
-		}
-	#elif defined(__APPLE__)
-		CGLContextObj ctx = CGLGetCurrentContext();
-		if (ctx) {
-			GLint sync = 0;
-			CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
-		}
-	#endif
+	}
+#elif defined(__APPLE__)
+	CGLContextObj ctx = CGLGetCurrentContext();
+	if (ctx)
+	{
+		GLint sync = 0;
+		CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+	}
+#endif
 }
 
-void change_window_size(int w, int h) {
-	if(h == 0)
+void change_window_size(int w, int h)
+{
+	if (h == 0)
 		h = 1;
 
 	cam->update_window_size(w, h);
@@ -123,80 +139,78 @@ void change_window_size(int w, int h) {
 
 	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
 
-    glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 }
 
-
-void render_scene(void) {
+void render_scene(void)
+{
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
-	//use cameras view matrix
+	// use cameras view matrix
 	matrix4x4 view_matrix = cam->get_view_matrix();
 
 	matrix4x4 projection_view = projection_matrix * view_matrix;
-	
+
 	glMultMatrixf(projection_view.get_data());
-	if(draw_axis) {
+	if (draw_axis)
+	{
 		glBegin(GL_LINES);
-			//x axis
-			glColor3f(1.0f, 0.0f, 0.0f);
-			glVertex3f(-100.0f, 0.0f, 0.0f);
-			glVertex3f( 100.0f, 0.0f, 0.0f);
+		// x axis
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(-100.0f, 0.0f, 0.0f);
+		glVertex3f(100.0f, 0.0f, 0.0f);
 
-			//y axis
-			glColor3f(0.0f, 1.0f, 0.0f);
-			glVertex3f(0.0f, -100.0f, 0.0f);
-			glVertex3f(0.0f,  100.0f, 0.0f);
+		// y axis
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(0.0f, -100.0f, 0.0f);
+		glVertex3f(0.0f, 100.0f, 0.0f);
 
-			//z axis
-			glColor3f(0.0f, 0.0f, 1.0f);
-			glVertex3f(0.0f, 0.0f, -100.0f);
-			glVertex3f(0.0f, 0.0f,  100.0f);
+		// z axis
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(0.0f, 0.0f, -100.0f);
+		glVertex3f(0.0f, 0.0f, 100.0f);
 		glEnd();
 	}
 	glColor3f(1.0f, 1.0f, 1.0f);
 
-	if(wire_mode) {
+	if (wire_mode)
 		glPolygonMode(GL_FRONT, GL_LINE);
-	} 
-	else {
+	else
 		glPolygonMode(GL_FRONT, GL_FILL);
-	}
 
-	
-	if(is_first_frame || cam->update_frustum() || update_frustum_on_free_cam)
+	// update frustum if camera is locked OR flag is set
+	if (cam->update_frustum() || update_frustum_on_free_cam)
 		view_frustum.update_frustum(projection_view);
 
-	if(draw_frustum)
+	if (draw_frustum)
 		view_frustum.draw_frustum();
 
-
-	//render all meshes loaded in groups
+	// render all meshes loaded in groups
 	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres);
-	
-	//fps counter
+
+	// fps counter
 	char str[20];
 
 	frames++;
 	int time = glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 1000) {
-		fps = (float)frames*1000.0/(float)(time-timebase);
+	if (time - timebase > 1000)
+	{
+		fps = (float)frames * 1000.0 / (float)(time - timebase);
 		timebase = time;
 		frames = 0;
-		
+
 		sprintf_s(str, "%.4f", fps);
 
 		glutSetWindowTitle(str);
 	}
-	
 
-	is_first_frame = false;
 	// End of frame
 	glutSwapBuffers();
 }
 
-void idle() {
+void idle()
+{
 	int current_time = glutGet(GLUT_ELAPSED_TIME);
 	int delta_time_ms = current_time - prev_time;
 	prev_time = current_time;
@@ -206,36 +220,38 @@ void idle() {
 	glutPostRedisplay();
 }
 
-void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
-	switch(c) {
-		case '1':
-			draw_axis = !draw_axis;
-			break;
+void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
+{
+	switch (c)
+	{
+	case '1':
+		draw_axis = !draw_axis;
+		break;
 
-		case '2':
-			wire_mode = !wire_mode;
-			break;
+	case '2':
+		wire_mode = !wire_mode;
+		break;
 
-		case '3':
-			draw_bounding_spheres = !draw_bounding_spheres;
-			break;
+	case '3':
+		draw_bounding_spheres = !draw_bounding_spheres;
+		break;
 
-		case '4':
-			draw_frustum = !draw_frustum;
-			break;
+	case '4':
+		draw_frustum = !draw_frustum;
+		break;
 
-		case '5':
-			frustum_cull = !frustum_cull;
-			break;
+	case '5':
+		frustum_cull = !frustum_cull;
+		break;
 
-		case '6':
-			update_frustum_on_free_cam = !update_frustum_on_free_cam;
-			break;
+	case '6':
+		update_frustum_on_free_cam = !update_frustum_on_free_cam;
+		break;
 
-		case 'f':
-		case 'F':
-			cam->switch_camera_mode();
-			break;
+	case 'f':
+	case 'F':
+		cam->switch_camera_mode();
+		break;
 
 		/*
 		case 'p':
@@ -244,59 +260,65 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y) {
 			break;
 		*/
 
-		case 'r':
-		case 'R':
-			cam->reset_camera();
-			break;
+	case 'r':
+	case 'R':
+		cam->reset_camera();
+		break;
 
-		case 'c':
-		case 'C':
-			cam->cycle_target();
-			break;
+	case 'c':
+	case 'C':
+		cam->cycle_target();
+		break;
 
-		case 'z':
-		case 'Z':
-			cam->add_to_target_radius(-1.0f);
-			break;
+	case 'z':
+	case 'Z':
+		cam->add_to_target_radius(-1.0f);
+		break;
 
-		case 'x':
-		case 'X':
-			cam->add_to_target_radius(1.0f);
-			break;
+	case 'x':
+	case 'X':
+		cam->add_to_target_radius(1.0f);
+		break;
 
-		case 27:
-			exit(0);
-			break;
+	case 27:
+		exit(0);
+		break;
 
-		default:
-			key_states[c] = true;
-			break;
+	default:
+		key_states[c] = true;
+		break;
 	}
 }
 
-void processKeyRelease(unsigned char c, int mouse_x, int mouse_y) {
+void processKeyRelease(unsigned char c, int mouse_x, int mouse_y)
+{
 	key_states[c] = false;
 }
 
-void processMouse(int x, int y) {
+void processMouse(int x, int y)
+{
 	cam->update_camera_direction(x, y);
 }
 
-void processSpecialKeys(int key, int xx, int yy) {
-	//no special keys are used
+void processSpecialKeys(int key, int xx, int yy)
+{
+	// no special keys are used
 }
 
+void printInfo()
+{
 
-void printInfo() {
+	std::cout << "\n>------------------------------------------------------------------------------------------<\n"
+			  << std::endl;
 
-	std::cout << "\n>------------------------------------------------------------------------------------------<\n" << std::endl;
-
-	std::cout << "\n\n> ! - - - - - General Info - - - - - ! <\n" << std::endl;
+	std::cout << "\n\n> ! - - - - - General Info - - - - - ! <\n"
+			  << std::endl;
 	std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
 	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
 
-	std::cout << "\n\n> ! - - - - - Debug options - - - - - ! <\n" << std::endl;
+	std::cout << "\n\n> ! - - - - - Debug options - - - - - ! <\n"
+			  << std::endl;
 
 	std::cout << "Press 1 to toggle axis rendering." << std::endl;
 	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
@@ -305,53 +327,58 @@ void printInfo() {
 	std::cout << "Press 5 to toggle view frustum culling." << std::endl;
 	std::cout << "Press 6 to toggle frustum update on free camera mode." << std::endl;
 
-	std::cout << "\n\n> ! - - - - - Keyboard / mouse controls - - - - - ! <\n" << std::endl;
+	std::cout << "\n\n> ! - - - - - Keyboard / mouse controls - - - - - ! <\n"
+			  << std::endl;
 
-	std::cout << ">- - - Fixed camera - - -<\n" << std::endl;
+	std::cout << ">- - - Fixed camera - - -<\n"
+			  << std::endl;
 	std::cout << "W/A/S/D to rotate camera around target." << std::endl;
 	std::cout << "Press Z to zoom into target." << std::endl;
 	std::cout << "Press X to zoom out of target." << std::endl;
 	std::cout << "Press C to change camera target." << std::endl;
 	std::cout << "Press R to reset camera to first target." << std::endl;
 
-	std::cout << "\n>- - - Free camera - - -<\n" << std::endl;
+	std::cout << "\n>- - - Free camera - - -<\n"
+			  << std::endl;
 	std::cout << "Use mouse to look around / change camera direction." << std::endl;
 	std::cout << "W/A/S/D to move camera relative to it's direction." << std::endl;
 
-	std::cout << "\n>- - - General / Common - - -<\n" << std::endl;
- 	std::cout << "Press F to switch between fixed camera and free camera mode." << std::endl;
+	std::cout << "\n>- - - General / Common - - -<\n"
+			  << std::endl;
+	std::cout << "Press F to switch between fixed camera and free camera mode." << std::endl;
 	std::cout << "Press ESC to exit." << std::endl;
 
-	std::cout << "\n>------------------------------------------------------------------------------------------<\n" << std::endl;
+	std::cout << "\n>------------------------------------------------------------------------------------------<\n"
+			  << std::endl;
 }
 
-
-int main(int argc, char **argv) {
-	if(argc != 2) {
+int main(int argc, char **argv)
+{
+	if (argc != 2)
+	{
 		std::cout << "Wrong number of arguments!" << std::endl;
 		return 1;
 	}
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
-	glutInitWindowPosition(100,100);
-	glutInitWindowSize(win_width,win_height);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100, 100);
+	glutInitWindowSize(win_width, win_height);
 	glutCreateWindow("Projeto CG-25");
-		
+
 	glutDisplayFunc(render_scene);
 	glutIdleFunc(idle);
 	glutReshapeFunc(change_window_size);
-	
+
 	glutKeyboardFunc(processKeyPress);
 	glutKeyboardUpFunc(processKeyRelease);
 	glutPassiveMotionFunc(processMouse);
 	glutSpecialFunc(processSpecialKeys);
-	
-	
-	#ifndef __APPLE__
+
+#ifndef __APPLE__
 	glewInit();
-	#endif
-	
+#endif
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
@@ -362,20 +389,23 @@ int main(int argc, char **argv) {
 	glEnable(GL_BLEND);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	
+
 	printInfo();
-	try {
+	try
+	{
 		cfg_obj = new config(argv[1]);
 	}
-	catch (const std::exception& exc) {
+	catch (const std::exception &exc)
+	{
 		printRedException(exc.what());
 	}
 
 	cam = cfg_obj->get_config_camera_init();
 
 	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
-	glutReshapeWindow(std::get<0>(win_attribs), std::get<1>(win_attribs));
-	
+	int width = std::get<0>(win_attribs), height = std::get<1>(win_attribs);
+	glutReshapeWindow(width, height);
+
 	vector3 projection_attributes = cfg_obj->get_projection_settings();
 	cam_fov = projection_attributes.x;
 	cam_near = projection_attributes.y;
@@ -388,12 +418,21 @@ int main(int argc, char **argv) {
 
 	disable_vsync();
 
-	//this means using a custom projection and view matrix!
+	// this means using a custom projection and view matrix!
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 
+	if (height == 0)
+		height = 1;
+	cam->update_window_size(width, height);
+	float ratio = width * 1.0 / height;
+
+	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
+	matrix4x4 proj_view = projection_matrix * cam->get_view_matrix();
+	view_frustum.update_frustum(proj_view);
+
 	glutMainLoop();
-	
+
 	return 1;
 }
