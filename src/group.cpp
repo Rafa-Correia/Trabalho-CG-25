@@ -54,8 +54,6 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
             glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
         }
-
-        
     }
 
     for (size_t i = 0; i < sub_groups.size(); i++)
@@ -64,26 +62,34 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
     }
 
     glPopMatrix();
-    
-    if(draw_translation_path) {
-        t->draw_path();
+
+    if (draw_translation_path)
+    {
+        if (t)
+            t->draw_path();
     }
 }
 
 void group::update_group(int delta_time_ms, matrix4x4 parent_transform)
 {
-    //update transforms here!
-    t->update(delta_time_ms);
-    r->update(delta_time_ms);
+    // update transforms here!
+    if (t)
+        t->update(delta_time_ms);
+    if (r)
+        r->update(delta_time_ms);
 
     model_matrix = matrix4x4::Identity();
-    for(int i = 0; i < 3; i++) {
-        if(transform_order[i] == 't') model_matrix = model_matrix * t->get_translation();
-        if(transform_order[i] == 'r') model_matrix = model_matrix * r->get_rotation();
-        if(transform_order[i] == 's') model_matrix = model_matrix * s;  //s (scale) is always static
+    for (int i = 0; i < 3; i++)
+    {
+        if (transform_order[i] == 't')
+            model_matrix = model_matrix * t->get_translation();
+        if (transform_order[i] == 'r')
+            model_matrix = model_matrix * r->get_rotation();
+        if (transform_order[i] == 's')
+            model_matrix = model_matrix * s; // s (scale) is always static
     }
 
-    //update position
+    // update position
     matrix4x4 full_transform = parent_transform * model_matrix;
     position.x = full_transform.get_data_at_point(3, 0);
     position.y = full_transform.get_data_at_point(3, 1);
@@ -99,7 +105,7 @@ void group::update_group(int delta_time_ms, matrix4x4 parent_transform)
 
 void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
 {
-    std::stringstream ss; //used for exceptions
+    std::stringstream ss; // used for exceptions
     float bound_scaling = parent_scale;
     int current_transform = 0;
     tinyxml2::XMLElement *transform = root->FirstChildElement("transform");
@@ -131,31 +137,36 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 this->transform_order[current_transform] = 't';
                 current_transform++;
 
-                const char* time_value = child->Attribute("time");
-                if(time_value) {
-                    //this now means this is a dynamic translation
+                const char *time_value = child->Attribute("time");
+                if (time_value)
+                {
+                    // this now means this is a dynamic translation
                     float time;
                     tinyxml2::XMLError result = child->QueryFloatAttribute("time", &time);
-                    if (result == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE) {
-                        //only this error can happen, since we checked if existed before
+                    if (result == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE)
+                    {
+                        // only this error can happen, since we checked if existed before
                         ss << "\"time\" attribute in translation element is not a valid float!";
                         throw FailedToParseGroupException(ss.str());
                     }
 
-                    //since we checked if it existed and was a valid float, we only need to check if larger than 0
-                    if(time <= 0) {
+                    // since we checked if it existed and was a valid float, we only need to check if larger than 0
+                    if (time <= 0)
+                    {
                         ss << "\"time\" attribute must be larger than 0!";
                         throw FailedToParseGroupException(ss.str());
                     }
 
-                    //dont forget to read boolean "align". it is not being done yet
+                    // dont forget to read boolean "align". it is not being done yet
 
                     std::vector<vector3> points;
                     tinyxml2::XMLElement *point = child->FirstChildElement();
-                    while(point) {
+                    while (point)
+                    {
                         float x, y, z;
-                        if(point->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS) {
-                            //load all points, if point has invalid / non existant attributes then you're isnide this block~
+                        if (point->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+                        {
+                            // load all points, if point has invalid / non existant attributes then you're isnide this block~
                             ss << "A \"point\" element has invalid or missing attributes!";
                             throw FailedToParseGroupException(ss.str());
                         }
@@ -165,7 +176,8 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                         point = point->NextSiblingElement();
                     }
 
-                    if(points.size() < 4) {
+                    if (points.size() < 4)
+                    {
                         ss << "Minimum number of \"point\" elements inside translation is 4!";
                         throw FailedToParseGroupException(ss.str());
                     }
@@ -173,7 +185,8 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     this->t = new translation_dynamic(time, false, points);
                 }
 
-                else {
+                else
+                {
                     float t_x = 0, t_y = 0, t_z = 0;
                     child->QueryFloatAttribute("x", &t_x);
                     child->QueryFloatAttribute("y", &t_y);

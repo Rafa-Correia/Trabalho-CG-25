@@ -21,5 +21,15 @@
         <models>
             <model file="torus.3d" />
         </models>
+
+        <group>
+            <transform>
+                <scale x="0.5" y="0.5" z="0.5" />
+            </transform>
+
+            <models>
+                <model file="sphere.3d" />
+            </models>
+        </group>
     </group>
 </world>
