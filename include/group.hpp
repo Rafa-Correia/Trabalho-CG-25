@@ -7,6 +7,13 @@
 #include "vector4.hpp"
 #include "frustum.hpp"
 
+#include "transforms/rotation_dynamic.hpp"
+#include "transforms/rotation_static.hpp"
+
+#include "transforms/translation_dynamic.hpp"
+#include "transforms/translation_static.hpp"
+
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -34,7 +41,7 @@ public:
      * @param view_frustum View frustum to be used in frustum culling.
      * @param render_bounding_spheres Determines if bounding spheres are rendered.
      */
-    void render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false);
+    void render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull = true, bool render_bounding_spheres = false, bool draw_translation_path = false);
 
     /**
      * Returns camera lock positions for this group and calls itself for all subgroups.
@@ -46,12 +53,18 @@ public:
     /**
      * Updates all groups' positions.
      */
-    void update_group_positions(matrix4x4 parent_transform, vector3 parent_position = vector3());
+    void update_group(int delta_time_ms, matrix4x4 parent_transform);
 
 private:
     unsigned int mesh_count = 0; // < -- number of loaded meshes
 
     matrix4x4 model_matrix; // < -- 4 by 4 matrix storing transformations
+
+    unsigned char transform_order[3] = {0};
+    
+    translation *t = NULL;  //these need to be null since there is no default constructor
+    rotation *r = NULL;
+    matrix4x4 s;
 
     vector4 color; // < -- group color, doesnt apply to subgroups.
 
@@ -73,10 +86,8 @@ private:
      * Function responsible for creating a group from a root "group" XMLElement.
      *
      * @param root Group element to parse.
-     *
-     * @returns Boolean indicating if parsing was successful.
      */
-    bool parse_group(tinyxml2::XMLElement *root, float parent_scale = 1.0f);
+    void parse_group(tinyxml2::XMLElement *root, float parent_scale = 1.0f);
 
     /**
      * Function responsible for loading model file (*.3d).

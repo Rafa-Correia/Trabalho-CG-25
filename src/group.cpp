@@ -3,15 +3,12 @@
 group::group(tinyxml2::XMLElement *root, float parent_scale)
 {
     model_matrix = matrix4x4::Identity();
-    if (!group::parse_group(root, parent_scale))
-    {
-        throw FailedToParseGroupException(std::string("Failed to parse group element!"));
-    }
+    group::parse_group(root, parent_scale);
 }
 
 // render / update
 
-void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres)
+void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres, bool draw_translation_path)
 {
     glPushMatrix();
     glMultMatrixf(model_matrix.get_data());
@@ -57,18 +54,36 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
             glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
         }
+
+        
     }
 
     for (size_t i = 0; i < sub_groups.size(); i++)
     {
-        sub_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres);
+        sub_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres, draw_translation_path);
     }
 
     glPopMatrix();
+    
+    if(draw_translation_path) {
+        t->draw_path();
+    }
 }
 
-void group::update_group_positions(matrix4x4 parent_transform, vector3 parent_position)
+void group::update_group(int delta_time_ms, matrix4x4 parent_transform)
 {
+    //update transforms here!
+    t->update(delta_time_ms);
+    r->update(delta_time_ms);
+
+    model_matrix = matrix4x4::Identity();
+    for(int i = 0; i < 3; i++) {
+        if(transform_order[i] == 't') model_matrix = model_matrix * t->get_translation();
+        if(transform_order[i] == 'r') model_matrix = model_matrix * r->get_rotation();
+        if(transform_order[i] == 's') model_matrix = model_matrix * s;  //s (scale) is always static
+    }
+
+    //update position
     matrix4x4 full_transform = parent_transform * model_matrix;
     position.x = full_transform.get_data_at_point(3, 0);
     position.y = full_transform.get_data_at_point(3, 1);
@@ -76,19 +91,20 @@ void group::update_group_positions(matrix4x4 parent_transform, vector3 parent_po
 
     for (size_t i = 0; i < sub_groups.size(); i++)
     {
-        sub_groups.at(i).update_group_positions(full_transform);
+        sub_groups.at(i).update_group(delta_time_ms, full_transform);
     }
 }
 
 // parsing / loading
 
-bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
+void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
 {
+    std::stringstream ss; //used for exceptions
     float bound_scaling = parent_scale;
+    int current_transform = 0;
     tinyxml2::XMLElement *transform = root->FirstChildElement("transform");
     if (transform)
     {
-
         std::unordered_set<std::string> seen;
 
         for (tinyxml2::XMLElement *child = transform->FirstChildElement(); child; child = child->NextSiblingElement())
@@ -99,27 +115,72 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
             {
                 if (seen.count(tag))
                 {
-                    std::cout << "Duplicate element inside transform: " << tag << std::endl;
-                    return false;
+                    ss << "Duplicate element inside transform: " << tag;
+                    throw FailedToParseGroupException(ss.str());
                 }
                 seen.insert(tag);
             }
             else
             {
-                std::cout << "Invalid element inside transform: " << tag << std::endl;
-                return false;
+                ss << "Invalid element inside transform: " << tag;
+                throw FailedToParseGroupException(ss.str());
             }
 
             if (tag == "translate")
             {
+                this->transform_order[current_transform] = 't';
+                current_transform++;
 
-                float t_x = 0, t_y = 0, t_z = 0;
-                child->QueryFloatAttribute("x", &t_x);
-                child->QueryFloatAttribute("y", &t_y);
-                child->QueryFloatAttribute("z", &t_z);
+                const char* time_value = child->Attribute("time");
+                if(time_value) {
+                    //this now means this is a dynamic translation
+                    float time;
+                    tinyxml2::XMLError result = child->QueryFloatAttribute("time", &time);
+                    if (result == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE) {
+                        //only this error can happen, since we checked if existed before
+                        ss << "\"time\" attribute in translation element is not a valid float!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
 
-                matrix4x4 T = matrix4x4::Translate(vector3(t_x, t_y, t_z));
-                model_matrix = model_matrix * T;
+                    //since we checked if it existed and was a valid float, we only need to check if larger than 0
+                    if(time <= 0) {
+                        ss << "\"time\" attribute must be larger than 0!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    //dont forget to read boolean "align". it is not being done yet
+
+                    std::vector<vector3> points;
+                    tinyxml2::XMLElement *point = child->FirstChildElement();
+                    while(point) {
+                        float x, y, z;
+                        if(point->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || point->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS) {
+                            //load all points, if point has invalid / non existant attributes then you're isnide this block~
+                            ss << "A \"point\" element has invalid or missing attributes!";
+                            throw FailedToParseGroupException(ss.str());
+                        }
+                        vector3 p_pos = vector3(x, y, z);
+                        points.push_back(p_pos);
+
+                        point = point->NextSiblingElement();
+                    }
+
+                    if(points.size() < 4) {
+                        ss << "Minimum number of \"point\" elements inside translation is 4!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    this->t = new translation_dynamic(time, false, points);
+                }
+
+                else {
+                    float t_x = 0, t_y = 0, t_z = 0;
+                    child->QueryFloatAttribute("x", &t_x);
+                    child->QueryFloatAttribute("y", &t_y);
+                    child->QueryFloatAttribute("z", &t_z);
+
+                    this->t = new translation_static(vector3(t_x, t_y, t_z));
+                }
             }
             else if (tag == "rotate")
             {
@@ -130,13 +191,13 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 child->QueryFloatAttribute("y", &r_y);
                 child->QueryFloatAttribute("z", &r_z);
 
-                matrix4x4 R = matrix4x4::Rotate(angle * (M_PI / 180.0f), vector3(r_x, r_y, r_z));
-
-                model_matrix = model_matrix * R;
+                this->r = new rotation_static(angle, vector3(r_x, r_y, r_z));
             }
             else if (tag == "scale")
             {
                 // transform_order.push_back('s');
+                this->transform_order[current_transform] = 's';
+                current_transform++;
 
                 float s_x = 1, s_y = 1, s_z = 1;
                 child->QueryFloatAttribute("x", &s_x);
@@ -150,9 +211,7 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 else if (s_z >= s_y && s_z >= s_x)
                     bound_scaling *= s_z;
 
-                matrix4x4 S = matrix4x4::Scale(vector3(s_x, s_y, s_z));
-
-                model_matrix = model_matrix * S;
+                this->s = matrix4x4::Scale(vector3(s_x, s_y, s_z));
             }
         }
     }
@@ -175,8 +234,8 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
             {
                 if (!parse_model_file(filepath))
                 {
-                    std::cout << "Model file is invalid: " << filepath << std::endl;
-                    return false;
+                    ss << "Model file is invalid: " << filepath;
+                    throw FailedToParseGroupException(ss.str());
                 }
 
                 mesh_bounding_spheres.at(mesh_count).w *= bound_scaling;
@@ -185,15 +244,15 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
             }
             else
             {
-                std::cout << "A model element must have a file attribute!" << std::endl;
-                return false;
+                ss << "A model element must have a file attribute!";
+                throw FailedToParseGroupException(ss.str());
             }
             model = model->NextSiblingElement("model");
         }
         if (!loaded_model_at_least_once)
         {
-            std::cout << "A models element must have at least one model child element!" << std::endl;
-            return false;
+            ss << "A models element must have at least one model child element!";
+            throw FailedToParseGroupException(ss.str());
         }
     }
     else
@@ -231,8 +290,6 @@ bool group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
         group sub(subgroup, bound_scaling);
         sub_groups.push_back(sub);
     }
-
-    return true;
 }
 
 bool group::parse_model_file(const char *filepath)

@@ -75,6 +75,11 @@ public:
     static matrix4x4 Projection(float fov, float aspect_ratio, float near_plane, float far_plane);
 
     /**
+     * Creates matrix for catmul rom curve calcs.
+     */
+    static matrix4x4 Catmul_rom();
+
+    /**
      * Getter for matrix data, in a float[16] representation.
      *
      * @returns Matrix data in a float[16] format. Always has 16 elements.

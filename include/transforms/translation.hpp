@@ -1,0 +1,27 @@
+#ifndef TRANSLATION_HPP
+#define TRANSLATION_HPP
+
+#include "vector3.hpp"
+#include "matrix4x4.hpp"
+
+#include <vector>
+#include <iostream>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glew.h>
+#include <GL/glut.h>
+#endif
+
+class translation {
+    public:
+        virtual void update(int delta_time_ms) = 0;
+        virtual matrix4x4 get_translation() = 0;
+        virtual void draw_path() = 0;
+};
+
+#endif

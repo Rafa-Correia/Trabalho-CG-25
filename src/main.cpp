@@ -38,6 +38,8 @@ typedef int (*PFNGLXSWAPINTERVALSGIPROC)(int);
 #include "vector4.hpp"
 #include "frustum.hpp"
 
+#include "transforms/translation_dynamic.hpp"	//remove later, just for testing
+
 // important objects	----------------------------->>>
 
 config *cfg_obj = NULL;
@@ -59,6 +61,7 @@ float cam_fov, cam_near, cam_far;
 
 bool draw_axis = false;
 bool wire_mode = false;
+bool draw_path = false;
 
 // frustum cull debug
 bool draw_bounding_spheres = false;
@@ -78,6 +81,9 @@ int prev_time;
 int frames;
 float fps;
 // < -------------------------------------------------
+
+
+translation_dynamic *t = NULL; //remove later
 
 void printRedException(const std::string &message)
 {
@@ -187,7 +193,7 @@ void render_scene(void)
 		view_frustum.draw_frustum();
 
 	// render all meshes loaded in groups
-	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres);
+	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres, draw_path);
 
 	// fps counter
 	char str[20];
@@ -214,6 +220,8 @@ void idle()
 	int current_time = glutGet(GLUT_ELAPSED_TIME);
 	int delta_time_ms = current_time - prev_time;
 	prev_time = current_time;
+
+	cfg_obj->update_groups(delta_time_ms);
 
 	cam->play_animations(delta_time_ms);
 	cam->update_camera_position(key_states, delta_time_ms);
@@ -246,6 +254,10 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 
 	case '6':
 		update_frustum_on_free_cam = !update_frustum_on_free_cam;
+		break;
+
+	case '7':
+		draw_path = !draw_path;
 		break;
 
 	case 'f':
@@ -390,7 +402,6 @@ int main(int argc, char **argv)
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	printInfo();
 	try
 	{
 		cfg_obj = new config(argv[1]);
@@ -398,7 +409,9 @@ int main(int argc, char **argv)
 	catch (const std::exception &exc)
 	{
 		printRedException(exc.what());
+		return 1;
 	}
+	printInfo();
 
 	cam = cfg_obj->get_config_camera_init();
 

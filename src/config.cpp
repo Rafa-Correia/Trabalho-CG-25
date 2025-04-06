@@ -2,14 +2,9 @@
 
 config::config(const char *path)
 {
-	if (!this->load(path))
-	{
-		std::stringstream ss;
-		ss << "Failed to load file at: " << path;
-		throw FailedToLoadException(ss.str());
-	}
+	this->load(path);
 
-	update_group_positions();
+	update_groups(0);
 
 	cam = new camera(c_pos, c_lookat, c_up, query_group_postitions());
 }
@@ -49,31 +44,32 @@ std::vector<vector3> config::query_group_postitions()
 
 // render / update groups
 
-void config::render_all_groups(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres)
+void config::render_all_groups(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres, bool draw_translation_path)
 {
 	for (size_t i = 0; i < root_groups.size(); i++)
 	{
-		root_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres);
+		root_groups.at(i).render_group(camera_transform, view_frustum, frustum_cull, render_bounding_spheres, draw_translation_path);
 	}
 }
 
-void config::update_group_positions()
+void config::update_groups(int delta_time_ms)
 {
 	for (size_t i = 0; i < root_groups.size(); i++)
 	{
-		root_groups.at(i).update_group_positions(matrix4x4::Identity());
+		root_groups.at(i).update_group(delta_time_ms, matrix4x4::Identity());
 	}
 }
 
 // private
 
-bool config::load(const char *filepath)
+void config::load(const char *filepath)
 {
+	std::stringstream ss; //string stream for errors and stuff
 	tinyxml2::XMLDocument doc;
 	if (doc.LoadFile(filepath) != tinyxml2::XML_SUCCESS)
 	{
-		std::cout << "Failed to load XML config file at: " << filepath << std::endl;
-		return false;
+		ss << "Failed to load XML config file at: " << filepath;
+		throw FailedToLoadException(ss.str());
 	}
 
 	tinyxml2::XMLElement *root = doc.RootElement();
@@ -81,8 +77,8 @@ bool config::load(const char *filepath)
 	{
 		if (std::string(root->Value()) != "world")
 		{
-			std::cout << "Unexpected root element: " << root->Value() << std::endl;
-			return false;
+			ss << "Unexpected root element: " << root->Value();
+			throw FailedToLoadException(ss.str());
 		}
 
 		tinyxml2::XMLElement *window = root->FirstChildElement("window");
@@ -94,13 +90,13 @@ bool config::load(const char *filepath)
 
 			if (width == -1 || height == -1)
 			{ // check if loaded
-				std::cout << "There was a problem loading width\\height!" << std::endl;
-				return false;
+				ss << "There was a problem loading width\\height!" ;
+				throw FailedToLoadException(ss.str());
 			}
 			if (width <= 0 || height <= 0)
 			{ // check if valid
-				std::cout << "Width\\Height is not valid!" << std::endl;
-				return false;
+				ss << "Width\\Height is not valid!";
+				throw FailedToLoadException(ss.str());
 			}
 
 			w_width = width;
@@ -108,8 +104,8 @@ bool config::load(const char *filepath)
 		}
 		else
 		{
-			std::cout << "No window element!" << std::endl;
-			return false;
+			ss << "No window element!";
+			throw FailedToLoadException(ss.str());
 		}
 
 		tinyxml2::XMLElement *camera = root->FirstChildElement("camera");
@@ -127,8 +123,8 @@ bool config::load(const char *filepath)
 			}
 			else
 			{
-				std::cout << "No position element!" << std::endl;
-				return false;
+				ss << "No position element!";
+				throw FailedToLoadException(ss.str());
 			}
 
 			tinyxml2::XMLElement *lookat = camera->FirstChildElement("lookAt");
@@ -143,8 +139,8 @@ bool config::load(const char *filepath)
 			}
 			else
 			{
-				std::cout << "No lookAt element!" << std::endl;
-				return false;
+				ss << "No lookAt element!";
+				throw FailedToLoadException(ss.str());
 			}
 
 			tinyxml2::XMLElement *up = camera->FirstChildElement("up");
@@ -159,8 +155,8 @@ bool config::load(const char *filepath)
 			}
 			else
 			{
-				std::cout << "No up element!" << std::endl;
-				return false;
+				ss << "No up element!";
+				throw FailedToLoadException(ss.str());
 			}
 
 			tinyxml2::XMLElement *projection = camera->FirstChildElement("projection");
@@ -173,27 +169,27 @@ bool config::load(const char *filepath)
 
 				if (fov == -1 || near == -1 || far == -1)
 				{
-					std::cout << "Camera fov\\near plane\\far plane wasn't loaded!" << std::endl;
-					return false;
+					ss << "Camera fov\\near plane\\far plane wasn't loaded!";
+					throw FailedToLoadException(ss.str());
 				}
 				if (fov <= 0 || near <= 0 || far <= 0)
 				{
-					std::cout << "Camera fov\\near plane\\far plane isn't valid!" << std::endl;
-					return false;
+					ss << "Camera fov\\near plane\\far plane isn't valid!";
+					throw FailedToLoadException(ss.str());
 				}
 
 				projection_attributes = vector3(fov, near, far);
 			}
 			else
 			{
-				std::cout << "No projection element!" << std::endl;
-				return false;
+				ss << "No projection element!";
+				throw FailedToLoadException(ss.str());
 			}
 		}
 		else
 		{
-			std::cout << "No camera element!" << std::endl;
-			return false;
+			ss << "No camera element!";
+			throw FailedToLoadException(ss.str());
 		}
 
 		bool loaded_group_at_least_once = false;
@@ -211,16 +207,14 @@ bool config::load(const char *filepath)
 
 		if (!loaded_group_at_least_once)
 		{
-			std::cout << "At least one group element is mandatory!" << std::endl;
-			return false;
+			ss << "At least one group element is mandatory!";
+			throw FailedToLoadException(ss.str());
 		}
-
-		return true;
 	}
 	else
 	{
-		std::cout << "Failed to load root element!" << std::endl;
-		return false;
+		ss << "Failed to load root element!";
+		throw FailedToLoadException(ss.str());
 	}
 }
 

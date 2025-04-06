@@ -141,6 +141,37 @@ matrix4x4 matrix4x4::Projection(float fov, float aspect_ratio, float near_plane,
     return result;
 }
 
+matrix4x4 matrix4x4::Catmul_rom() {
+    /**
+     * float m[4][4] = {	{-0.5f,  1.5f, -1.5f,  0.5f},
+						{ 1.0f, -2.5f,  2.0f, -0.5f},
+						{-0.5f,  0.0f,  0.5f,  0.0f},
+						{ 0.0f,  1.0f,  0.0f,  0.0f}};
+     */
+    matrix4x4 result;
+
+    result.m_data[0] = -0.5f;
+    result.m_data[1] = -1.0f;
+    result.m_data[2] = -0.5f;
+    result.m_data[3] = 0.0f;
+
+    result.m_data[4] = 1.5f;
+    result.m_data[5] = -2.5f;
+    result.m_data[6] = 0.0f;
+    result.m_data[7] = 1.0f;
+
+    result.m_data[8] = -1.5f;
+    result.m_data[9] = 2.0f;
+    result.m_data[10] = 0.5f;
+    result.m_data[11] = 0.0f;
+
+    result.m_data[12] = 0.5f;
+    result.m_data[13] = -0.5f;
+    result.m_data[14] = 0.0f;
+    result.m_data[15] = 0.0f;
+
+    return result;
+}
 // getters
 
 float *matrix4x4::get_data()
