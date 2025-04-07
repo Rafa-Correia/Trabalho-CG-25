@@ -11,7 +11,7 @@ group::group(tinyxml2::XMLElement *root, float parent_scale)
 void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, bool frustum_cull, bool render_bounding_spheres, bool draw_translation_path)
 {
     glPushMatrix();
-    glMultMatrixf(model_matrix.get_data());
+    glMultMatrixf(model_matrix);
 
     if (render_bounding_spheres)
     {
@@ -20,7 +20,7 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
         {
             glPushMatrix();
             glLoadIdentity();
-            glMultMatrixf(camera_transform.get_data());
+            glMultMatrixf(camera_transform);
             glTranslatef(position.x, position.y, position.z);
             vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
             glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
@@ -82,9 +82,9 @@ void group::update_group(int delta_time_ms, matrix4x4 parent_transform)
     for (int i = 0; i < 3; i++)
     {
         if (transform_order[i] == 't')
-            model_matrix = model_matrix * t->get_translation();
+            model_matrix = model_matrix * *t; // dereference to be able to cast to matrix4x4
         if (transform_order[i] == 'r')
-            model_matrix = model_matrix * r->get_rotation();
+            model_matrix = model_matrix * *r; // dereference again (look above)
         if (transform_order[i] == 's')
             model_matrix = model_matrix * s; // s (scale) is always static
     }
@@ -143,17 +143,18 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     // this now means this is a dynamic translation
                     float time;
                     tinyxml2::XMLError result = child->QueryFloatAttribute("time", &time);
-                    if (result == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE)
+                    if (result != tinyxml2::XML_SUCCESS)
                     {
-                        // only this error can happen, since we checked if existed before
-                        ss << "\"time\" attribute in translation element is not a valid float!";
+                        // only valid error is XML_WRONG_ATTRIBUTE_TYPE
+                        //  only this error can happen, since we checked if existed before
+                        ss << "\"time\" attribute in translate element is not a valid float!";
                         throw FailedToParseGroupException(ss.str());
                     }
 
                     // since we checked if it existed and was a valid float, we only need to check if larger than 0
                     if (time <= 0)
                     {
-                        ss << "\"time\" attribute must be larger than 0!";
+                        ss << "\"time\" attribute in translate element must be larger than 0!";
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -187,24 +188,68 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
 
                 else
                 {
-                    float t_x = 0, t_y = 0, t_z = 0;
-                    child->QueryFloatAttribute("x", &t_x);
-                    child->QueryFloatAttribute("y", &t_y);
-                    child->QueryFloatAttribute("z", &t_z);
 
-                    this->t = new translation_static(vector3(t_x, t_y, t_z));
+                    float x = 0, y = 0, z = 0;
+                    if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+                    {
+                        ss << "x, y or z attribute in translate element is either missing or not a valid float!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    this->t = new translation_static(vector3(x, y, z));
                 }
             }
             else if (tag == "rotate")
             {
+                this->transform_order[current_transform] = 'r';
+                current_transform++;
 
-                float angle = 0, r_x = 0, r_y = 0, r_z = 0;
-                child->QueryFloatAttribute("angle", &angle);
-                child->QueryFloatAttribute("x", &r_x);
-                child->QueryFloatAttribute("y", &r_y);
-                child->QueryFloatAttribute("z", &r_z);
+                const char *time_value = child->Attribute("time");
+                if (time_value)
+                {
+                    // since there's a time attribute, it means it's a dynamic rotation
+                    float time;
+                    tinyxml2::XMLError result = child->QueryFloatAttribute("time", &time);
+                    if (result != tinyxml2::XML_SUCCESS)
+                    {
+                        ss << "\"time\" attribute in rotate element is not a valid float!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
 
-                this->r = new rotation_static(angle, vector3(r_x, r_y, r_z));
+                    if (time <= 0)
+                    {
+                        ss << "\"time\" attribute in rotate element must be larger than 0!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    float x, y, z;
+
+                    if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+                    {
+                        ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    this->r = new rotation_dynamic(time, vector3(x, y, z));
+                }
+                else
+                {
+                    float angle = 0, x = 0, y = 0, z = 0;
+
+                    if (child->QueryFloatAttribute("angle", &angle) != tinyxml2::XML_SUCCESS)
+                    {
+                        ss << "angle attribute of rotate element is either missing or not a valid float! Perhaps you're missing a \"time\" attribute?";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+                    {
+                        ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                        throw FailedToParseGroupException(ss.str());
+                    }
+
+                    this->r = new rotation_static(angle, vector3(x, y, z));
+                }
             }
             else if (tag == "scale")
             {
@@ -212,19 +257,22 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 this->transform_order[current_transform] = 's';
                 current_transform++;
 
-                float s_x = 1, s_y = 1, s_z = 1;
-                child->QueryFloatAttribute("x", &s_x);
-                child->QueryFloatAttribute("y", &s_y);
-                child->QueryFloatAttribute("z", &s_z);
+                float x = 1, y = 1, z = 1;
 
-                if (s_x >= s_y && s_x >= s_z)
-                    bound_scaling *= s_x;
-                else if (s_y >= s_z && s_y >= s_z)
-                    bound_scaling *= s_y;
-                else if (s_z >= s_y && s_z >= s_x)
-                    bound_scaling *= s_z;
+                if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+                {
+                    ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                    throw FailedToParseGroupException(ss.str());
+                }
 
-                this->s = matrix4x4::Scale(vector3(s_x, s_y, s_z));
+                if (x >= y && x >= z)
+                    bound_scaling *= x;
+                else if (y >= z && y >= z)
+                    bound_scaling *= y;
+                else if (z >= y && z >= x)
+                    bound_scaling *= z;
+
+                this->s = matrix4x4::Scale(vector3(x, y, z));
             }
         }
     }

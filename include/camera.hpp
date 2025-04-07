@@ -104,6 +104,11 @@ public:
      */
     bool update_frustum();
 
+    /**
+     *
+     */
+    void update_lock_positions(std::vector<vector3> &l_pos);
+
 private:
     vector3 pos; // < -- position of the camera
     vector3 up;  // < -- camera's "up" vector (vector pointing up)

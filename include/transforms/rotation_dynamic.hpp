@@ -3,18 +3,22 @@
 
 #include "rotation.hpp"
 
-class rotation_dynamic : public rotation {
-    public:
-        rotation_dynamic(float time, vector3 rotation_vector);
+class rotation_dynamic : public rotation
+{
+public:
+    rotation_dynamic(float time, vector3 rotation_vector);
 
-        void update(int delta_time_ms) override;
-        matrix4x4 get_rotation() override;
-    private:
-        float full_time;
-        float animation_counter;
+    void update(int delta_time_ms) override;
+    matrix4x4 get_rotation() override;
 
-        vector3 rotation_vector;
-        matrix4x4 rotation_matrix;
+    operator const matrix4x4() const override;
+
+private:
+    float full_time;
+    float animation_counter;
+
+    vector3 rotation_vector;
+    matrix4x4 rotation_matrix;
 };
 
 #endif

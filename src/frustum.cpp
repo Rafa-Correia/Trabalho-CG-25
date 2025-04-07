@@ -41,7 +41,7 @@ bool frustum::inside_frustum(vector3 position, float radius)
 
 void frustum::update_frustum(matrix4x4 &projection_view_matrix)
 {
-    float left[4], right[4], top[4], bottom[4], near[4], far[4];
+    float left[4], right[4], top[4], bottom[4], near_p[4], far_p[4];
 
     for (int i = 4; i--;)
     {
@@ -61,19 +61,19 @@ void frustum::update_frustum(matrix4x4 &projection_view_matrix)
     }
     for (int i = 4; i--;)
     {
-        near[i] = projection_view_matrix.get_data_at_point(i, 3) + projection_view_matrix.get_data_at_point(i, 2);
+        near_p[i] = projection_view_matrix.get_data_at_point(i, 3) + projection_view_matrix.get_data_at_point(i, 2);
     }
     for (int i = 4; i--;)
     {
-        far[i] = projection_view_matrix.get_data_at_point(i, 3) - projection_view_matrix.get_data_at_point(i, 2);
+        far_p[i] = projection_view_matrix.get_data_at_point(i, 3) - projection_view_matrix.get_data_at_point(i, 2);
     }
 
     left_plane = vector4(left[0], left[1], left[2], left[3]);
     right_plane = vector4(right[0], right[1], right[2], right[3]);
     top_plane = vector4(top[0], top[1], top[2], top[3]);
     bottom_plane = vector4(bottom[0], bottom[1], bottom[2], bottom[3]);
-    near_plane = vector4(near[0], near[1], near[2], near[3]);
-    far_plane = vector4(far[0], far[1], far[2], far[3]);
+    near_plane = vector4(near_p[0], near_p[1], near_p[2], near_p[3]);
+    far_plane = vector4(far_p[0], far_p[1], far_p[2], far_p[3]);
 
     left_plane.normalize(false);
     right_plane.normalize(false);
@@ -122,17 +122,17 @@ vector3 frustum::intersect_planes(const vector4 &p1, const vector4 &p2, const ve
 
 void frustum::draw_frustum_private(const vector4 planes[6])
 {
-    const int left = 0, right = 1, bottom = 2, top = 3, near = 4, far = 5;
+    const int left = 0, right = 1, bottom = 2, top = 3, near_p = 4, far_p = 5;
 
     // frustum corners
-    vector3 near_top_left = intersect_planes(planes[near], planes[top], planes[left]);
-    vector3 near_top_right = intersect_planes(planes[near], planes[top], planes[right]);
-    vector3 near_bottom_left = intersect_planes(planes[near], planes[bottom], planes[left]);
-    vector3 near_bottom_right = intersect_planes(planes[near], planes[bottom], planes[right]);
-    vector3 far_top_left = intersect_planes(planes[far], planes[top], planes[left]);
-    vector3 far_top_right = intersect_planes(planes[far], planes[top], planes[right]);
-    vector3 far_bottom_left = intersect_planes(planes[far], planes[bottom], planes[left]);
-    vector3 far_bottom_right = intersect_planes(planes[far], planes[bottom], planes[right]);
+    vector3 near_top_left = intersect_planes(planes[near_p], planes[top], planes[left]);
+    vector3 near_top_right = intersect_planes(planes[near_p], planes[top], planes[right]);
+    vector3 near_bottom_left = intersect_planes(planes[near_p], planes[bottom], planes[left]);
+    vector3 near_bottom_right = intersect_planes(planes[near_p], planes[bottom], planes[right]);
+    vector3 far_top_left = intersect_planes(planes[far_p], planes[top], planes[left]);
+    vector3 far_top_right = intersect_planes(planes[far_p], planes[top], planes[right]);
+    vector3 far_bottom_left = intersect_planes(planes[far_p], planes[bottom], planes[left]);
+    vector3 far_bottom_right = intersect_planes(planes[far_p], planes[bottom], planes[right]);
 
     glColor3f(1.0f, 1.0f, 0.0f);
     glBegin(GL_LINES);

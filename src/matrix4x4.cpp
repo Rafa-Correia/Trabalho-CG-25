@@ -13,6 +13,34 @@ matrix4x4::matrix4x4()
     m_data[15] = 1;
 }
 
+matrix4x4::matrix4x4(std::vector<float> content)
+{
+    if (content.size() != 16)
+    {
+        std::stringstream ss;
+
+        ss << "Trying to build matrix with " << content.size() << " element(s). Matrix can only be built with 16 elements, returning identity...";
+        helper::print_warning(ss.str());
+
+        for (int i = 0; i < 16; i++)
+        {
+            this->m_data[i] = 0;
+        }
+
+        this->m_data[0] = 1;
+        this->m_data[5] = 1;
+        this->m_data[10] = 1;
+        this->m_data[15] = 1;
+
+        return;
+    }
+
+    for (size_t i = 0; i < 16; i++)
+    {
+        this->m_data[i] = content.at(i);
+    }
+}
+
 // unique matrix builders
 
 matrix4x4 matrix4x4::Identity()
@@ -141,17 +169,12 @@ matrix4x4 matrix4x4::Projection(float fov, float aspect_ratio, float near_plane,
     return result;
 }
 
-matrix4x4 matrix4x4::Catmul_rom() {
-    /**
-     * float m[4][4] = {	{-0.5f,  1.5f, -1.5f,  0.5f},
-						{ 1.0f, -2.5f,  2.0f, -0.5f},
-						{-0.5f,  0.0f,  0.5f,  0.0f},
-						{ 0.0f,  1.0f,  0.0f,  0.0f}};
-     */
+matrix4x4 matrix4x4::Catmul_rom()
+{
     matrix4x4 result;
 
     result.m_data[0] = -0.5f;
-    result.m_data[1] = -1.0f;
+    result.m_data[1] = 1.0f;
     result.m_data[2] = -0.5f;
     result.m_data[3] = 0.0f;
 
@@ -172,28 +195,12 @@ matrix4x4 matrix4x4::Catmul_rom() {
 
     return result;
 }
-// getters
 
-float *matrix4x4::get_data()
-{
-    return this->m_data;
-}
+// getters
 
 float matrix4x4::get_data_at_point(int row, int column)
 {
     return m_data[row * 4 + column];
-}
-
-// multiply vector by matrix
-
-vector3 matrix4x4::apply_to_point(vector3 point)
-{
-    float new_x, new_y, new_z;
-    new_x = m_data[0] * point.x + m_data[4] * point.y + m_data[8] * point.z + m_data[12];
-    new_y = m_data[1] * point.x + m_data[5] * point.y + m_data[9] * point.z + m_data[13];
-    new_z = m_data[2] * point.x + m_data[6] * point.y + m_data[10] * point.z + m_data[14];
-
-    return vector3(new_x, new_y, new_z);
 }
 
 // operator(s)
@@ -216,4 +223,30 @@ matrix4x4 matrix4x4::operator*(const matrix4x4 &other) const
     }
 
     return result;
+}
+
+vector3 matrix4x4::operator*(const vector3 &vec) const
+{
+    float new_x, new_y, new_z;
+    new_x = m_data[0] * vec.x + m_data[4] * vec.y + m_data[8] * vec.z + m_data[12];
+    new_y = m_data[1] * vec.x + m_data[5] * vec.y + m_data[9] * vec.z + m_data[13];
+    new_z = m_data[2] * vec.x + m_data[6] * vec.y + m_data[10] * vec.z + m_data[14];
+
+    return vector3(new_x, new_y, new_z);
+}
+
+vector4 matrix4x4::operator*(const vector4 &vec) const
+{
+    float new_x, new_y, new_z, new_w;
+    new_x = m_data[0] * vec.x + m_data[4] * vec.y + m_data[8] * vec.z + m_data[12] * vec.w;
+    new_y = m_data[1] * vec.x + m_data[5] * vec.y + m_data[9] * vec.z + m_data[13] * vec.w;
+    new_z = m_data[2] * vec.x + m_data[6] * vec.y + m_data[10] * vec.z + m_data[14] * vec.w;
+    new_w = m_data[3] * vec.x + m_data[7] * vec.y + m_data[11] * vec.z + m_data[15] * vec.w;
+
+    return vector4(new_x, new_y, new_z, new_w);
+}
+
+matrix4x4::operator const float *() const
+{
+    return m_data;
 }

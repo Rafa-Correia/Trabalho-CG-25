@@ -64,7 +64,7 @@ void config::update_groups(int delta_time_ms)
 
 void config::load(const char *filepath)
 {
-	std::stringstream ss; //string stream for errors and stuff
+	std::stringstream ss; // string stream for errors and stuff
 	tinyxml2::XMLDocument doc;
 	if (doc.LoadFile(filepath) != tinyxml2::XML_SUCCESS)
 	{
@@ -90,7 +90,7 @@ void config::load(const char *filepath)
 
 			if (width == -1 || height == -1)
 			{ // check if loaded
-				ss << "There was a problem loading width\\height!" ;
+				ss << "There was a problem loading width\\height!";
 				throw FailedToLoadException(ss.str());
 			}
 			if (width <= 0 || height <= 0)
@@ -162,23 +162,23 @@ void config::load(const char *filepath)
 			tinyxml2::XMLElement *projection = camera->FirstChildElement("projection");
 			if (projection)
 			{
-				float fov = -1, near = -1, far = -1;
+				float fov = -1, near_p = -1, far_p = -1;
 				projection->QueryFloatAttribute("fov", &fov);
-				projection->QueryFloatAttribute("near", &near);
-				projection->QueryFloatAttribute("far", &far);
+				projection->QueryFloatAttribute("near", &near_p);
+				projection->QueryFloatAttribute("far", &far_p);
 
-				if (fov == -1 || near == -1 || far == -1)
+				if (fov == -1 || near_p == -1 || far_p == -1)
 				{
 					ss << "Camera fov\\near plane\\far plane wasn't loaded!";
 					throw FailedToLoadException(ss.str());
 				}
-				if (fov <= 0 || near <= 0 || far <= 0)
+				if (fov <= 0 || near_p <= 0 || far_p <= 0)
 				{
 					ss << "Camera fov\\near plane\\far plane isn't valid!";
 					throw FailedToLoadException(ss.str());
 				}
 
-				projection_attributes = vector3(fov, near, far);
+				projection_attributes = vector3(fov, near_p, far_p);
 			}
 			else
 			{

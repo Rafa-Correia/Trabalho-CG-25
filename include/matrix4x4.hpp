@@ -2,11 +2,20 @@
 #define MATRIX4X4_HPP
 
 #include "vector3.hpp"
+#include "vector4.hpp"
+#include "helper.hpp"
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-
-#include <tuple>
 
 class matrix4x4
 {
@@ -17,6 +26,11 @@ public:
      * @returns Identity matrix representation.
      */
     matrix4x4();
+
+    /**
+     * Creates matrix from float array content.
+     */
+    matrix4x4(std::vector<float> content);
 
     /**
      * Creates Identity 4 by 4 matrix.
@@ -80,13 +94,6 @@ public:
     static matrix4x4 Catmul_rom();
 
     /**
-     * Getter for matrix data, in a float[16] representation.
-     *
-     * @returns Matrix data in a float[16] format. Always has 16 elements.
-     */
-    float *get_data();
-
-    /**
      * Getter for matrix data in specific position.
      *
      * @param row Row of intended value.
@@ -96,16 +103,11 @@ public:
      */
     float get_data_at_point(int row, int column);
 
-    /**
-     * Applies transformation to a point in 3D space.
-     *
-     * @param x x component of point.
-     * @param y y component of point.
-     * @param z z component of point.
-     */
-    vector3 apply_to_point(vector3 point);
-
     matrix4x4 operator*(const matrix4x4 &other) const;
+    vector3 operator*(const vector3 &vec) const; // i think this is unused, anyway, this is the same as multiplying by a vec4 with w = 1
+    vector4 operator*(const vector4 &vec) const;
+
+    operator const float *() const;
 
 private:
     float m_data[16]; // < -- Inner structure storing matrix data.

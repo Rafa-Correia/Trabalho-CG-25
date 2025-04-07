@@ -48,6 +48,8 @@ public:
     vector4 &operator*=(const float &scalar);
     vector4 &operator/=(const float &scalar);
 
+    float operator*(const vector4 &other) const; // this isn't actual multiplication (it's kind of like matrix multiplication?)
+
 private:
 };
 

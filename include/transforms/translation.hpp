@@ -2,6 +2,7 @@
 #define TRANSLATION_HPP
 
 #include "vector3.hpp"
+#include "vector4.hpp"
 #include "matrix4x4.hpp"
 
 #include <vector>
@@ -17,11 +18,14 @@
 #include <GL/glut.h>
 #endif
 
-class translation {
-    public:
-        virtual void update(int delta_time_ms) = 0;
-        virtual matrix4x4 get_translation() = 0;
-        virtual void draw_path() = 0;
+class translation
+{
+public:
+    virtual void update(int delta_time_ms) = 0;
+    virtual matrix4x4 get_translation() = 0;
+    virtual void draw_path() = 0;
+
+    virtual operator const matrix4x4() const = 0;
 };
 
 #endif

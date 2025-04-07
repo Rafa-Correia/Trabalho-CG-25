@@ -200,6 +200,11 @@ void camera::add_to_target_radius(float delta)
 
 // misc important
 
+void camera::update_lock_positions(std::vector<vector3> &l_pos)
+{
+    this->lock_point_list = l_pos;
+}
+
 void camera::update_window_size(int width, int height)
 {
     center_x = width / 2;

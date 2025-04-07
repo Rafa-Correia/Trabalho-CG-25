@@ -78,6 +78,13 @@ public:
      */
     void update_groups(int delta_time_ms);
 
+    /**
+     * Getter for all groups and their sub group positions for camera locking.
+     *
+     * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
+     */
+    std::vector<vector3> query_group_postitions();
+
 private:
     int w_width, w_height; // < -- Window attributes
 
@@ -98,13 +105,6 @@ private:
      * @param path File path to configuration file.
      */
     void load(const char *path);
-
-    /**
-     * Getter for all groups and their sub group positions for camera locking.
-     *
-     * @returns All positions of groups and subgroups for camera locking. Each position is 3 floats!
-     */
-    std::vector<vector3> query_group_postitions();
 };
 
 class FailedToLoadException : public std::exception

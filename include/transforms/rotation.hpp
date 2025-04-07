@@ -7,10 +7,13 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-class rotation {
-    public:
-        virtual void update(int delta_time_ms) = 0;
-        virtual matrix4x4 get_rotation() = 0;
+class rotation
+{
+public:
+    virtual void update(int delta_time_ms) = 0;
+    virtual matrix4x4 get_rotation() = 0;
+
+    virtual operator const matrix4x4() const = 0;
 };
 
 #endif

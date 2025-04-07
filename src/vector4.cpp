@@ -133,3 +133,15 @@ vector4 &vector4::operator/=(const float &scalar)
 
     return *this;
 }
+
+float vector4::operator*(const vector4 &other) const
+{
+    float result = 0;
+
+    result += this->x * other.x;
+    result += this->y * other.y;
+    result += this->z * other.z;
+    result += this->w * other.w;
+
+    return result;
+}

@@ -37,8 +37,7 @@ typedef int (*PFNGLXSWAPINTERVALSGIPROC)(int);
 #include "vector3.hpp"
 #include "vector4.hpp"
 #include "frustum.hpp"
-
-#include "transforms/translation_dynamic.hpp"	//remove later, just for testing
+#include "helper.hpp"
 
 // important objects	----------------------------->>>
 
@@ -53,6 +52,8 @@ frustum view_frustum = frustum();
 // window options	--------------------------------->>>
 
 int win_width = 10, win_height = 10;
+
+// projection stuff
 float cam_fov, cam_near, cam_far;
 
 // < -------------------------------------------------
@@ -62,6 +63,7 @@ float cam_fov, cam_near, cam_far;
 bool draw_axis = false;
 bool wire_mode = false;
 bool draw_path = false;
+bool update_groups = true;
 
 // frustum cull debug
 bool draw_bounding_spheres = false;
@@ -81,24 +83,6 @@ int prev_time;
 int frames;
 float fps;
 // < -------------------------------------------------
-
-
-translation_dynamic *t = NULL; //remove later
-
-void printRedException(const std::string &message)
-{
-#ifdef _WIN32
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-	std::cout << "Exception: ";
-
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-	std::cout << " " << message << std::endl;
-#else
-	std::cout << "\033[31mException: \033[0m " << message << std::endl;
-#endif
-}
 
 void disable_vsync()
 {
@@ -158,7 +142,7 @@ void render_scene(void)
 
 	matrix4x4 projection_view = projection_matrix * view_matrix;
 
-	glMultMatrixf(projection_view.get_data());
+	glMultMatrixf(projection_view);
 	if (draw_axis)
 	{
 		glBegin(GL_LINES);
@@ -215,13 +199,22 @@ void render_scene(void)
 	glutSwapBuffers();
 }
 
+/**
+ *
+ * IDLE FUNCTION, IT IS VERY IMPORTANT TO UPDATE EVERYTHING EVERY FRAME!
+ */
 void idle()
 {
 	int current_time = glutGet(GLUT_ELAPSED_TIME);
 	int delta_time_ms = current_time - prev_time;
 	prev_time = current_time;
 
-	cfg_obj->update_groups(delta_time_ms);
+	if (update_groups)
+	{
+		cfg_obj->update_groups(delta_time_ms);
+		std::vector<vector3> l_pos = cfg_obj->query_group_postitions();
+		cam->update_lock_positions(l_pos);
+	}
 
 	cam->play_animations(delta_time_ms);
 	cam->update_camera_position(key_states, delta_time_ms);
@@ -241,23 +234,27 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 		break;
 
 	case '3':
-		draw_bounding_spheres = !draw_bounding_spheres;
+		draw_path = !draw_path;
 		break;
 
 	case '4':
-		draw_frustum = !draw_frustum;
+		update_groups = !update_groups;
 		break;
 
 	case '5':
-		frustum_cull = !frustum_cull;
+		draw_bounding_spheres = !draw_bounding_spheres;
 		break;
 
 	case '6':
-		update_frustum_on_free_cam = !update_frustum_on_free_cam;
+		draw_frustum = !draw_frustum;
 		break;
 
 	case '7':
-		draw_path = !draw_path;
+		frustum_cull = !frustum_cull;
+		break;
+
+	case '8':
+		update_frustum_on_free_cam = !update_frustum_on_free_cam;
 		break;
 
 	case 'f':
@@ -334,10 +331,13 @@ void printInfo()
 
 	std::cout << "Press 1 to toggle axis rendering." << std::endl;
 	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
-	std::cout << "Press 3 to toggle bounding sphere rendering." << std::endl;
-	std::cout << "Press 4 to toggle view frustum rendering." << std::endl;
-	std::cout << "Press 5 to toggle view frustum culling." << std::endl;
-	std::cout << "Press 6 to toggle frustum update on free camera mode." << std::endl;
+	std::cout << "Press 3 to toggle dynamic translation path rendering." << std::endl;
+	std::cout << "Press 4 to toggle animation on or off." << std::endl;
+
+	std::cout << "\nPress 5 to toggle bounding sphere rendering." << std::endl;
+	std::cout << "Press 6 to toggle view frustum rendering." << std::endl;
+	std::cout << "Press 7 to toggle view frustum culling." << std::endl;
+	std::cout << "Press 8 to toggle frustum update on free camera mode." << std::endl;
 
 	std::cout << "\n\n> ! - - - - - Keyboard / mouse controls - - - - - ! <\n"
 			  << std::endl;
@@ -408,13 +408,15 @@ int main(int argc, char **argv)
 	}
 	catch (const std::exception &exc)
 	{
-		printRedException(exc.what());
+		helper::print_exception(exc.what());
 		return 1;
 	}
 	printInfo();
 
+	// get camera from config
 	cam = cfg_obj->get_config_camera_init();
 
+	// window attributes are stored in cfg
 	std::tuple<int, int> win_attribs = cfg_obj->get_window_attributes();
 	int width = std::get<0>(win_attribs), height = std::get<1>(win_attribs);
 	glutReshapeWindow(width, height);
@@ -436,6 +438,7 @@ int main(int argc, char **argv)
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 
+	// set view frustum before first frame!
 	if (height == 0)
 		height = 1;
 	cam->update_window_size(width, height);
@@ -445,6 +448,7 @@ int main(int argc, char **argv)
 	matrix4x4 proj_view = projection_matrix * cam->get_view_matrix();
 	view_frustum.update_frustum(proj_view);
 
+	// MAIN LOOP!!!!!
 	glutMainLoop();
 
 	return 1;

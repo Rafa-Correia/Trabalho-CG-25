@@ -13,7 +13,6 @@
 #include "transforms/translation_dynamic.hpp"
 #include "transforms/translation_static.hpp"
 
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -61,10 +60,10 @@ private:
     matrix4x4 model_matrix; // < -- 4 by 4 matrix storing transformations
 
     unsigned char transform_order[3] = {0};
-    
-    translation *t = NULL;  //these need to be null since there is no default constructor
+
+    translation *t = NULL; // these need to be null since there is no default constructor
     rotation *r = NULL;
-    matrix4x4 s;
+    matrix4x4 s; // scale is always static!
 
     vector4 color; // < -- group color, doesnt apply to subgroups.
 
