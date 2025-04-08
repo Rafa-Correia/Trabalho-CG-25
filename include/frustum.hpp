@@ -49,9 +49,9 @@ private:
     vector4 near_plane;
     vector4 far_plane;
 
-    static vector3 frustum::intersect_planes(const vector4 &p1, const vector4 &p2, const vector4 &p3);
+    static vector3 intersect_planes(const vector4 &p1, const vector4 &p2, const vector4 &p3);
 
-    void frustum::draw_frustum_private(const vector4 planes[6]);
+    void draw_frustum_private(const vector4 planes[6]);
 };
 
 #endif

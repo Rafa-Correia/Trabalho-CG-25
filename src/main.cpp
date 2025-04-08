@@ -190,7 +190,7 @@ void render_scene(void)
 		timebase = time;
 		frames = 0;
 
-		sprintf_s(str, "%.4f", fps);
+		sprintf(str, "%.4f", fps);
 
 		std::vector<std::string> metrics;
 		metrics.push_back("Framerate: " + std::string(str));
