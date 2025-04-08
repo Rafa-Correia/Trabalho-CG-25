@@ -203,6 +203,21 @@ void camera::add_to_target_radius(float delta)
 void camera::update_lock_positions(std::vector<vector3> &l_pos)
 {
     this->lock_point_list = l_pos;
+
+    // needs to update position of camera relative to lock position, and update lock position as well.
+
+    if (!is_free_camera)
+    {
+        this->target_lock_point = lock_point_list.at(current_target);
+        spherical_to_cartesian_coords(true); // update target lock point (wont matter if not in animation)
+
+        if (current_animation == C_ANIMATION_IDLE)
+        {
+            // only update actual target and position if not in animation
+            this->lock_point = lock_point_list.at(current_target);
+            spherical_to_cartesian_coords();
+        }
+    }
 }
 
 void camera::update_window_size(int width, int height)

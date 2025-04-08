@@ -37,7 +37,7 @@ typedef int (*PFNGLXSWAPINTERVALSGIPROC)(int);
 #include "vector3.hpp"
 #include "vector4.hpp"
 #include "frustum.hpp"
-#include "helper.hpp"
+#include "printer.hpp"
 
 // important objects	----------------------------->>>
 
@@ -192,6 +192,9 @@ void render_scene(void)
 
 		sprintf_s(str, "%.4f", fps);
 
+		std::vector<std::string> metrics;
+		metrics.push_back("Framerate: " + std::string(str));
+
 		glutSetWindowTitle(str);
 	}
 
@@ -316,7 +319,6 @@ void processSpecialKeys(int key, int xx, int yy)
 
 void printInfo()
 {
-
 	std::cout << "\n>------------------------------------------------------------------------------------------<\n"
 			  << std::endl;
 
@@ -360,7 +362,7 @@ void printInfo()
 	std::cout << "Press F to switch between fixed camera and free camera mode." << std::endl;
 	std::cout << "Press ESC to exit." << std::endl;
 
-	std::cout << "\n>------------------------------------------------------------------------------------------<\n"
+	std::cout << "\n>------------------------------------------------------------------------------------------<\n\n\n\n"
 			  << std::endl;
 }
 
@@ -408,7 +410,7 @@ int main(int argc, char **argv)
 	}
 	catch (const std::exception &exc)
 	{
-		helper::print_exception(exc.what());
+		printer::print_exception(exc.what());
 		return 1;
 	}
 	printInfo();
@@ -447,6 +449,18 @@ int main(int argc, char **argv)
 	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
 	matrix4x4 proj_view = projection_matrix * cam->get_view_matrix();
 	view_frustum.update_frustum(proj_view);
+
+	// enable ansi code support on windows
+#ifdef _WIN32
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwMode = 0;
+	GetConsoleMode(hOut, &dwMode);
+	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	SetConsoleMode(hOut, dwMode);
+#endif
+
+	printer::print_exception("This is a test.");
+	printer::print_warning("This is a test.");
 
 	// MAIN LOOP!!!!!
 	glutMainLoop();
