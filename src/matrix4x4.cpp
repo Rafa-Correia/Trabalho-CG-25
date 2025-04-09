@@ -96,6 +96,33 @@ matrix4x4 matrix4x4::Rotate(float theta, vector3 rotation_vector)
     return result;
 }
 
+matrix4x4 matrix4x4::Rotate(vector3 x, vector3 y, vector3 z)
+{
+    matrix4x4 result;
+
+    result.m_data[0] = x.x;
+    result.m_data[1] = x.y;
+    result.m_data[2] = x.z;
+    result.m_data[3] = 0;
+
+    result.m_data[4] = y.x;
+    result.m_data[5] = y.y;
+    result.m_data[6] = y.z;
+    result.m_data[7] = 0;
+
+    result.m_data[8] = z.x;
+    result.m_data[9] = z.y;
+    result.m_data[10] = z.z;
+    result.m_data[11] = 0;
+
+    result.m_data[12] = 0;
+    result.m_data[13] = 0;
+    result.m_data[14] = 0;
+    result.m_data[15] = 1;
+
+    return result;
+}
+
 matrix4x4 matrix4x4::Scale(vector3 scale_vector)
 {
     matrix4x4 result;

@@ -59,6 +59,11 @@ public:
     static matrix4x4 Rotate(float theta, vector3 rotation_vector);
 
     /**
+     * Catmul rom stuff
+     */
+    static matrix4x4 Rotate(vector3 x, vector3 y, vector3 z);
+
+    /**
      * Creates transformation matrix for scaling.
      *
      * @param scale_vector Vector containing scaling information.

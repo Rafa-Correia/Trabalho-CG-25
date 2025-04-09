@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <iostream>
+#include <tuple>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -17,6 +18,8 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #endif
+
+#define PATH_DIVISIONS 100
 
 class translation
 {

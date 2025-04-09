@@ -159,6 +159,13 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     }
 
                     // dont forget to read boolean "align". it is not being done yet
+                    bool align = false;
+                    tinyxml2::XMLError align_result = child->QueryBoolAttribute("align", &align);
+                    if (align_result != tinyxml2::XML_SUCCESS)
+                    {
+                        printer::print_warning("Couldn't read align attribute! Defaulting to false...");
+                        align = false;
+                    }
 
                     std::vector<vector3> points;
                     tinyxml2::XMLElement *point = child->FirstChildElement();
@@ -183,7 +190,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                         throw FailedToParseGroupException(ss.str());
                     }
 
-                    this->t = new translation_dynamic(time, false, points);
+                    this->t = new translation_dynamic(time, align, points);
                 }
 
                 else

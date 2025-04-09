@@ -179,9 +179,6 @@ void render_scene(void)
 	// render all meshes loaded in groups
 	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres, draw_path);
 
-	// fps counter
-	char str[20];
-
 	frames++;
 	int time = glutGet(GLUT_ELAPSED_TIME);
 	if (time - timebase > 1000)
@@ -190,12 +187,10 @@ void render_scene(void)
 		timebase = time;
 		frames = 0;
 
-		sprintf(str, "%.4f", fps);
+		std::stringstream ss;
+		ss << fps;
 
-		std::vector<std::string> metrics;
-		metrics.push_back("Framerate: " + std::string(str));
-
-		glutSetWindowTitle(str);
+		glutSetWindowTitle(ss.str().data());
 	}
 
 	// End of frame
@@ -459,8 +454,8 @@ int main(int argc, char **argv)
 	SetConsoleMode(hOut, dwMode);
 #endif
 
-	printer::print_exception("This is a test.");
-	printer::print_warning("This is a test.");
+	// printer::print_exception("This is a test.");
+	// printer::print_warning("This is a test.");
 
 	// MAIN LOOP!!!!!
 	glutMainLoop();
