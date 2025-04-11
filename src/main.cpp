@@ -260,12 +260,10 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 		cam->switch_camera_mode();
 		break;
 
-		/*
-		case 'p':
-		case 'P':
-			//was used to print info, now unused
-			break;
-		*/
+	case 'p':
+	case 'P':
+		printer::print_tutorial(glGetString(GL_VENDOR), glGetString(GL_RENDERER), glGetString(GL_VERSION));
+		break;
 
 	case 'r':
 	case 'R':
@@ -363,9 +361,13 @@ void printInfo()
 
 int main(int argc, char **argv)
 {
+	printer::print_init();
+
+	std::stringstream ss;
 	if (argc != 2)
 	{
-		std::cout << "Wrong number of arguments!" << std::endl;
+		ss << "Wrong number of arguments!";
+		printer::print_exception(ss.str(), "main");
 		return 1;
 	}
 
@@ -403,12 +405,10 @@ int main(int argc, char **argv)
 	{
 		cfg_obj = new config(argv[1]);
 	}
-	catch (const std::exception &exc)
+	catch (const std::exception &)
 	{
-		printer::print_exception(exc.what());
 		return 1;
 	}
-	printInfo();
 
 	// get camera from config
 	cam = cfg_obj->get_config_camera_init();

@@ -20,7 +20,7 @@ matrix4x4::matrix4x4(std::vector<float> content)
         std::stringstream ss;
 
         ss << "Trying to build matrix with " << content.size() << " element(s). Matrix can only be built with 16 elements, returning identity...";
-        printer::print_warning(ss.str());
+        printer::print_warning(ss.str(), "matrix4x4 constructor");
 
         for (int i = 0; i < 16; i++)
         {

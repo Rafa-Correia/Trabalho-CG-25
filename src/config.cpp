@@ -69,6 +69,7 @@ void config::load(const char *filepath)
 	if (doc.LoadFile(filepath) != tinyxml2::XML_SUCCESS)
 	{
 		ss << "Failed to load XML config file at: " << filepath;
+		printer::print_exception(ss.str(), "config::load");
 		throw FailedToLoadException(ss.str());
 	}
 
@@ -78,24 +79,25 @@ void config::load(const char *filepath)
 		if (std::string(root->Value()) != "world")
 		{
 			ss << "Unexpected root element: " << root->Value();
+			printer::print_exception(ss.str(), "config::load");
 			throw FailedToLoadException(ss.str());
 		}
 
 		tinyxml2::XMLElement *window = root->FirstChildElement("window");
 		if (window)
 		{
-			int width = -1, height = -1;
-			window->QueryIntAttribute("width", &width);
-			window->QueryIntAttribute("height", &height);
+			int width, height;
 
-			if (width == -1 || height == -1)
+			if (window->QueryIntAttribute("width", &width) != tinyxml2::XML_SUCCESS || window->QueryIntAttribute("height", &height) != tinyxml2::XML_SUCCESS)
 			{ // check if loaded
 				ss << "There was a problem loading width\\height!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 			if (width <= 0 || height <= 0)
 			{ // check if valid
-				ss << "Width\\Height is not valid!";
+				ss << "Width\\Height must be larger than 0!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 
@@ -105,6 +107,7 @@ void config::load(const char *filepath)
 		else
 		{
 			ss << "No window element!";
+			printer::print_exception(ss.str(), "config::load");
 			throw FailedToLoadException(ss.str());
 		}
 
@@ -114,48 +117,63 @@ void config::load(const char *filepath)
 			tinyxml2::XMLElement *position = camera->FirstChildElement("position");
 			if (position)
 			{
-				float x = 0, y = 0, z = 0;
-				position->QueryFloatAttribute("x", &x);
-				position->QueryFloatAttribute("y", &y);
-				position->QueryFloatAttribute("z", &z);
+				float x, y, z;
+
+				if (position->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || position->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || position->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+				{
+					ss << "x, y or z attribute of camera position is either missing or not a valid float!";
+					printer::print_exception(ss.str(), "config::load");
+					throw FailedToLoadException(ss.str());
+				}
 
 				c_pos = vector3(x, y, z);
 			}
 			else
 			{
 				ss << "No position element!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 
 			tinyxml2::XMLElement *lookat = camera->FirstChildElement("lookAt");
 			if (lookat)
 			{
-				float x = 0, y = 0, z = 0;
-				lookat->QueryFloatAttribute("x", &x);
-				lookat->QueryFloatAttribute("y", &y);
-				lookat->QueryFloatAttribute("z", &z);
+				float x, y, z;
+
+				if (lookat->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || lookat->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || lookat->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+				{
+					ss << "x, y or z attribute of camera lookat is either missing or not a valid float!";
+					printer::print_exception(ss.str(), "config::load");
+					throw FailedToLoadException(ss.str());
+				}
 
 				c_lookat = vector3(x, y, z);
 			}
 			else
 			{
 				ss << "No lookAt element!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 
 			tinyxml2::XMLElement *up = camera->FirstChildElement("up");
 			if (up)
 			{
-				float x = 0, y = 0, z = 0;
-				up->QueryFloatAttribute("x", &x);
-				up->QueryFloatAttribute("y", &y);
-				up->QueryFloatAttribute("z", &z);
+				float x, y, z;
+
+				if (up->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || up->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || up->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
+				{
+					ss << "x, y or z attribute of camera up is either missing or not a valid float!";
+					printer::print_exception(ss.str(), "config::load");
+					throw FailedToLoadException(ss.str());
+				}
 
 				c_up = vector3(x, y, z);
 			}
 			else
 			{
 				ss << "No up element!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 
@@ -167,14 +185,16 @@ void config::load(const char *filepath)
 				projection->QueryFloatAttribute("near", &near_p);
 				projection->QueryFloatAttribute("far", &far_p);
 
-				if (fov == -1 || near_p == -1 || far_p == -1)
+				if (projection->QueryFloatAttribute("fov", &fov) != tinyxml2::XML_SUCCESS || projection->QueryFloatAttribute("near", &near_p) != tinyxml2::XML_SUCCESS || projection->QueryFloatAttribute("far", &far_p) != tinyxml2::XML_SUCCESS)
 				{
-					ss << "Camera fov\\near plane\\far plane wasn't loaded!";
+					ss << "Camera fov\\near plane\\far plane attribute of camera projection was either missing or not a valid float!";
+					printer::print_exception(ss.str(), "config::load");
 					throw FailedToLoadException(ss.str());
 				}
 				if (fov <= 0 || near_p <= 0 || far_p <= 0)
 				{
-					ss << "Camera fov\\near plane\\far plane isn't valid!";
+					ss << "Camera fov\\near plane\\far plane must be larger than 0!";
+					printer::print_exception(ss.str(), "config::load");
 					throw FailedToLoadException(ss.str());
 				}
 
@@ -183,12 +203,14 @@ void config::load(const char *filepath)
 			else
 			{
 				ss << "No projection element!";
+				printer::print_exception(ss.str(), "config::load");
 				throw FailedToLoadException(ss.str());
 			}
 		}
 		else
 		{
 			ss << "No camera element!";
+			printer::print_exception(ss.str(), "config::load");
 			throw FailedToLoadException(ss.str());
 		}
 
@@ -208,12 +230,14 @@ void config::load(const char *filepath)
 		if (!loaded_group_at_least_once)
 		{
 			ss << "At least one group element is mandatory!";
+			printer::print_exception(ss.str(), "config::load");
 			throw FailedToLoadException(ss.str());
 		}
 	}
 	else
 	{
 		ss << "Failed to load root element!";
+		printer::print_exception(ss.str(), "config::load");
 		throw FailedToLoadException(ss.str());
 	}
 }

@@ -122,6 +122,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 if (seen.count(tag))
                 {
                     ss << "Duplicate element inside transform: " << tag;
+                    printer::print_exception(ss.str(), "group::parse_group");
                     throw FailedToParseGroupException(ss.str());
                 }
                 seen.insert(tag);
@@ -129,6 +130,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
             else
             {
                 ss << "Invalid element inside transform: " << tag;
+                printer::print_exception(ss.str(), "group::parse_group");
                 throw FailedToParseGroupException(ss.str());
             }
 
@@ -142,12 +144,13 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 {
                     // this now means this is a dynamic translation
                     float time;
-                    tinyxml2::XMLError result = child->QueryFloatAttribute("time", &time);
-                    if (result != tinyxml2::XML_SUCCESS)
+                    tinyxml2::XMLError time_result = child->QueryFloatAttribute("time", &time);
+                    if (time_result != tinyxml2::XML_SUCCESS)
                     {
                         // only valid error is XML_WRONG_ATTRIBUTE_TYPE
                         //  only this error can happen, since we checked if existed before
                         ss << "\"time\" attribute in translate element is not a valid float!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -155,6 +158,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (time <= 0)
                     {
                         ss << "\"time\" attribute in translate element must be larger than 0!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -167,6 +171,15 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                         align = false;
                     }
 
+                    // optional loop boolean.
+                    bool loop = true;
+                    tinyxml2::XMLError loop_result = child->QueryBoolAttribute("loop", &loop);
+                    if (loop_result != tinyxml2::XML_SUCCESS)
+                    {
+                        printer::print_info("No loop attribute found. Defaulting to true...");
+                        loop = true;
+                    }
+
                     std::vector<vector3> points;
                     tinyxml2::XMLElement *point = child->FirstChildElement();
                     while (point)
@@ -176,6 +189,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                         {
                             // load all points, if point has invalid / non existant attributes then you're isnide this block~
                             ss << "A \"point\" element has invalid or missing attributes!";
+                            printer::print_exception(ss.str(), "group::parse_group");
                             throw FailedToParseGroupException(ss.str());
                         }
                         vector3 p_pos = vector3(x, y, z);
@@ -187,6 +201,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (points.size() < 4)
                     {
                         ss << "Minimum number of \"point\" elements inside translation is 4!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -200,6 +215,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
                     {
                         ss << "x, y or z attribute in translate element is either missing or not a valid float!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -220,12 +236,14 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (result != tinyxml2::XML_SUCCESS)
                     {
                         ss << "\"time\" attribute in rotate element is not a valid float!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
                     if (time <= 0)
                     {
                         ss << "\"time\" attribute in rotate element must be larger than 0!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -234,6 +252,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
                     {
                         ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -246,12 +265,14 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                     if (child->QueryFloatAttribute("angle", &angle) != tinyxml2::XML_SUCCESS)
                     {
                         ss << "angle attribute of rotate element is either missing or not a valid float! Perhaps you're missing a \"time\" attribute?";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
                     if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
                     {
                         ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                        printer::print_exception(ss.str(), "group::parse_group");
                         throw FailedToParseGroupException(ss.str());
                     }
 
@@ -269,6 +290,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 if (child->QueryFloatAttribute("x", &x) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("y", &y) != tinyxml2::XML_SUCCESS || child->QueryFloatAttribute("z", &z) != tinyxml2::XML_SUCCESS)
                 {
                     ss << "x, y or z attribute of rotate element is either missing or not a valid float!";
+                    printer::print_exception(ss.str(), "group::parse_group");
                     throw FailedToParseGroupException(ss.str());
                 }
 
@@ -303,6 +325,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                 if (!parse_model_file(filepath))
                 {
                     ss << "Model file is invalid: " << filepath;
+                    printer::print_exception(ss.str(), "group::parse_model_file");
                     throw FailedToParseGroupException(ss.str());
                 }
 
@@ -313,6 +336,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
             else
             {
                 ss << "A model element must have a file attribute!";
+                printer::print_exception(ss.str(), "group::parse_group");
                 throw FailedToParseGroupException(ss.str());
             }
             model = model->NextSiblingElement("model");
@@ -320,6 +344,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
         if (!loaded_model_at_least_once)
         {
             ss << "A models element must have at least one model child element!";
+            printer::print_exception(ss.str(), "group::parse_group");
             throw FailedToParseGroupException(ss.str());
         }
     }

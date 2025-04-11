@@ -9,7 +9,7 @@
     
     <group>
         <transform> 
-            <translate time="15" align="True" >
+            <translate time="15" align="True" loop="True">
                 <point x="0" y="0" z="2" />
                 <point x="2" y="0" z="1" />
                 <point x="3" y="0.5" z="0" />
