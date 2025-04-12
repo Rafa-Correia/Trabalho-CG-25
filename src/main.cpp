@@ -286,10 +286,12 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 		break;
 
 	case 27:
+		// this is esc!
 		exit(0);
 		break;
 
 	default:
+		// any key that has no special effect will instead be registered as being pressed down
 		key_states[c] = true;
 		break;
 	}
@@ -297,66 +299,14 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 
 void processKeyRelease(unsigned char c, int mouse_x, int mouse_y)
 {
+	// sets key state to being up (obvious, eh?)
 	key_states[c] = false;
 }
 
 void processMouse(int x, int y)
 {
+	// x and y are the offset of the mouse from the previous frame
 	cam->update_camera_direction(x, y);
-}
-
-void processSpecialKeys(int key, int xx, int yy)
-{
-	// no special keys are used
-}
-
-void printInfo()
-{
-	std::cout << "\n>------------------------------------------------------------------------------------------<\n"
-			  << std::endl;
-
-	std::cout << "\n\n> ! - - - - - General Info - - - - - ! <\n"
-			  << std::endl;
-	std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
-	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
-
-	std::cout << "\n\n> ! - - - - - Debug options - - - - - ! <\n"
-			  << std::endl;
-
-	std::cout << "Press 1 to toggle axis rendering." << std::endl;
-	std::cout << "Press 2 to toggle between wire and solid rendering mode." << std::endl;
-	std::cout << "Press 3 to toggle dynamic translation path rendering." << std::endl;
-	std::cout << "Press 4 to toggle animation on or off." << std::endl;
-
-	std::cout << "\nPress 5 to toggle bounding sphere rendering." << std::endl;
-	std::cout << "Press 6 to toggle view frustum rendering." << std::endl;
-	std::cout << "Press 7 to toggle view frustum culling." << std::endl;
-	std::cout << "Press 8 to toggle frustum update on free camera mode." << std::endl;
-
-	std::cout << "\n\n> ! - - - - - Keyboard / mouse controls - - - - - ! <\n"
-			  << std::endl;
-
-	std::cout << ">- - - Fixed camera - - -<\n"
-			  << std::endl;
-	std::cout << "W/A/S/D to rotate camera around target." << std::endl;
-	std::cout << "Press Z to zoom into target." << std::endl;
-	std::cout << "Press X to zoom out of target." << std::endl;
-	std::cout << "Press C to change camera target." << std::endl;
-	std::cout << "Press R to reset camera to first target." << std::endl;
-
-	std::cout << "\n>- - - Free camera - - -<\n"
-			  << std::endl;
-	std::cout << "Use mouse to look around / change camera direction." << std::endl;
-	std::cout << "W/A/S/D to move camera relative to it's direction." << std::endl;
-
-	std::cout << "\n>- - - General / Common - - -<\n"
-			  << std::endl;
-	std::cout << "Press F to switch between fixed camera and free camera mode." << std::endl;
-	std::cout << "Press ESC to exit." << std::endl;
-
-	std::cout << "\n>------------------------------------------------------------------------------------------<\n\n\n\n"
-			  << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -384,7 +334,6 @@ int main(int argc, char **argv)
 	glutKeyboardFunc(processKeyPress);
 	glutKeyboardUpFunc(processKeyRelease);
 	glutPassiveMotionFunc(processMouse);
-	glutSpecialFunc(processSpecialKeys);
 
 #ifndef __APPLE__
 	glewInit();
@@ -405,8 +354,17 @@ int main(int argc, char **argv)
 	{
 		cfg_obj = new config(argv[1]);
 	}
-	catch (const std::exception &)
+	catch (const FailedToLoadException &)
 	{
+		return 1;
+	}
+	catch (const FailedToParseGroupException &)
+	{
+		return 1;
+	}
+	catch (const std::exception &exc)
+	{
+		printer::print_exception(exc.what(), "unknown");
 		return 1;
 	}
 

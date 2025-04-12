@@ -205,7 +205,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
                         throw FailedToParseGroupException(ss.str());
                     }
 
-                    this->t = new translation_dynamic(time, align, points);
+                    this->t = new translation_dynamic(time, align, points, loop);
                 }
 
                 else

@@ -50,7 +50,7 @@ public:
                           << std::endl;
         }
 
-        static void print_tutorial(const unsigned char *vendor = "unknown", const unsigned char *renderer = "unknown", const unsigned char *version = "unknown")
+        static void print_tutorial(const unsigned char *vendor, const unsigned char *renderer, const unsigned char *version)
         {
                 // noted that using endl (flushing) every time this function is called is VERY (!) inneficient. We should be "\n"ing
                 // and flushing only at the end. This is only called like once, so it's probably fine.

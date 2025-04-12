@@ -6,7 +6,7 @@
 class translation_dynamic : public translation
 {
 public:
-    translation_dynamic(float total_time, bool align, std::vector<vector3> points, int path_divisions = PATH_DIVISIONS);
+    translation_dynamic(float total_time, bool align, std::vector<vector3> points, bool loop, int path_divisions = PATH_DIVISIONS);
 
     void update(int delta_time_ms) override;
     matrix4x4 get_translation() override;
@@ -17,6 +17,7 @@ public:
 private:
     float total_time;
     bool align = false;
+    bool loop = true;
     int animation_timer;
 
     std::vector<vector3> points;
