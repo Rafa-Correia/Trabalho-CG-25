@@ -1,87 +1,66 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.15)
+project(trabalhocg25)
 
-# Project Name
-PROJECT(trabalhocg25)
-
+# Set folders for Visual Studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# Add top-level include directory
 include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/include/transforms)
-include_directories(${CMAKE_SOURCE_DIR}/generator/include)
 
-# Add source files
-set(SOURCES src/main.cpp src/tinyxml2.cpp src/config.cpp src/group.cpp src/camera.cpp src/matrix4x4.cpp src/vector3.cpp src/vector4.cpp src/frustum.cpp src/transforms/rotation_dynamic.cpp src/transforms/rotation_static.cpp src/transforms/translation_dynamic.cpp src/transforms/translation_static.cpp)
+# Add subdirectories for modularized code
+add_subdirectory(src/math)
+add_subdirectory(src/external)
+add_subdirectory(src/engine)
+add_subdirectory(src/generator)
 
-# Create the executable
-add_executable(${PROJECT_NAME} ${SOURCES})
-add_executable("generator" generator/src/generator.cpp generator/src/shapes/cone.cpp generator/src/shapes/sphere.cpp generator/src/shapes/box.cpp generator/src/shapes/plane.cpp generator/src/shapes/cylinder.cpp generator/src/shapes/torus.cpp)
 
+# Find OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
 link_directories(${OpenGL_LIBRARY_DIRS})
 add_definitions(${OpenGL_DEFINITIONS})
 
 if(NOT OPENGL_FOUND)
-    message(ERROR " OPENGL not found!")
-endif(NOT OPENGL_FOUND)
+    message(FATAL_ERROR "OPENGL not found!")
+endif()
 
-if  (WIN32)
+# Platform-specific toolkit settings
+if(WIN32)
+    set(TOOLKITS_FOLDER "${CMAKE_SOURCE_DIR}/toolkits" CACHE PATH "Path to Toolkits folder")
+    message(STATUS "Toolkits_DIR set to: ${TOOLKITS_FOLDER}")
 
-	set(TOOLKITS_FOLDER "${CMAKE_SOURCE_DIR}/toolkits" CACHE PATH "Path to Toolkits folder")
-	message(STATUS "Toolkits_DIR set to: " ${TOOLKITS_FOLDER})
-	
-	if (NOT EXISTS "${TOOLKITS_FOLDER}/glut/GL/glut.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glut/glut32.lib")
-		message(ERROR ": GLUT not found")
-	endif (NOT EXISTS "${TOOLKITS_FOLDER}/glut/GL/glut.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glut/glut32.lib")	
-	
-	if (NOT EXISTS "${TOOLKITS_FOLDER}/glew/GL/glew.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glew/glew32.lib")
-		message(ERROR ": GLEW not found")
-	endif (NOT EXISTS "${TOOLKITS_FOLDER}/glew/GL/glew.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glew/glew32.lib")	
+    include_directories(${TOOLKITS_FOLDER}/glut ${TOOLKITS_FOLDER}/glew)
 
-	
-	include_directories(${TOOLKITS_FOLDER}/glut ${TOOLKITS_FOLDER}/glew)
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} 
-										  ${TOOLKITS_FOLDER}/glut/glut32.lib 
-										  ${TOOLKITS_FOLDER}/glew/glew32.lib )
-	
-	if (EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")
-		file(COPY ${TOOLKITS_FOLDER}/glut/glut32.dll DESTINATION ${CMAKE_BINARY_DIR})
-		file(COPY ${TOOLKITS_FOLDER}/glew/glew32.dll DESTINATION ${CMAKE_BINARY_DIR})
-	endif(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")	
-	
-	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+    target_link_libraries(engine PRIVATE
+        ${OPENGL_LIBRARIES}
+        ${TOOLKITS_FOLDER}/glut/glut32.lib
+        ${TOOLKITS_FOLDER}/glew/glew32.lib
+    )
 
-	
-	
-else (WIN32) #Linux and Mac
+    if(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll" AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")
+        file(COPY ${TOOLKITS_FOLDER}/glut/glut32.dll DESTINATION ${CMAKE_BINARY_DIR})
+        file(COPY ${TOOLKITS_FOLDER}/glew/glew32.dll DESTINATION ${CMAKE_BINARY_DIR})
+    endif()
 
-	set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} Wno-deprecated")
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT engine)
 
-	find_package(GLUT REQUIRED)
-	include_directories(${GLUT_INCLUDE_DIR})
-	link_directories(${GLUT_LIBRARY_DIRS})
-	add_definitions(${GLUT_DEFINITIONS})
-	
-	if (NOT APPLE)
-		find_package(GLEW REQUIRED)
-		include_directories(${GLEW_INCLUDE_DIRS})
-		link_libraries(${GLEW_LIBRARIES})
-		target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES})
-	else (NOT APPLE)
-		target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
-	endif(NOT APPLE)
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
-	if(NOT GLUT_FOUND)
-	   message(ERROR ": GLUT not found!")
-	endif(NOT GLUT_FOUND)
-	
-endif(WIN32)
+    find_package(GLUT REQUIRED)
+    include_directories(${GLUT_INCLUDE_DIR})
+    link_directories(${GLUT_LIBRARY_DIRS})
+    add_definitions(${GLUT_DEFINITIONS})
 
+    if(NOT APPLE)
+        find_package(GLEW REQUIRED)
+        include_directories(${GLEW_INCLUDE_DIRS})
+        target_link_libraries(engine ${GLEW_LIBRARIES})
+    endif()
 
+    target_link_libraries(engine PRIVATE ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 
-
-
-
-
-
+    if(NOT GLUT_FOUND)
+        message(FATAL_ERROR ": GLUT not found!")
+    endif()
+endif()

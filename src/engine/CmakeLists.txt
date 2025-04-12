@@ -1,0 +1,16 @@
+file(GLOB_RECURSE ENGINE_SOURCES *.cpp)
+add_executable(engine ${ENGINE_SOURCES})
+target_include_directories(engine PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+target_link_libraries(engine
+    PRIVATE
+        math
+        external
+)
+
+if (WIN32)
+    target_include_directories(engine PRIVATE
+        ${CMAKE_SOURCE_DIR}/toolkits/glut
+        ${CMAKE_SOURCE_DIR}/toolkits/glew
+    )
+endif()
