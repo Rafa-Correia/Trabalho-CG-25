@@ -44,3 +44,6 @@ bin/*
 
 # test_files folder 
 /test_files/*
+
+# patch files
+*.patch

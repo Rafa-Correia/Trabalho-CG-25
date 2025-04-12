@@ -1,6 +1,8 @@
 #ifndef VECTOR3_HPP
 #define VECTOR3_HPP
 
+#include <iostream>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -64,6 +66,8 @@ public:
     vector3 &operator-=(const vector3 &other);
     vector3 &operator*=(const float &other);
     vector3 &operator/=(const float &other);
+
+    friend std::ostream &operator<<(std::ostream &os, const vector3 &vec);
 
 private:
 };

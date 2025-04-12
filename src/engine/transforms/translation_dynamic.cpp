@@ -145,7 +145,7 @@ std::tuple<vector3, vector3> translation_dynamic::p_d_on_curve(float time_alpha)
 
 std::tuple<vector3, vector3> translation_dynamic::p_d_on_segment(float segment_time_alpha, vector3 p0, vector3 p1, vector3 p2, vector3 p3)
 {
-	matrix4x4 m = matrix4x4::Catmul_rom();
+	static matrix4x4 m = matrix4x4::Catmul_rom();
 
 	vector4 a_x; // = m * px
 	vector4 a_y; // = m * py

@@ -1,6 +1,6 @@
 #include "generator/box.hpp"
 
-void box_generator::generate(int argc, char **argv) const
+void box_generator::generate(int argc, char **argv)
 {
     if (argc != 5)
     {

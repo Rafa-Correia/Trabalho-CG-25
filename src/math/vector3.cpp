@@ -124,3 +124,9 @@ vector3 &vector3::operator/=(const float &other)
 
     return *this;
 }
+
+std::ostream &operator<<(std::ostream &os, const vector3 &vec)
+{
+    os << vec.x << ";" << vec.y << ";" << vec.z;
+    return os;
+}

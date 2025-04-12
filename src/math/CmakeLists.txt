@@ -1,3 +1,7 @@
-file(GLOB_RECURSE MATH_SOURCES *.cpp)
-add_library(math STATIC ${MATH_SOURCES})
+add_library(math STATIC
+    vector3.cpp
+    vector4.cpp 
+    matrix4x4.cpp 
+    math_utils.cpp
+)
 target_include_directories(math PUBLIC ${CMAKE_SOURCE_DIR}/include)

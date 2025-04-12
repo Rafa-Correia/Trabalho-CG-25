@@ -6,7 +6,7 @@
 class plane_generator : public shape_generator
 {
 public:
-    void generate(int argc, char **argv) const override;
+    void generate(int argc, char **argv) override;
 };
 
 #endif

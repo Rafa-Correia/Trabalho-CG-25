@@ -4,38 +4,37 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "shape_generator.hpp"
-#include "cone.hpp"
-#include "sphere.hpp"
-#include "cylinder.hpp"
-#include "box.hpp"
-#include "plane.hpp"
-#include "torus.hpp"
+#include "generator/shape_generator.hpp"
+#include "generator/cone.hpp"
+#include "generator/sphere.hpp"
+#include "generator/cylinder.hpp"
+#include "generator/box.hpp"
+#include "generator/plane.hpp"
+#include "generator/torus.hpp"
+#include "generator/patch.hpp"
+
+#include "utils/printer.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
 
-void printRedException(const std::string& message) {
-#ifdef _WIN32
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
-    std::cout << "Exception: ";
-
-    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-    std::cout << " " << message << std::endl;
-#else
-    std::cout << "\033[31mException: \033[0m " << message << std::endl;
-#endif
-}
-
 int main(int argc, char **argv)
 {
+    // enable ansi code support on windows
+#ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    GetConsoleMode(hOut, &dwMode);
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hOut, dwMode);
+#endif
+
     shape_generator *generator;
 
     std::string model_type(argv[1]);
@@ -55,24 +54,33 @@ int main(int argc, char **argv)
     {
         generator = new plane_generator();
     }
-    else if (model_type.compare("cylinder") == 0) 
+    else if (model_type.compare("cylinder") == 0)
     {
         generator = new cylinder_generator();
     }
-    else if (model_type.compare("torus") == 0) {
+    else if (model_type.compare("torus") == 0)
+    {
         generator = new torus_generator();
+    }
+    else if (model_type.compare("patch") == 0)
+    {
+        generator = new patch_generator();
     }
     else
     {
-        printRedException("Invalid shape!");
+        printer::print_exception("Invalid shape!");
         return 1;
     }
 
-    try {
+    try
+    {
         generator->generate(argc, argv);
     }
-    catch (const InvalidArgumentsException& exc) {
-        printRedException(exc.what());
+    catch (const InvalidArgumentsException &exc)
+    {
+        std::stringstream ss;
+        ss << "gen " << model_type;
+        printer::print_exception(exc.what(), ss.str());
         return 1;
     }
 

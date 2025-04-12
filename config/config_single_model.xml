@@ -15,7 +15,7 @@
         </transform>
 
         <models>
-            <model file="torus.3d"/>
+            <model file="patch.3d"/>
         </models>
     </group>
 </world>

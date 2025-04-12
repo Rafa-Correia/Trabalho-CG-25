@@ -100,6 +100,11 @@ public:
     static matrix4x4 Catmul_rom();
 
     /**
+     * Creates matrix for bezier curves
+     */
+    static matrix4x4 Bezier();
+
+    /**
      * Getter for matrix data in specific position.
      *
      * @param row Row of intended value.

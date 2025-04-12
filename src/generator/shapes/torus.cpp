@@ -1,6 +1,6 @@
 #include "generator/torus.hpp"
 
-void torus_generator::generate(int argc, char **argv) const
+void torus_generator::generate(int argc, char **argv)
 {
     // args -> -name- torus center_radius inner_radius n_slices n_sections file
     if (argc != 7)
@@ -64,10 +64,10 @@ void torus_generator::generate(int argc, char **argv) const
 
     // all arguments are initialized at this point!
 
-    std::cout << "Center radius: " << center_radius << std::endl;
-    std::cout << "Inner radius: " << inner_radius << std::endl;
-    std::cout << "Number of slices: " << n_slices << std::endl;
-    std::cout << "Number of sections: " << n_sections << std::endl;
+    // std::cout << "Center radius: " << center_radius << std::endl;
+    // std::cout << "Inner radius: " << inner_radius << std::endl;
+    // std::cout << "Number of slices: " << n_slices << std::endl;
+    // std::cout << "Number of sections: " << n_sections << std::endl;
 
     std::ofstream file(filepath);
 

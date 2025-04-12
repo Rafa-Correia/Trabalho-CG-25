@@ -5,10 +5,9 @@
 #include <iostream>
 #include <vector>
 
-class printer
+namespace printer
 {
-public:
-        static void print_warning(const std::string &message, const std::string &caller = std::string(""))
+        inline void print_warning(const std::string &message, const std::string &caller = std::string(""))
         {
                 if (std::string("").compare(caller) != 0)
                 {
@@ -20,7 +19,7 @@ public:
                 }
         }
 
-        static void print_exception(const std::string &message, const std::string &caller = std::string(""))
+        inline void print_exception(const std::string &message, const std::string &caller = std::string(""))
         {
                 if (std::string("").compare(caller) != 0)
                 {
@@ -32,7 +31,7 @@ public:
                 }
         }
 
-        static void print_info(const std::string &message, const std::string &caller = std::string(""))
+        inline void print_info(const std::string &message, const std::string &caller = std::string(""))
         {
                 if (std::string("").compare(caller) != 0)
                 {
@@ -44,13 +43,13 @@ public:
                 }
         }
 
-        static void print_init()
+        inline void print_init()
         {
                 std::cout << "\nPress P to print the whole shebang (tutorial / keys).\n\n"
                           << std::endl;
         }
 
-        static void print_tutorial(const unsigned char *vendor, const unsigned char *renderer, const unsigned char *version)
+        inline void print_tutorial(const unsigned char *vendor, const unsigned char *renderer, const unsigned char *version)
         {
                 // noted that using endl (flushing) every time this function is called is VERY (!) inneficient. We should be "\n"ing
                 // and flushing only at the end. This is only called like once, so it's probably fine.

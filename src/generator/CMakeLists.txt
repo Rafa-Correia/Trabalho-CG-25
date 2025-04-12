@@ -5,5 +5,4 @@ target_include_directories(generator PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(generator
     PRIVATE
         math
-        utils
 )

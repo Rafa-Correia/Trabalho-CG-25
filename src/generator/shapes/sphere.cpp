@@ -1,6 +1,6 @@
 #include "generator/sphere.hpp"
 
-void sphere_generator::generate(int argc, char **argv) const
+void sphere_generator::generate(int argc, char **argv)
 {
     if (argc != 6)
     {
@@ -78,10 +78,10 @@ void sphere_generator::generate(int argc, char **argv) const
         throw InvalidArgumentsException("Number of stacks must be larger than 0!");
     }
 
-    std::cout << "Radius: " << radius << std::endl;
-    std::cout << "Slices: " << slices << std::endl;
-    std::cout << "Stacks: " << stacks << std::endl;
-    std::cout << "Filepath: " << filepath << std::endl;
+    // std::cout << "Radius: " << radius << std::endl;
+    // std::cout << "Slices: " << slices << std::endl;
+    // std::cout << "Stacks: " << stacks << std::endl;
+    // std::cout << "Filepath: " << filepath << std::endl;
 
     std::ofstream file(filepath);
 

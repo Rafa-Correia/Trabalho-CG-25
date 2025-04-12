@@ -1,6 +1,6 @@
 #include "generator/plane.hpp"
 
-void plane_generator::generate(int argc, char **argv) const
+void plane_generator::generate(int argc, char **argv)
 {
     if (argc != 5)
     {

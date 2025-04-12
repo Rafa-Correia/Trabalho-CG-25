@@ -1,6 +1,6 @@
 #include "generator/cylinder.hpp"
 
-void cylinder_generator::generate(int argc, char **argv) const
+void cylinder_generator::generate(int argc, char **argv)
 {
     if (argc != 7)
     {
@@ -100,11 +100,11 @@ void cylinder_generator::generate(int argc, char **argv) const
         throw InvalidArgumentsException("Number of stacks must be larger than 0!");
     }
 
-    std::cout << "Radius: " << radius << std::endl;
-    std::cout << "Heigth: " << height << std::endl;
-    std::cout << "Slices: " << slices << std::endl;
-    std::cout << "Stacks: " << stacks << std::endl;
-    std::cout << "Filepath: " << filepath << std::endl;
+    // std::cout << "Radius: " << radius << std::endl;
+    // std::cout << "Heigth: " << height << std::endl;
+    // std::cout << "Slices: " << slices << std::endl;
+    // std::cout << "Stacks: " << stacks << std::endl;
+    // std::cout << "Filepath: " << filepath << std::endl;
 
     std::ofstream file(filepath);
 

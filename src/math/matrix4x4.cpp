@@ -223,6 +223,34 @@ matrix4x4 matrix4x4::Catmul_rom()
     return result;
 }
 
+matrix4x4 matrix4x4::Bezier()
+{
+    matrix4x4 result;
+
+    // todo
+    result.m_data[0] = -1;
+    result.m_data[1] = 3;
+    result.m_data[2] = -3;
+    result.m_data[3] = 1;
+
+    result.m_data[4] = 3;
+    result.m_data[5] = -6;
+    result.m_data[6] = 3;
+    result.m_data[7] = 0;
+
+    result.m_data[8] = -3;
+    result.m_data[9] = 3;
+    result.m_data[10] = 0;
+    result.m_data[11] = 0;
+
+    result.m_data[12] = 1;
+    result.m_data[13] = 0;
+    result.m_data[14] = 0;
+    result.m_data[15] = 0;
+
+    return result;
+}
+
 // getters
 
 float matrix4x4::get_data_at_point(int row, int column)
