@@ -13,47 +13,10 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
     glPushMatrix();
     glMultMatrixf(model_matrix);
 
-    if (render_bounding_spheres)
+    for (size_t i = 0; i < models.size(); i++)
     {
-        glColor3f(1.0f, 0.0f, 0.0f);
-        for (size_t i = 0; i < mesh_bounding_spheres.size(); i++)
-        {
-            glPushMatrix();
-            glLoadIdentity();
-            glMultMatrixf(camera_transform);
-            glTranslatef(position.x, position.y, position.z);
-            vector4 bounding_sphere_info = mesh_bounding_spheres.at(i);
-            glTranslatef(bounding_sphere_info.x, bounding_sphere_info.y, bounding_sphere_info.z);
-            glutWireSphere(bounding_sphere_info.w, 10, 10);
-            glPopMatrix();
-        }
-    }
-
-    glColor4f(color.x, color.y, color.z, color.w);
-    for (unsigned int j = 0; j < mesh_count; j++)
-    {
-        if (frustum_cull && !view_frustum.inside_frustum(position, mesh_bounding_spheres.at(j).w))
-            continue;
-
-        GLuint VBO = group_vbos.at(j);
-        std::tuple<bool, GLuint> EBO_t = group_ebos.at(j);
-        int obj_count = vertex_or_index_count.at(j);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glVertexPointer(3, GL_FLOAT, 0, 0);
-
-        if (!std::get<0>(EBO_t))
-        {
-            glDrawArrays(GL_TRIANGLES, 0, obj_count);
-        }
-        else
-        {
-
-            GLuint EBO = std::get<1>(EBO_t);
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-            glDrawElements(GL_TRIANGLES, obj_count, GL_UNSIGNED_INT, NULL);
-        }
+        model mod = models.at(i);
+        mod.render_model(view_frustum, frustum_cull, this->position, render_bounding_spheres, camera_transform);
     }
 
     for (size_t i = 0; i < sub_groups.size(); i++)
@@ -65,8 +28,14 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
 
     if (draw_translation_path)
     {
+#ifdef USE_LIGHTING
+        glDisable(GL_LIGHTING);
+#endif
         if (t)
             t->draw_path();
+#ifdef USE_LIGHTING
+        glEnable(GL_LIGHTING);
+#endif
     }
 }
 
@@ -315,31 +284,12 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
     if (models)
     {
         bool loaded_model_at_least_once = false;
-        tinyxml2::XMLElement *model = models->FirstChildElement("model");
-        while (model)
+        tinyxml2::XMLElement *model_element = models->FirstChildElement("model");
+        while (model_element)
         {
             loaded_model_at_least_once = true;
-            const char *filepath = model->Attribute("file");
-            if (filepath)
-            {
-                if (!parse_model_file(filepath))
-                {
-                    ss << "Model file is invalid: " << filepath;
-                    printer::print_exception(ss.str(), "group::parse_model_file");
-                    throw FailedToParseGroupException(ss.str());
-                }
-
-                mesh_bounding_spheres.at(mesh_count).w *= bound_scaling;
-
-                mesh_count++;
-            }
-            else
-            {
-                ss << "A model element must have a file attribute!";
-                printer::print_exception(ss.str(), "group::parse_group");
-                throw FailedToParseGroupException(ss.str());
-            }
-            model = model->NextSiblingElement("model");
+            this->models.push_back(model(model_element));
+            model_element = model_element->NextSiblingElement("model");
         }
         if (!loaded_model_at_least_once)
         {
@@ -354,26 +304,10 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
         // return false;
     }
 
-    tinyxml2::XMLElement *color_element = root->FirstChildElement("color");
-    if (color_element)
-    {
-        float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f;
+    // need to parse material!
+    // for now use default
 
-        color_element->QueryFloatAttribute("r", &r);
-        color_element->QueryFloatAttribute("g", &g);
-        color_element->QueryFloatAttribute("b", &b);
-        color_element->QueryFloatAttribute("a", &a);
-
-        if (a <= 0.0f || a > 1.0f)
-            a = 1.0f;
-
-        color = vector4(r, g, b, a);
-    }
-    else
-    {
-        // if no color element then mesh is white.
-        color = vector4(1.0f, 1.0f, 1.0f, 1.0f);
-    }
+    this->mat = material();
 
     // loop through all subgroups
 
@@ -383,133 +317,6 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
         group sub(subgroup, bound_scaling);
         sub_groups.push_back(sub);
     }
-}
-
-bool group::parse_model_file(const char *filepath)
-{
-    std::ifstream file(filepath);
-
-    if (!file)
-    {
-        std::cout << "Failed to open file: " << filepath << std::endl;
-        return false;
-    }
-
-    bool i_flag = false, n_flag = false, t_flag = false;
-
-    std::vector<float> vertices;
-    std::vector<int> indices;
-    std::vector<float> normals;
-    std::vector<float> tex_coords;
-
-    std::string line;
-    std::vector<char> data_order;
-    int line_index = 0;
-    while (std::getline(file, line))
-    {
-        std::stringstream ss(line);
-        std::string token;
-
-        if (line_index == 0)
-        {
-            const char *line_data = line.data();
-            if (line_data[0] == '1')
-            {
-                i_flag = true;
-                data_order.push_back('i');
-            }
-            if (line_data[1] == '1')
-            {
-                n_flag = true;
-                data_order.push_back('n');
-            }
-            if (line_data[2] == '1')
-            {
-                t_flag = true;
-                data_order.push_back('t');
-            }
-        }
-        else if (line_index == 1)
-        {
-            std::vector<float> bounding_sphere_info_vector;
-            while (std::getline(ss, token, ';'))
-            {
-                float bounding_info_token = std::stof(token);
-                bounding_sphere_info_vector.push_back(bounding_info_token);
-            }
-
-            mesh_bounding_spheres.push_back(vector4(bounding_sphere_info_vector.at(0), bounding_sphere_info_vector.at(1), bounding_sphere_info_vector.at(2), bounding_sphere_info_vector.at(3)));
-        }
-        else if (line_index == 2)
-        { // vertices
-            while (std::getline(ss, token, ';'))
-            {
-                float vertex_float = std::stof(token);
-                vertices.push_back(vertex_float);
-            }
-
-            GLuint VBO;
-            glGenBuffers(1, &VBO);
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-            group_vbos.push_back(VBO);
-
-            if (!i_flag)
-            {
-                group_ebos.push_back(std::tuple<bool, GLuint>(false, 0));
-                vertex_or_index_count.push_back(vertices.size() / 3);
-            }
-            if (!n_flag)
-            {
-            }
-
-            // mesh_vertices_buffer.push_back(vertices);
-        }
-        else
-        { // all the others
-            if (data_order.size() == 0)
-                break; // only indices
-
-            if (data_order.at(line_index - 3) == 'i')
-            {
-                // read indices
-                while (std::getline(ss, token, ';'))
-                {
-                    int index = std::stoi(token);
-                    indices.push_back(index);
-                }
-
-                GLuint EBO;
-
-                glGenBuffers(1, &EBO);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * indices.size(), indices.data(), GL_STATIC_DRAW);
-
-                std::tuple<bool, GLuint> EBO_tuple(true, EBO);
-
-                group_ebos.push_back(EBO_tuple);
-
-                vertex_or_index_count.push_back(indices.size());
-            }
-            else if (data_order.at(line_index - 3) == 'n')
-            {
-                // read normals
-                // unused for now
-            }
-            else if (data_order.at(line_index - 3) == 't')
-            {
-                // read texture coordinates
-                // unused for now
-            }
-        }
-
-        line_index++;
-    }
-
-    file.close();
-
-    return true;
 }
 
 // getters

@@ -27,8 +27,10 @@ void plane_generator::generate(int argc, char **argv)
         throw InvalidArgumentsException("Error opening the file!");
     }
 
-    std::vector<float> vertices;
+    std::vector<vector3> vertices;
     std::vector<size_t> indices;
+
+    std::vector<vector3> normals;
 
     float halfSize = length / 2.0f;
     float step = length / divisions;
@@ -49,9 +51,11 @@ void plane_generator::generate(int argc, char **argv)
                 float y = 0.0f;
                 float z = oz + j * uz + i * vz;
 
-                vertices.push_back(x);
-                vertices.push_back(y);
-                vertices.push_back(z);
+                vector3 v(x, y, z);
+                vertices.push_back(v);
+
+                vector3 n(0.0f, 1.0f, 0.0f);
+                normals.push_back(n);
 
                 if (i < divisions && j < divisions)
                 {
@@ -68,27 +72,32 @@ void plane_generator::generate(int argc, char **argv)
                 }
             }
         };
-        file << "100\n"; // Placeholder de settings, pode ajustar se necessário
+
+        file << "110\n"; // Placeholder de settings, pode ajustar se necessário
 
         file << "0;0;0;" << (length * sqrtf(2)) / 2.0f << "\n";
 
-        float *vertices_array = vertices.data();
-        // Escreve vértices
         for (size_t i = 0; i < vertices.size(); i++)
         {
-            if (i > 0)
+            if (i != 0)
                 file << ";";
-            file << vertices_array[i];
+            file << vertices.at(i);
         }
         file << "\n";
 
-        size_t *indices_array = indices.data();
-        // Escreve índices
         for (size_t i = 0; i < indices.size(); i++)
         {
-            if (i > 0)
+            if (i != 0)
                 file << ";";
-            file << indices_array[i];
+            file << indices.at(i);
+        }
+        file << "\n";
+
+        for (size_t i = 0; i < normals.size(); i++)
+        {
+            if (i != 0)
+                file << ";";
+            file << normals.at(i);
         }
 
         file << std::flush;

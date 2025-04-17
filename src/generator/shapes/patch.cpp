@@ -80,6 +80,12 @@ void patch_generator::generate(int argc, char **argv)
             vector3 p2 = math_utils::point_on_bezier(u, patch_control_points.at(2 * 4), patch_control_points.at(2 * 4 + 1), patch_control_points.at(2 * 4 + 2), patch_control_points.at(2 * 4 + 3));
             vector3 p3 = math_utils::point_on_bezier(u, patch_control_points.at(3 * 4), patch_control_points.at(3 * 4 + 1), patch_control_points.at(3 * 4 + 2), patch_control_points.at(3 * 4 + 3));
 
+            // partial derivatives for derivative u
+            vector3 pd_u0 = math_utils::derivative_on_bezier(u, patch_control_points.at(0 * 4), patch_control_points.at(0 * 4 + 1), patch_control_points.at(0 * 4 + 2), patch_control_points.at(0 * 4 + 3));
+            vector3 pd_u1 = math_utils::derivative_on_bezier(u, patch_control_points.at(1 * 4), patch_control_points.at(1 * 4 + 1), patch_control_points.at(1 * 4 + 2), patch_control_points.at(1 * 4 + 3));
+            vector3 pd_u2 = math_utils::derivative_on_bezier(u, patch_control_points.at(2 * 4), patch_control_points.at(2 * 4 + 1), patch_control_points.at(2 * 4 + 2), patch_control_points.at(2 * 4 + 3));
+            vector3 pd_u3 = math_utils::derivative_on_bezier(u, patch_control_points.at(3 * 4), patch_control_points.at(3 * 4 + 1), patch_control_points.at(3 * 4 + 2), patch_control_points.at(3 * 4 + 3));
+
             for (size_t k = 0; k <= tesselation_level; k++, patch_point_count++)
             {
                 // ss << "i: " << i << " || j: " << j << " || k: " << k;
@@ -90,8 +96,11 @@ void patch_generator::generate(int argc, char **argv)
                 vector3 p = math_utils::point_on_bezier(v, p0, p1, p2, p3);
                 vertices.push_back(p);
 
-                // needs to connect to previous points!
-                // still don't know how to do that
+                vector3 du = math_utils::point_on_bezier(v, pd_u0, pd_u1, pd_u2, pd_u3);
+                vector3 dv = math_utils::derivative_on_bezier(v, p0, p1, p2, p3);
+                vector3 n = vector3::cross(du, dv);
+                n.normalize();
+                normals.push_back(n);
 
                 // dont connect to previous line if you are on the first line (there's no previous line)
                 if (j > 0 && k > 0)
@@ -125,7 +134,7 @@ void patch_generator::generate(int argc, char **argv)
     }
 
     // by this point the file should be open!
-    output_file << "100\n";
+    output_file << "110\n";
 
     output_file << "0;0;0;" << 10.0f /*this is the bounding sphere radius, i'm not calculating it just yet*/ << "\n";
 
@@ -142,6 +151,14 @@ void patch_generator::generate(int argc, char **argv)
         if (i != 0)
             output_file << ";";
         output_file << mesh_indices.at(i);
+    }
+    output_file << "\n";
+
+    for (size_t i = 0; i < normals.size(); i++)
+    {
+        if (i != 0)
+            output_file << ";";
+        output_file << normals.at(i);
     }
 
     output_file << std::flush;

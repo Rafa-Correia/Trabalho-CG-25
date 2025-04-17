@@ -12,6 +12,8 @@
 #include "engine/transforms/rotation_static.hpp"
 #include "engine/transforms/translation_dynamic.hpp"
 #include "engine/transforms/translation_static.hpp"
+#include "engine/material.hpp"
+#include "engine/model.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -65,15 +67,17 @@ private:
     rotation *r = NULL;
     matrix4x4 s; // scale is always static!
 
-    vector4 color; // < -- group color, doesnt apply to subgroups.
-
     vector3 position; // < -- group position in 3D space.
+
+    material mat;
 
     std::vector<group> sub_groups; // < -- All loaded subgroups
 
-    std::vector<GLuint> group_vbos;                   // < -- VBOs of all group meshes
-    std::vector<std::tuple<bool, GLuint>> group_ebos; // < -- Pair of boolean and EBO for all group meshes. boolean = false -> no EBO
-    std::vector<size_t> vertex_or_index_count;        // < -- Vertex count if no EBO, index count if EBO
+    std::vector<model> models;
+    std::vector<GLuint> group_vbos;                             // < -- VBOs of all group meshes
+    std::vector<std::tuple<bool, GLuint>> group_ebos;           // < -- Pair of boolean and EBO for all group meshes. boolean = false -> no EBO
+    std::vector<std::tuple<bool, GLuint>> group_normal_buffers; // < -- Pair of boolean and normals
+    std::vector<size_t> vertex_or_index_count;                  // < -- Vertex count if no EBO, index count if EBO
     std::vector<vector4> mesh_bounding_spheres;
 
     /**
@@ -87,15 +91,6 @@ private:
      * @param root Group element to parse.
      */
     void parse_group(tinyxml2::XMLElement *root, float parent_scale = 1.0f);
-
-    /**
-     * Function responsible for loading model file (*.3d).
-     *
-     * @param filepath Path to model file.
-     *
-     * @returns Boolean indicating if parsing was successful.
-     */
-    bool parse_model_file(const char *filepath);
 };
 
 class FailedToParseGroupException : public std::exception

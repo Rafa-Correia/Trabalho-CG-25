@@ -62,111 +62,119 @@ void torus_generator::generate(int argc, char **argv)
     if (n_sections < 3)
         throw InvalidArgumentsException("Number of sections must be larger than or equal to 3!");
 
-    // all arguments are initialized at this point!
-
-    // std::cout << "Center radius: " << center_radius << std::endl;
-    // std::cout << "Inner radius: " << inner_radius << std::endl;
-    // std::cout << "Number of slices: " << n_slices << std::endl;
-    // std::cout << "Number of sections: " << n_sections << std::endl;
-
     std::ofstream file(filepath);
 
-    if (file.is_open())
-    {
-        std::vector<float> vertices;
-        std::vector<size_t> indices;
-
-        float alpha, beta;
-        float alpha_delta = 2 * (float)M_PI / (float)n_slices;
-        float beta_delta = 2 * (float)M_PI / (float)n_sections;
-
-        // loop for all sections
-        for (int i = 0; i < n_sections; i++)
-        {
-            beta = i * beta_delta;
-            // loop to build each sections "circle"
-            for (int j = 0; j < n_slices; j++)
-            {
-                alpha = j * alpha_delta;
-
-                vertices.push_back(sinf(beta) * cosf(alpha) * inner_radius + sinf(beta) * (inner_radius + center_radius)); // x
-                vertices.push_back(sinf(alpha) * inner_radius);                                                            // y
-                vertices.push_back(cosf(beta) * cosf(alpha) * inner_radius + cosf(beta) * (inner_radius + center_radius)); // z
-
-                if (i != 0)
-                {
-                    indices.push_back(i * n_slices + j);
-                    indices.push_back((i - 1) * n_slices + ((j + 1) % n_slices));
-                    indices.push_back((i - 1) * n_slices + j);
-
-                    if (j == 0)
-                        continue;
-                    indices.push_back(i * n_slices + j);
-                    indices.push_back((i - 1) * n_slices + j);
-                    indices.push_back(i * n_slices + j - 1);
-                }
-            }
-
-            if (i == 0)
-                continue;
-
-            indices.push_back(i * n_slices);
-            indices.push_back((i - 1) * n_slices);
-            indices.push_back((i + 1) * n_slices - 1);
-        }
-        std::cout << std::flush;
-
-        // build last section here!
-
-        for (int j = 0; j < n_slices; j++)
-        {
-            indices.push_back(j);
-            indices.push_back((n_sections - 1) * n_slices + ((j + 1) % n_slices));
-            indices.push_back((n_sections - 1) * n_slices + j);
-
-            if (j == 0)
-                continue;
-            indices.push_back(j);
-            indices.push_back((n_sections - 1) * n_slices + j);
-            indices.push_back(j - 1);
-        }
-
-        indices.push_back(0);
-        indices.push_back((n_sections - 1) * n_slices);
-        indices.push_back(n_sections - 1);
-
-        // write to file
-        file << "100\n";
-
-        file << "0;0;0;" << center_radius + 2 * inner_radius << "\n";
-
-        std::cout << "Metadata complete..." << std::endl;
-
-        // vertices
-        float *vertices_array = vertices.data();
-        if (vertices.size() != 0)
-            file << vertices_array[0];
-        for (int i = 1; (long long unsigned int)i < vertices.size(); i++)
-        {
-            file << ";" << vertices_array[i];
-        }
-        file << "\n";
-
-        // indices
-        size_t *indices_array = indices.data();
-        if (indices.size() != 0)
-            file << indices_array[0];
-        for (int i = 1; (long long unsigned int)i < indices.size(); i++)
-        {
-            file << ";" << indices_array[i];
-        }
-
-        file << std::flush;
-
-        file.close();
-    }
-    else
+    if (!file.is_open())
     {
         throw InvalidArgumentsException("Error opening the file!");
     }
+
+    std::vector<vector3> vertices;
+    std::vector<size_t> indices;
+
+    std::vector<vector3> normals;
+
+    float alpha, beta;
+    float alpha_delta = 2 * (float)M_PI / (float)n_slices;
+    float beta_delta = 2 * (float)M_PI / (float)n_sections;
+
+    // loop for all sections
+    for (int i = 0; i < n_sections; i++)
+    {
+        beta = i * beta_delta;
+        // loop to build each section's "circle"
+        for (int j = 0; j < n_slices; j++)
+        {
+            alpha = j * alpha_delta;
+
+            vector3 v(
+                sinf(beta) * cosf(alpha) * inner_radius + sinf(beta) * (inner_radius + center_radius),
+                sinf(alpha) * inner_radius,
+                cosf(beta) * cosf(alpha) * inner_radius + cosf(beta) * (inner_radius + center_radius));
+
+            vertices.push_back(v);
+
+            vector3 center(
+                sinf(beta) * (inner_radius + center_radius),
+                0.0f,
+                cosf(beta) * (inner_radius + center_radius));
+
+            vector3 n = v - center;
+            n.normalize();
+            normals.push_back(n);
+
+            if (i != 0)
+            {
+                indices.push_back(i * n_slices + j);
+                indices.push_back((i - 1) * n_slices + ((j + 1) % n_slices));
+                indices.push_back((i - 1) * n_slices + j);
+
+                if (j == 0)
+                    continue;
+                indices.push_back(i * n_slices + j);
+                indices.push_back((i - 1) * n_slices + j);
+                indices.push_back(i * n_slices + j - 1);
+            }
+        }
+
+        if (i == 0)
+            continue;
+
+        indices.push_back(i * n_slices);
+        indices.push_back((i - 1) * n_slices);
+        indices.push_back((i + 1) * n_slices - 1);
+    }
+
+    // build last section here!
+
+    for (int j = 0; j < n_slices; j++)
+    {
+        indices.push_back(j);
+        indices.push_back((n_sections - 1) * n_slices + ((j + 1) % n_slices));
+        indices.push_back((n_sections - 1) * n_slices + j);
+
+        if (j == 0)
+            continue;
+        indices.push_back(j);
+        indices.push_back((n_sections - 1) * n_slices + j);
+        indices.push_back(j - 1);
+    }
+
+    indices.push_back(0);
+    indices.push_back((n_sections - 1) * n_slices);
+    indices.push_back(n_sections - 1);
+
+    // write to file
+    file << "110\n";
+
+    file << "0;0;0;" << center_radius + 2 * inner_radius << "\n";
+
+    // vertices
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << vertices.at(i);
+    }
+    file << "\n";
+
+    // indices
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << indices.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < normals.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << normals.at(i);
+    }
+
+    file << std::flush;
+
+    file.close();
 }

@@ -10,12 +10,20 @@
     <group>
         <transform> 
             <translate x="0" y="0" z="0" />
-            <rotate angle="0" x="0" y="1" z="0" />
+            <rotate time="5" x="0" y="0" z="1" />
             <scale x="1" y="1" z="1" />
         </transform>
 
         <models>
-            <model file="patch.3d"/>
+            <model file="patch.3d">
+                <color>
+                    <diffuse R="255" G="200" B="140" />
+                    <ambient R="15" G="13" B="10" />
+                    <specular R="255" G="255" B="255" />
+                    <emissive R="0" G="0" B="0" />
+                    <shininess value="128" />
+                </color>
+            </model>
         </models>
     </group>
 </world>

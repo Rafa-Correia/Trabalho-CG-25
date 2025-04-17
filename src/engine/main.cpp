@@ -131,22 +131,37 @@ void change_window_size(int w, int h)
 
 	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMultMatrixf(projection_matrix);
+	glMatrixMode(GL_MODELVIEW);
+
 	glViewport(0, 0, w, h);
 }
 
 void render_scene(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glLoadIdentity();
 
 	// use cameras view matrix
 	matrix4x4 view_matrix = cam->get_view_matrix();
-
 	matrix4x4 projection_view = projection_matrix * view_matrix;
 
-	glMultMatrixf(projection_view);
+	glMultMatrixf(view_matrix);
+
+#if defined(USE_LIGHTING)
+	static float light_pos[4] = {0, 5.0f, 0, 1.0f};
+	glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+#endif
+
 	if (draw_axis)
 	{
+#ifdef USE_LIGHTING
+		glDisable(GL_LIGHTING);
+#endif
+
 		glBegin(GL_LINES);
 		// x axis
 		glColor3f(1.0f, 0.0f, 0.0f);
@@ -163,6 +178,10 @@ void render_scene(void)
 		glVertex3f(0.0f, 0.0f, -100.0f);
 		glVertex3f(0.0f, 0.0f, 100.0f);
 		glEnd();
+
+#ifdef USE_LIGHTING
+		glEnable(GL_LIGHTING);
+#endif
 	}
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -179,7 +198,7 @@ void render_scene(void)
 		view_frustum.draw_frustum();
 
 	// render all meshes loaded in groups
-	cfg_obj->render_all_groups(projection_view, view_frustum, frustum_cull, draw_bounding_spheres, draw_path);
+	cfg_obj->render_all_groups(view_matrix, view_frustum, frustum_cull, draw_bounding_spheres, draw_path);
 
 	frames++;
 	int time = glutGet(GLUT_ELAPSED_TIME);
@@ -352,6 +371,29 @@ int main(int argc, char **argv)
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
+#if defined(USE_LIGHTING)
+	printer::print_info("USE_LIGTHING is defined...");
+
+	glEnableClientState(GL_NORMAL_ARRAY);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	glEnable(GL_NORMALIZE);
+
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); // <- Phong
+
+	float dark[4] = {0.2, 0.2, 0.2, 1.0};
+	float white[4] = {1.0, 1.0, 1.0, 1.0};
+	float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	// light colors
+	glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, white);
+	// controls global ambient light
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
+#endif
+
 	try
 	{
 		cfg_obj = new config(argv[1]);
@@ -390,11 +432,6 @@ int main(int argc, char **argv)
 
 	disable_vsync();
 
-	// this means using a custom projection and view matrix!
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-
 	// set view frustum before first frame!
 	if (height == 0)
 		height = 1;
@@ -404,6 +441,11 @@ int main(int argc, char **argv)
 	projection_matrix = matrix4x4::Projection(cam_fov, ratio, cam_near, cam_far);
 	matrix4x4 proj_view = projection_matrix * cam->get_view_matrix();
 	view_frustum.update_frustum(proj_view);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMultMatrixf(projection_matrix);
+	glMatrixMode(GL_MODELVIEW);
 
 	// enable ansi code support on windows
 #ifdef _WIN32

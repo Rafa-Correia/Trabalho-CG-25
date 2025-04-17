@@ -27,8 +27,10 @@ void box_generator::generate(int argc, char **argv)
         throw InvalidArgumentsException("Error opening the file!");
     }
 
-    std::vector<float> vertices;
+    std::vector<vector3> vertices;
     std::vector<size_t> indices;
+
+    std::vector<vector3> normals;
 
     float halfSize = size / 2.0f;
     float step = size / divisions;
@@ -39,7 +41,7 @@ void box_generator::generate(int argc, char **argv)
                        float ux, float uy, float uz, // Horizontal vector (U)
                        float vx, float vy, float vz, // Vertical vector (V)
                        bool flip = false) {          // Invert triangle order if needed
-        int baseIndex = vertices.size() / 3;
+        int baseIndex = vertices.size();
 
         for (int i = 0; i <= divisions; i++)
         {
@@ -49,9 +51,13 @@ void box_generator::generate(int argc, char **argv)
                 float y = oy + j * uy + i * vy;
                 float z = oz + j * uz + i * vz;
 
-                vertices.push_back(x);
-                vertices.push_back(y);
-                vertices.push_back(z);
+                vector3 v(x, y, z);
+                vertices.push_back(v);
+
+                vector3 n(nx, ny, nz);
+                n *= -1;
+                n.normalize();
+                normals.push_back(n);
 
                 if (i < divisions && j < divisions)
                 {
@@ -100,24 +106,32 @@ void box_generator::generate(int argc, char **argv)
     addFace(-1, 0, 0, halfSize, -halfSize, halfSize, 0, 0, -step, 0, step, 0, true);
 
     // Escreve no ficheiro
-    file << "100\n"; // Placeholder de settings, pode ajustar se necessário
+    file << "110\n"; // Placeholder de settings, pode ajustar se necessário
 
     file << "0;0;0;" << (size * sqrtf(3)) / 2.0f << "\n";
 
     // Escreve vértices
     for (size_t i = 0; i < vertices.size(); i++)
     {
-        if (i > 0)
+        if (i != 0)
             file << ";";
-        file << vertices[i];
+        file << vertices.at(i);
     }
     file << "\n";
     // Escreve índices
     for (size_t i = 0; i < indices.size(); i++)
     {
-        if (i > 0)
+        if (i != 0)
             file << ";";
-        file << indices[i];
+        file << indices.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < normals.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << normals.at(i);
     }
 
     file << std::flush;

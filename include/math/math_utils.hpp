@@ -8,6 +8,7 @@
 namespace math_utils
 {
     vector3 point_on_bezier(float t, vector3 p0, vector3 p1, vector3 p2, vector3 p3);
+    vector3 derivative_on_bezier(float t, vector3 p0, vector3 p1, vector3 p2, vector3 p3);
 }
 
 #endif
