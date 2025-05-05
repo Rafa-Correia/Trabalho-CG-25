@@ -226,12 +226,123 @@ void config::load(const char *filepath)
 
 			group_element = group_element->NextSiblingElement("group");
 		}
-
 		if (!loaded_group_at_least_once)
 		{
 			ss << "At least one group element is mandatory!";
 			printer::print_exception(ss.str(), "config::load");
 			throw FailedToLoadException(ss.str());
+		}
+
+		tinyxml2::XMLElement *lights = root->FirstChildElement("lights");
+		if (lights)
+		{
+#ifdef USE_LIGHTING
+			static GLenum light_enums[] = {GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, GL_LIGHT3, GL_LIGHT4, GL_LIGHT5, GL_LIGHT6, GL_LIGHT7};
+			size_t current_light = 0;
+
+			bool has_loaded_light = false;
+			tinyxml2::XMLElement *light_elem = lights->FirstChildElement("light");
+			while (light_elem)
+			{
+				if (current_light > 7)
+				{
+					printer::print_exception("More than 8 lights were found! Number of lights MUST be less than or equal to 8.", "group::load");
+					throw FailedToLoadException("");
+				}
+
+				has_loaded_light = true;
+
+				const char *type;
+				tinyxml2::XMLError type_result = light_elem->QueryStringAttribute("type", &type);
+
+				if (type_result != tinyxml2::XML_SUCCESS)
+				{
+					printer::print_exception("light element either doesn't have a type attribute or it is not a valid string!", "group::load");
+					throw FailedToLoadException("");
+				}
+
+				vector3 pos, dir;
+				unsigned char type_c;
+				float cutoff = 45;
+
+				if (std::string("point").compare(type) == 0)
+				{
+					type_c = 'p';
+					float posX, posY, posZ;
+					if (light_elem->QueryFloatAttribute("posX", &posX) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("posY", &posY) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("posZ", &posZ) != tinyxml2::XML_SUCCESS)
+					{
+						printer::print_exception("posX, posY or posZ attribute of point light element is either missing or not a valid float!", "group::load");
+						throw FailedToLoadException("");
+					}
+					pos = vector3(posX, posY, posZ);
+				}
+				else if (std::string("directional").compare(type) == 0)
+				{
+					type_c = 'd';
+					float dirX, dirY, dirZ;
+					if (light_elem->QueryFloatAttribute("dirX", &dirX) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("dirY", &dirY) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("dirZ", &dirZ) != tinyxml2::XML_SUCCESS)
+					{
+						printer::print_exception("dirX, dirY or dirZ attribute of directional light element is either missing or not a valid float!", "group::load");
+						throw FailedToLoadException("");
+					}
+					dir = vector3(dirX, dirY, dirZ);
+				}
+				else if (std::string("spotlight").compare(type) == 0)
+				{
+					type_c = 's';
+					float posX, posY, posZ;
+					float dirX, dirY, dirZ;
+					float cutoff_attr;
+
+					if (light_elem->QueryFloatAttribute("posX", &posX) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("posY", &posY) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("posZ", &posZ) != tinyxml2::XML_SUCCESS)
+					{
+						printer::print_exception("posX, posY or posZ attribute of spotlight light element is either missing or not a valid float!", "group::load");
+						throw FailedToLoadException("");
+					}
+
+					if (light_elem->QueryFloatAttribute("dirX", &dirX) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("dirY", &dirY) != tinyxml2::XML_SUCCESS || light_elem->QueryFloatAttribute("dirZ", &dirZ) != tinyxml2::XML_SUCCESS)
+					{
+						printer::print_exception("dirX, dirY or dirZ attribute of spotlight light element is either missing or not a valid float!", "group::load");
+						throw FailedToLoadException("");
+					}
+
+					if (light_elem->QueryFloatAttribute("cutoff", &cutoff_attr) != tinyxml2::XML_SUCCESS)
+					{
+						printer::print_exception("cutoff attribute of spolight light element is either missing or not a valid float!", "group::load");
+						throw FailedToLoadException("");
+					}
+
+					pos = vector3(posX, posY, posZ);
+					dir = vector3(dirX, dirY, dirZ);
+					cutoff = cutoff_attr;
+				}
+				else
+				{
+					printer::print_exception("type attribute of light element is not valid!");
+					throw FailedToLoadException("");
+				}
+
+				light l = light(light_enums[current_light], type_c, pos, dir, cutoff);
+				this->lights.push_back(l);
+
+				current_light++;
+				light_elem = light_elem->NextSiblingElement("light");
+			}
+			if (!has_loaded_light)
+			{
+				printer::print_warning("USE_LIGHTING is defined but no light elements were found. Defaulting to single point light at origin.");
+			}
+#else
+			printer::print_warning("USE_LIGHTING isn't defined but lights element was found! They will be ignored...");
+#endif
+		}
+		else
+		{
+#ifdef USE_LIGHTING
+			printer::print_warning("USE_LIGHTING is defined but no lights element was found. Defaulting to single point light at origin.");
+			light l = light(GL_LIGHT0, 'p', vector3(), vector3(), 0);
+			this->lights.push_back(l);
+#endif
 		}
 	}
 	else
@@ -240,6 +351,19 @@ void config::load(const char *filepath)
 		printer::print_exception(ss.str(), "config::load");
 		throw FailedToLoadException(ss.str());
 	}
+}
+
+void config::apply_lights()
+{
+#ifndef USE_LIGHTING
+	printer::print_warning("Apply lights called but USE_LIGHTING is not defined.");
+	return;
+#else
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		lights.at(i).apply_light();
+	}
+#endif
 }
 
 // debug

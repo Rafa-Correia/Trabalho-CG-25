@@ -6,6 +6,7 @@
 #include "engine/group.hpp"
 #include "engine/camera.hpp"
 #include "engine/frustum.hpp"
+#include "engine/light.hpp"
 
 #include "math/matrix4x4.hpp"
 #include "math/vector3.hpp"
@@ -87,6 +88,11 @@ public:
      */
     std::vector<vector3> query_group_postitions();
 
+    /**
+     *
+     */
+    void apply_lights();
+
 private:
     int w_width, w_height; // < -- Window attributes
 
@@ -100,6 +106,7 @@ private:
     camera *cam; // < -- Camera object created with initial configuration.
 
     std::vector<group> root_groups; // < -- Vector of all root groups (groups with no parent group)
+    std::vector<light> lights;
 
     /**
      * Function responsible for loading and parsing a configuration file.

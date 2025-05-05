@@ -154,21 +154,30 @@ void cone_generator::generate(int argc, char **argv)
     }
 
     // peak!
-
-    vector3 peak(0.0f, height, 0.0f);
-    vector3 peak_normal(0.0f, 1.0f, 0.0f);
-
-    vertices.push_back(peak);
-    normals.push_back(peak_normal);
-
-    size_t peak_i = vertices.size() - 1;
+    size_t peak_i = vertices.size();
 
     for (size_t i = 0; i < slices; i++)
     {
+        alpha = angle_delta * i;
+        float current_radius = radius_delta * (1);
+
         size_t top_ring = index_base + (stacks - 1) * slices + i;
         size_t next_top = index_base + (stacks - 1) * slices + (i + 1) % slices;
 
-        indices.push_back(peak_i);
+        // Compute the position of the peak (same position for all, but different vertex!)
+        vector3 peak(0.0f, height, 0.0f);
+
+        // Compute normal based on triangle face (flat-shaded)
+        vector3 n(sinf(alpha) * current_radius * hypotenuse / height, radius / hypotenuse, cosf(alpha) * current_radius * hypotenuse / height);
+        n.normalize();
+
+        // Add unique peak vertex and its unique normal
+        vertices.push_back(peak);
+        normals.push_back(n);
+
+        size_t unique_peak_i = vertices.size() - 1;
+
+        indices.push_back(unique_peak_i);
         indices.push_back(top_ring);
         indices.push_back(next_top);
     }

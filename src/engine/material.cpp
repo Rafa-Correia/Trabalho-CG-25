@@ -2,19 +2,19 @@
 
 material::material()
 {
-    this->diffuse = vector3(200, 200, 200) / 255;
-    this->ambient = vector3(50, 50, 50) / 255;
-    this->specular = vector3(0, 0, 0) / 255;
-    this->emmissive = vector3(0, 0, 0) / 255;
+    this->diffuse = vector3(200.0f, 200.0f, 200.0f) / 255.0f;
+    this->ambient = vector3(50.0f, 50.0f, 50.0f) / 255.0f;
+    this->specular = vector3(0.0f, 0.0f, 0.0f) / 255.0f;
+    this->emmissive = vector3(0.0f, 0.0f, 0.0f) / 255.0f;
     this->shininess = 0;
 }
 
 material::material(vector3 diffuse_component, vector3 ambient_component, vector3 specular_component, vector3 emmissive_component, float shininess)
 {
-    this->diffuse = diffuse_component / 255;
-    this->ambient = ambient_component / 255;
-    this->specular = specular_component / 255;
-    this->emmissive = emmissive_component / 255;
+    this->diffuse = diffuse_component / 255.0f;
+    this->ambient = ambient_component / 255.0f;
+    this->specular = specular_component / 255.0f;
+    this->emmissive = emmissive_component / 255.0f;
     this->shininess = shininess;
 }
 

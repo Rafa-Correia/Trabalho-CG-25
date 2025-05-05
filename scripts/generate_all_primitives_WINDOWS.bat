@@ -11,6 +11,7 @@ set "CYLINDER_ARGS=cylinder 1 2 20 20 cylinder.3d"
 set "TORUS_ARGS=torus 0.5 0.25 20 20 torus.3d"
 set "BOX_ARGS=box 1 5 box.3d"
 set "PLANE_ARGS=plane 1 5 plane.3d"
+set "PATCH=patch teapot.patch 9 patch.3d"
 
 "%CD%\%SUBFOLDER%\%EXECUTABLE%" %SPHERE_ARGS%
 "%CD%\%SUBFOLDER%\%EXECUTABLE%" %CONE_ARGS%
@@ -18,5 +19,6 @@ set "PLANE_ARGS=plane 1 5 plane.3d"
 "%CD%\%SUBFOLDER%\%EXECUTABLE%" %TORUS_ARGS%
 "%CD%\%SUBFOLDER%\%EXECUTABLE%" %BOX_ARGS%
 "%CD%\%SUBFOLDER%\%EXECUTABLE%" %PLANE_ARGS%
+"%CD%\%SUBFOLDER%\%EXECUTABLE%" %PATCH_ARGS%
 
 endlocal

@@ -152,8 +152,7 @@ void render_scene(void)
 	glMultMatrixf(view_matrix);
 
 #if defined(USE_LIGHTING)
-	static float light_pos[4] = {0, 5.0f, 0, 1.0f};
-	glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+	cfg_obj->apply_lights();
 #endif
 
 	if (draw_axis)
@@ -219,7 +218,6 @@ void render_scene(void)
 }
 
 /**
- *
  * IDLE FUNCTION, IT IS VERY IMPORTANT TO UPDATE EVERYTHING EVERY FRAME!
  */
 void idle()
@@ -377,21 +375,14 @@ int main(int argc, char **argv)
 	glEnableClientState(GL_NORMAL_ARRAY);
 
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
 
 	glEnable(GL_NORMALIZE);
 
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); // <- Phong
 
-	float dark[4] = {0.2, 0.2, 0.2, 1.0};
-	float white[4] = {1.0, 1.0, 1.0, 1.0};
-	float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	// light colors
-	glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, white);
 	// controls global ambient light
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
+	float amb[] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb);
 #endif
 
 	try

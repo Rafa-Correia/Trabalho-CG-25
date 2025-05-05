@@ -9,6 +9,7 @@ CYLINDER_ARGS="cylinder 1 2 20 20 cylinder.3d"
 TORUS_ARGS="torus 0.5 0.25 20 20 torus.3d"
 BOX_ARGS="box 1 3 box.3d"
 PLANE_ARGS="plane 1 3 plane.3d"
+PATCH_ARGS="patch teapot.patch 9 patch.3d"
 
 
 "./$SUBFOLDER/$EXECUTABLE" $SPHERE_ARGS
@@ -17,3 +18,4 @@ PLANE_ARGS="plane 1 3 plane.3d"
 "./$SUBFOLDER/$EXECUTABLE" $TORUS_ARGS
 "./$SUBFOLDER/$EXECUTABLE" $BOX_ARGS
 "./$SUBFOLDER/$EXECUTABLE" $PLANE_ARGS
+"./$SUBFOLDER/$EXECUTABLE" $PATCH_ARGS

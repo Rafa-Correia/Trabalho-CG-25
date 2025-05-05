@@ -307,8 +307,6 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
     // need to parse material!
     // for now use default
 
-    this->mat = material();
-
     // loop through all subgroups
 
     tinyxml2::XMLElement *subgroup = root->FirstChildElement("group");
