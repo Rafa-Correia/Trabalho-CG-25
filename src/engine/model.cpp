@@ -1,20 +1,19 @@
 #include "engine/model.hpp"
 
-model::model(tinyxml2::XMLElement *root)
+model::model(tinyxml2::XMLElement *root, float bound_scale_factor)
 {
-    parse_model(root);
+    parse_model(root, bound_scale_factor);
 }
 
 void model::render_model(frustum &view_frustum, bool frustum_cull, vector3 &position, bool render_bounding_sphere, matrix4x4 &camera_transform)
 {
     if (render_bounding_sphere)
     {
-#ifdef USE_LIGHTING
         glDisable(GL_LIGHTING);
-#endif
+
+        glPushMatrix();
 
         glColor3f(1.0f, 0.0f, 0.0f);
-        glPushMatrix();
 
         glLoadIdentity();
         glMultMatrixf(camera_transform);
@@ -24,9 +23,7 @@ void model::render_model(frustum &view_frustum, bool frustum_cull, vector3 &posi
 
         glPopMatrix();
 
-#ifdef USE_LIGHTING
         glEnable(GL_LIGHTING);
-#endif
     }
 
 #ifndef IGNORE_FRUSTUM_CULL
@@ -34,35 +31,50 @@ void model::render_model(frustum &view_frustum, bool frustum_cull, vector3 &posi
         return;
 #endif
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
     glVertexPointer(3, GL_FLOAT, 0, 0);
 
-#ifndef USE_LIGHTING
-    glColor3f(this->mat.diffuse.x, this->mat.diffuse.y, this->mat.diffuse.z);
-#endif
-
-    if (has_normals)
+    if (this->has_normals)
     {
-#ifdef USE_LIGHTING
         this->mat.apply_material();
-        glBindBuffer(GL_ARRAY_BUFFER, NORMAL_BUFFER);
+        glBindBuffer(GL_ARRAY_BUFFER, this->NORMAL_BUFFER);
         glNormalPointer(GL_FLOAT, 0, 0);
-#endif
     }
 
-    if (!has_ebo)
+    if (this->has_texture_coordinates)
     {
-        glDrawArrays(GL_TRIANGLES, 0, object_count);
+        glEnable(GL_TEXTURE_2D);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+        glBindTexture(GL_TEXTURE_2D, this->TEXTURE);
+
+        glBindBuffer(GL_ARRAY_BUFFER, this->TEXTURE_COORDINATE_BUFFER);
+        glTexCoordPointer(2, GL_FLOAT, 0, 0);
     }
     else
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, object_count, GL_UNSIGNED_INT, NULL);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    if (!this->has_ebo)
+    {
+        glDrawArrays(GL_TRIANGLES, 0, this->object_count);
+    }
+    else
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+        glDrawElements(GL_TRIANGLES, this->object_count, GL_UNSIGNED_INT, 0);
+    }
+
+    if (this->has_texture_coordinates)
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
     return;
 }
 
-void model::parse_model(tinyxml2::XMLElement *root)
+void model::parse_model(tinyxml2::XMLElement *root, float bound_scale_factor)
 {
     std::stringstream ss;
 
@@ -75,7 +87,42 @@ void model::parse_model(tinyxml2::XMLElement *root)
         throw FailedToParseModelException("");
     }
 
-    parse_file(filepath);
+    parse_file(filepath, bound_scale_factor);
+
+    tinyxml2::XMLElement *texture = root->FirstChildElement("texture");
+    if (texture)
+    {
+        const char *tex_filepath;
+        tinyxml2::XMLError tex_result = texture->QueryStringAttribute("file", &tex_filepath);
+        if (tex_result != tinyxml2::XML_SUCCESS)
+        {
+            if (this->has_texture_coordinates)
+            {
+                printer::print_exception("Model has texture coordinates but no valid texture filepath.");
+                throw FailedToParseModelException("");
+            }
+        }
+        else
+        {
+            if (this->has_texture_coordinates)
+                this->load_texture(tex_filepath);
+            else
+            {
+                printer::print_warning("Valid texture filepath was found but model doesn't have texture coordinates. The texture will not be loaded.");
+            }
+        }
+    }
+    else
+    {
+        if (this->has_texture_coordinates)
+        {
+            printer::print_warning("Model's file has texture coordinates but no texture element was found. The 'has_texture_coordinates' flag is no longer set for this model.");
+            this->has_texture_coordinates = false;
+        }
+    }
+
+    if (!this->has_texture_coordinates)
+        this->TEXTURE = 0;
 
     tinyxml2::XMLElement *color = root->FirstChildElement("color");
     if (color)
@@ -192,7 +239,7 @@ void model::parse_model(tinyxml2::XMLElement *root)
     }
 }
 
-void model::parse_file(const std::string &filepath)
+void model::parse_file(const std::string &filepath, float bound_scale_factor)
 {
     std::stringstream ss;
     std::ifstream file(filepath);
@@ -203,8 +250,6 @@ void model::parse_file(const std::string &filepath)
         printer::print_exception(ss.str(), "model file_parse");
         throw FailedToParseModelException("");
     }
-
-    bool t_flag = false;
 
     std::vector<float> vertices;
     std::vector<int> indices;
@@ -227,23 +272,16 @@ void model::parse_file(const std::string &filepath)
                 has_ebo = true;
                 data_order.push_back('i');
             }
-            else
-                has_ebo = false;
 
             if (line_data[1] == '1')
             {
                 has_normals = true;
                 data_order.push_back('n');
-#ifndef USE_LIGHTING
-                printer::print_warning("Normals are loaded but USE_LIGHTING is not defined. This may cause some problems. Define USE_LIGTHING in model.hpp.");
-#endif
             }
-            else
-                has_normals = false;
 
             if (line_data[2] == '1')
             {
-                t_flag = true;
+                has_texture_coordinates = true;
                 data_order.push_back('t');
             }
         }
@@ -256,7 +294,7 @@ void model::parse_file(const std::string &filepath)
                 bounding_sphere_info_vector.push_back(bounding_info_token);
             }
 
-            this->bounding_sphere = vector4(bounding_sphere_info_vector.at(0), bounding_sphere_info_vector.at(1), bounding_sphere_info_vector.at(2), bounding_sphere_info_vector.at(3));
+            this->bounding_sphere = vector4(bounding_sphere_info_vector.at(0), bounding_sphere_info_vector.at(1), bounding_sphere_info_vector.at(2), bounding_sphere_info_vector.at(3) * bound_scale_factor);
         }
         else if (line_index == 2)
         { // vertices
@@ -314,15 +352,19 @@ void model::parse_file(const std::string &filepath)
                 glGenBuffers(1, &NORMAL_BUFFER);
                 glBindBuffer(GL_ARRAY_BUFFER, NORMAL_BUFFER);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
-
-#ifndef USE_LIGHTING
-                printer::print_info("USE_LIGHTING is not defined but normals are loaded. Define USE_LIGHTING in group.hpp to enable lighting.\n\n", "debug");
-#endif
             }
             else if (data_order.at(line_index - 3) == 't')
             {
                 // read texture coordinates
-                // unused for now
+                while (std::getline(ss, token, ';'))
+                {
+                    float tex_float = std::stof(token);
+                    tex_coords.push_back(tex_float);
+                }
+
+                glGenBuffers(1, &TEXTURE_COORDINATE_BUFFER);
+                glBindBuffer(GL_ARRAY_BUFFER, TEXTURE_COORDINATE_BUFFER);
+                glBufferData(GL_ARRAY_BUFFER, tex_coords.size() * sizeof(float), tex_coords.data(), GL_STATIC_DRAW);
             }
         }
 
@@ -330,4 +372,51 @@ void model::parse_file(const std::string &filepath)
     }
 
     file.close();
+}
+
+void model::load_texture(const std::string &filepath)
+{
+    // std::stringstream ss;
+    // ss << "load_texture has been called (" << filepath << ")...";
+    // printer::print_info(ss.str());
+
+    // ss.clear();
+    // ss.str(std::string());
+
+    // ss << "Image path converted: " << (ILstring)filepath.data();
+    // printer::print_info(ss.str());
+
+    unsigned int tw, th;
+    unsigned char *tex_data;
+    ILuint t;
+    ilGenImages(1, &t);
+    ilBindImage(t);
+
+    // printer::print_info("Trying to load image...");
+    ilLoadImage((ILstring)filepath.data());
+    // printer::print_info("Done!");
+
+    tw = ilGetInteger(IL_IMAGE_WIDTH);
+    th = ilGetInteger(IL_IMAGE_HEIGHT);
+
+    // ss.clear();
+    // ss.str(std::string());
+
+    // ss << "tw: " << tw << " || th: " << th;
+    // printer::print_info(ss.str());
+
+    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+    tex_data = ilGetData();
+
+    glGenTextures(1, &this->TEXTURE);
+
+    glBindTexture(GL_TEXTURE_2D, this->TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_data);
+    glGenerateMipmap(GL_TEXTURE_2D);
 }

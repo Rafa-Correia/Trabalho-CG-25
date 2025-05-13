@@ -73,6 +73,7 @@ void torus_generator::generate(int argc, char **argv)
     std::vector<size_t> indices;
 
     std::vector<vector3> normals;
+    std::vector<vector2> tex_coords;
 
     float alpha, beta;
     float alpha_delta = 2 * (float)M_PI / (float)n_slices;
@@ -82,10 +83,12 @@ void torus_generator::generate(int argc, char **argv)
     for (int i = 0; i < n_sections; i++)
     {
         beta = i * beta_delta;
+        float u_tex = beta / (2.0f * M_PI);
         // loop to build each section's "circle"
         for (int j = 0; j < n_slices; j++)
         {
             alpha = j * alpha_delta;
+            float v_tex = alpha / (2.0f * M_PI);
 
             vector3 v(
                 sinf(beta) * cosf(alpha) * inner_radius + sinf(beta) * (inner_radius + center_radius),
@@ -102,6 +105,9 @@ void torus_generator::generate(int argc, char **argv)
             vector3 n = v - center;
             n.normalize();
             normals.push_back(n);
+
+            vector2 t(u_tex, v_tex);
+            tex_coords.push_back(t);
 
             if (i != 0)
             {
@@ -145,7 +151,7 @@ void torus_generator::generate(int argc, char **argv)
     indices.push_back(n_sections - 1);
 
     // write to file
-    file << "110\n";
+    file << "111\n";
 
     file << "0;0;0;" << center_radius + 2 * inner_radius << "\n";
 
@@ -172,6 +178,14 @@ void torus_generator::generate(int argc, char **argv)
         if (i != 0)
             file << ";";
         file << normals.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < tex_coords.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << tex_coords.at(i);
     }
 
     file << std::flush;

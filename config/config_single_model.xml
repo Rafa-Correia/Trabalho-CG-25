@@ -8,27 +8,44 @@
     </camera>
 
     <group>
-        <transform>
-            <translate x="0" y="0" z="0" />
-            <rotate angle="0" x="0" y="0" z="1" />
-            <scale x="1" y="1" z="1" />
-        </transform>
-
         <models>
-            <model file="patch.3d">
+            <model file="C:\Users\rafae\Desktop\Trabalho-CG-25\sphere.3d">
+                <!-- <texture file="C:\Users\rafae\Desktop\Trabalho-CG-25\moon.jpg"/> -->
                 <color>
-                    <diffuse R="255" G="200" B="140" />
-                    <ambient R="15" G="13" B="10" />
+                    <diffuse R="255" G="255" B="255" />
+                    <ambient R="32" G="32" B="32" />
                     <specular R="255" G="255" B="255" />
                     <emissive R="0" G="0" B="0" />
                     <shininess value="128" />
                 </color>
             </model>
         </models>
+
+        <group>
+            <transform>
+                <translate x="3" y="0" z="0" />
+                <rotate time="10" x="0" y="1" z="0" />
+                <scale x="1" y="1" z="1" />
+            </transform>
+
+            <models>
+                <model file="C:\Users\rafae\Desktop\Trabalho-CG-25\sphere.3d">
+                    <texture file="C:\Users\rafae\Desktop\Trabalho-CG-25\sun.jpg"/>
+
+                    <color>
+                        <diffuse R="255" G="255" B="255" />
+                        <ambient R="32" G="32" B="32" />
+                        <specular R="255" G="255" B="255" />
+                        <emissive R="0" G="0" B="0" />
+                        <shininess value="128" />
+                    </color>
+                </model>
+            </models>
+        </group>
     </group>
 
     <lights>
-        <light type="directional" dirX="1" dirY="0" dirZ="0"/>
+        <light type="directional" dirX="0" dirY="0" dirZ="1"/>
         <!--
         <light type="point" posX="0" posY="3" posZ="0" />
         <light type="spotlight" posX="0" posY="10" posZ="0" dirX="1" dirY="1" dirZ="1" cutoff="45" />

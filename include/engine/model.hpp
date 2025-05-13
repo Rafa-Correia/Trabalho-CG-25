@@ -16,6 +16,7 @@
 #else
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <IL/il.h>
 #endif
 
 #include "engine/material.hpp"
@@ -33,26 +34,31 @@ class model
 {
 public:
     model() = delete;
-    model(tinyxml2::XMLElement *root);
+    model(tinyxml2::XMLElement *root, float bound_scale_factor);
     // non_empty constructor not needed, right?
 
     void render_model(frustum &view_frustum, bool frustum_cull, vector3 &position, bool render_bounding_sphere, matrix4x4 &camera_transform);
 
 private:
-    GLuint VBO;
-    GLuint EBO;
-    GLuint NORMAL_BUFFER;
-    size_t object_count;
+    GLuint VBO = 0;
+    GLuint EBO = 0;
+    GLuint NORMAL_BUFFER = 0;
+    GLuint TEXTURE_COORDINATE_BUFFER = 0;
+
+    GLuint TEXTURE = 0;
+    size_t object_count = 0;
 
     bool has_ebo = false;
     bool has_normals = false;
+    bool has_texture_coordinates = false;
 
     material mat;
 
     vector4 bounding_sphere;
 
-    void parse_model(tinyxml2::XMLElement *root);
-    void parse_file(const std::string &filepath);
+    void parse_model(tinyxml2::XMLElement *root, float bound_scale_factor);
+    void parse_file(const std::string &filepath, float bound_scale_factor);
+    void load_texture(const std::string &filepath);
 };
 
 class FailedToParseModelException : std::exception

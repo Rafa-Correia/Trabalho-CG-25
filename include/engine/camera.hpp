@@ -24,9 +24,9 @@
 #define C_ANIMATION_CHANGE_TARGET 2
 #define C_ANIMATION_CHANGE_RADIUS 3
 
-#define C_DURATION_CAMERA_LOCKING 500 // < -- duration in ms
+#define C_DURATION_CAMERA_LOCKING 350 // < -- duration in ms
 #define C_DURATION_CHANGE_TARGET 750  // < -- duration in ms
-#define C_DURATION_CHANGE_RADIUS 50   // < -- duration in ms
+#define C_DURATION_CHANGE_RADIUS 25   // < -- duration in ms
 
 class camera
 {
@@ -105,7 +105,9 @@ public:
     bool update_frustum();
 
     /**
+     *  Updates camera lock positions to keep track of dynamic groups.
      *
+     * @param l_pos Vector of all group positions.
      */
     void update_lock_positions(std::vector<vector3> &l_pos);
 
@@ -136,7 +138,7 @@ private:
 
     float linear_movement_speed = 50.0f; // < -- movement speed of camera in free camera mode. In units / sec.
     float angular_movement_speed = 1.0f; // < -- angular speed of camera in locked camera mode. In radians / sec.
-    float zoom_in_speed = 5.0f;          // < -- radius change speed in locked camera mode. In units / sec.
+    float zoom_in_speed = 20.0f;         // < -- radius change speed in locked camera mode. In units / sec.
     float mouse_sensitivity = 0.06f;     // < -- mouse sensitivity. I do not know the units :)
 
     bool is_free_camera = false;   // < -- state flag. If true then using free camera mode, otherwise using locked camera mode.

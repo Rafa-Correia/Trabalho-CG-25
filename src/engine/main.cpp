@@ -9,6 +9,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define GLUT_DISABLE_ATEXIT_HACK
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -151,15 +153,11 @@ void render_scene(void)
 
 	glMultMatrixf(view_matrix);
 
-#if defined(USE_LIGHTING)
 	cfg_obj->apply_lights();
-#endif
 
 	if (draw_axis)
 	{
-#ifdef USE_LIGHTING
 		glDisable(GL_LIGHTING);
-#endif
 
 		glBegin(GL_LINES);
 		// x axis
@@ -178,9 +176,7 @@ void render_scene(void)
 		glVertex3f(0.0f, 0.0f, 100.0f);
 		glEnd();
 
-#ifdef USE_LIGHTING
 		glEnable(GL_LIGHTING);
-#endif
 	}
 	glColor3f(1.0f, 1.0f, 1.0f);
 
@@ -199,7 +195,7 @@ void render_scene(void)
 	// render all meshes loaded in groups
 	cfg_obj->render_all_groups(view_matrix, view_frustum, frustum_cull, draw_bounding_spheres, draw_path);
 
-	frames++;
+	/* frames++;
 	int time = glutGet(GLUT_ELAPSED_TIME);
 	if (time - timebase > 1000)
 	{
@@ -211,7 +207,7 @@ void render_scene(void)
 		ss << fps;
 
 		glutSetWindowTitle(ss.str().data());
-	}
+	} */
 
 	// End of frame
 	glutSwapBuffers();
@@ -240,6 +236,8 @@ void idle()
 
 void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 {
+	static float zoom_delta = 1.0f;
+	std::stringstream ss;
 	switch (c)
 	{
 	case '1':
@@ -296,12 +294,24 @@ void processKeyPress(unsigned char c, int mouse_x, int mouse_y)
 
 	case 'z':
 	case 'Z':
-		cam->add_to_target_radius(-1.0f);
+		cam->add_to_target_radius(-zoom_delta);
 		break;
 
 	case 'x':
 	case 'X':
-		cam->add_to_target_radius(1.0f);
+		cam->add_to_target_radius(zoom_delta);
+		break;
+
+	case '+':
+		zoom_delta += 0.1f;
+		ss << "Zoom delta is now " << zoom_delta << ".";
+		printer::print_info(ss.str());
+		break;
+
+	case '-':
+		zoom_delta -= 0.1f;
+		ss << "Zoom delta is now " << zoom_delta << ".";
+		printer::print_info(ss.str());
 		break;
 
 	case 27:
@@ -328,17 +338,9 @@ void processMouse(int x, int y)
 	cam->update_camera_direction(x, y);
 }
 
-int main(int argc, char **argv)
+void init(int &argc, char **argv)
 {
-	printer::print_init();
-
-	std::stringstream ss;
-	if (argc != 2)
-	{
-		ss << "Wrong number of arguments!";
-		printer::print_exception(ss.str(), "main");
-		return 1;
-	}
+	// inits and function assignments
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -354,9 +356,13 @@ int main(int argc, char **argv)
 	glutKeyboardUpFunc(processKeyRelease);
 	glutPassiveMotionFunc(processMouse);
 
+	ilInit();
+
 #ifndef __APPLE__
 	glewInit();
 #endif
+
+	// stuff that needs enabling
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -368,22 +374,51 @@ int main(int argc, char **argv)
 	glEnable(GL_BLEND);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-
-#if defined(USE_LIGHTING)
-	printer::print_info("USE_LIGTHING is defined...");
-
 	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glEnable(GL_LIGHTING);
-
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_NORMALIZE);
 
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); // <- Phong
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); // emulates phong (since we have no shaders :p)
 
-	// controls global ambient light
+	// set global ambient light (i think this is unnecessary)
 	float amb[] = {1.0f, 1.0f, 1.0f, 1.0f};
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb);
+
+	// enable windows console ansi code support
+#ifdef _WIN32
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwMode = 0;
+	GetConsoleMode(hOut, &dwMode);
+	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+	SetConsoleMode(hOut, dwMode);
 #endif
+
+	// set background color
+	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+
+	// set time base for later (mainly deltatime stuff)
+	timebase = glutGet(GLUT_ELAPSED_TIME);
+	prev_time = glutGet(GLUT_ELAPSED_TIME);
+
+	disable_vsync();
+}
+
+int main(int argc, char **argv)
+{
+	printer::print_init();
+
+	std::stringstream ss;
+	if (argc != 2)
+	{
+		ss << "Wrong number of arguments!";
+		printer::print_exception(ss.str(), "main");
+		return 1;
+	}
+
+	init(argc, argv);
 
 	try
 	{
@@ -394,6 +429,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 	catch (const FailedToParseGroupException &)
+	{
+		return 1;
+	}
+	catch (const FailedToParseModelException &)
 	{
 		return 1;
 	}
@@ -416,13 +455,6 @@ int main(int argc, char **argv)
 	cam_near = projection_attributes.y;
 	cam_far = projection_attributes.z;
 
-	glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
-	timebase = glutGet(GLUT_ELAPSED_TIME);
-	prev_time = glutGet(GLUT_ELAPSED_TIME);
-
-	disable_vsync();
-
 	// set view frustum before first frame!
 	if (height == 0)
 		height = 1;
@@ -438,17 +470,9 @@ int main(int argc, char **argv)
 	glMultMatrixf(projection_matrix);
 	glMatrixMode(GL_MODELVIEW);
 
-	// enable ansi code support on windows
-#ifdef _WIN32
-	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD dwMode = 0;
-	GetConsoleMode(hOut, &dwMode);
-	dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-	SetConsoleMode(hOut, dwMode);
-#endif
-
 	// printer::print_exception("This is a test.");
 	// printer::print_warning("This is a test.");
+	// printer::print_info("This is a test.");
 
 	// MAIN LOOP!!!!!
 	glutMainLoop();

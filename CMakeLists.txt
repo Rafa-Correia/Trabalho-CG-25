@@ -1,20 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
 project(trabalhocg25)
 
-# Set folders for Visual Studio
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Add top-level include directory
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# Add subdirectories for modularized code
 add_subdirectory(src/math)
 add_subdirectory(src/external)
 add_subdirectory(src/engine)
 add_subdirectory(src/generator)
 
 
-# Find OpenGL
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})
 link_directories(${OpenGL_LIBRARY_DIRS})
@@ -24,22 +20,27 @@ if(NOT OPENGL_FOUND)
     message(FATAL_ERROR "OPENGL not found!")
 endif()
 
-# Platform-specific toolkit settings
 if(WIN32)
     set(TOOLKITS_FOLDER "${CMAKE_SOURCE_DIR}/toolkits" CACHE PATH "Path to Toolkits folder")
     message(STATUS "Toolkits_DIR set to: ${TOOLKITS_FOLDER}")
 
-    include_directories(${TOOLKITS_FOLDER}/glut ${TOOLKITS_FOLDER}/glew)
+    include_directories(
+        ${TOOLKITS_FOLDER}/glut 
+        ${TOOLKITS_FOLDER}/glew 
+        ${TOOLKITS_FOLDER}/devil
+    )
 
     target_link_libraries(engine PRIVATE
         ${OPENGL_LIBRARIES}
         ${TOOLKITS_FOLDER}/glut/glut32.lib
         ${TOOLKITS_FOLDER}/glew/glew32.lib
+        ${TOOLKITS_FOLDER}/devil/DevIL.lib
     )
 
-    if(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll" AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")
+    if(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll" AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll" AND EXISTS "${TOOLKITS_FOLDER}/devil/DevIL.dll")
         file(COPY ${TOOLKITS_FOLDER}/glut/glut32.dll DESTINATION ${CMAKE_BINARY_DIR})
         file(COPY ${TOOLKITS_FOLDER}/glew/glew32.dll DESTINATION ${CMAKE_BINARY_DIR})
+        file(COPY ${TOOLKITS_FOLDER}/devil/DevIL.dll DESTINATION ${CMAKE_BINARY_DIR})
     endif()
 
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT engine)
@@ -57,6 +58,10 @@ else()
         include_directories(${GLEW_INCLUDE_DIRS})
         target_link_libraries(engine ${GLEW_LIBRARIES})
     endif()
+
+    find_package(DevIL REQUIRED)
+    include_directories(${IL_INCLUDE_DIR})
+    target_link_libraries(engine PRIVATE ${IL_LIBRARIES})
 
     target_link_libraries(engine PRIVATE ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
 

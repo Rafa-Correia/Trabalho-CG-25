@@ -31,6 +31,7 @@ void box_generator::generate(int argc, char **argv)
     std::vector<size_t> indices;
 
     std::vector<vector3> normals;
+    std::vector<vector2> tex_coords;
 
     float halfSize = size / 2.0f;
     float step = size / divisions;
@@ -58,6 +59,9 @@ void box_generator::generate(int argc, char **argv)
                 n *= -1;
                 n.normalize();
                 normals.push_back(n);
+
+                vector2 t((float)j / divisions, (float)i / divisions);
+                tex_coords.push_back(t);
 
                 if (i < divisions && j < divisions)
                 {
@@ -106,7 +110,7 @@ void box_generator::generate(int argc, char **argv)
     addFace(-1, 0, 0, halfSize, -halfSize, halfSize, 0, 0, -step, 0, step, 0, true);
 
     // Escreve no ficheiro
-    file << "110\n"; // Placeholder de settings, pode ajustar se necessário
+    file << "111\n"; // Placeholder de settings, pode ajustar se necessário
 
     file << "0;0;0;" << (size * sqrtf(3)) / 2.0f << "\n";
 
@@ -132,6 +136,14 @@ void box_generator::generate(int argc, char **argv)
         if (i != 0)
             file << ";";
         file << normals.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < tex_coords.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << tex_coords.at(i);
     }
 
     file << std::flush;

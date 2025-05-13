@@ -236,7 +236,6 @@ void config::load(const char *filepath)
 		tinyxml2::XMLElement *lights = root->FirstChildElement("lights");
 		if (lights)
 		{
-#ifdef USE_LIGHTING
 			static GLenum light_enums[] = {GL_LIGHT0, GL_LIGHT1, GL_LIGHT2, GL_LIGHT3, GL_LIGHT4, GL_LIGHT5, GL_LIGHT6, GL_LIGHT7};
 			size_t current_light = 0;
 
@@ -332,17 +331,12 @@ void config::load(const char *filepath)
 			{
 				printer::print_warning("USE_LIGHTING is defined but no light elements were found. Defaulting to single point light at origin.");
 			}
-#else
-			printer::print_warning("USE_LIGHTING isn't defined but lights element was found! They will be ignored...");
-#endif
 		}
 		else
 		{
-#ifdef USE_LIGHTING
 			printer::print_warning("USE_LIGHTING is defined but no lights element was found. Defaulting to single point light at origin.");
 			light l = light(GL_LIGHT0, 'p', vector3(), vector3(), 0);
 			this->lights.push_back(l);
-#endif
 		}
 	}
 	else
@@ -355,15 +349,10 @@ void config::load(const char *filepath)
 
 void config::apply_lights()
 {
-#ifndef USE_LIGHTING
-	printer::print_warning("Apply lights called but USE_LIGHTING is not defined.");
-	return;
-#else
 	for (size_t i = 0; i < lights.size(); i++)
 	{
 		lights.at(i).apply_light();
 	}
-#endif
 }
 
 // debug

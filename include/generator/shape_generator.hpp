@@ -9,6 +9,7 @@
 #include <vector>
 #include <sstream>
 
+#include "math/vector2.hpp"
 #include "math/vector3.hpp"
 #include "math/vector4.hpp"
 #include "math/matrix4x4.hpp"

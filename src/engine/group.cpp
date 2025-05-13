@@ -28,14 +28,10 @@ void group::render_group(matrix4x4 &camera_transform, frustum &view_frustum, boo
 
     if (draw_translation_path)
     {
-#ifdef USE_LIGHTING
         glDisable(GL_LIGHTING);
-#endif
         if (t)
             t->draw_path();
-#ifdef USE_LIGHTING
         glEnable(GL_LIGHTING);
-#endif
     }
 }
 
@@ -288,7 +284,7 @@ void group::parse_group(tinyxml2::XMLElement *root, float parent_scale)
         while (model_element)
         {
             loaded_model_at_least_once = true;
-            this->models.push_back(model(model_element));
+            this->models.push_back(model(model_element, bound_scaling));
             model_element = model_element->NextSiblingElement("model");
         }
         if (!loaded_model_at_least_once)

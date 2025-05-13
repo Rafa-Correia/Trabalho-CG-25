@@ -326,12 +326,16 @@ void camera::set_animation(int animation)
         current_animation = C_ANIMATION_CHANGE_RADIUS;
         return;
     }
+
+    current_animation = C_ANIMATION_IDLE;
+    animation_locked = false;
 }
 
 // animation functions
 
 void camera::animate_camera_locking(int delta_time_ms)
 {
+    cartesian_to_spherical_coords();
     animation_timer += delta_time_ms;
 
     if (animation_timer >= C_DURATION_CAMERA_LOCKING)
@@ -345,7 +349,7 @@ void camera::animate_camera_locking(int delta_time_ms)
     float time_alpha = (float)animation_timer / (float)C_DURATION_CAMERA_LOCKING;
     float eased_alpha = time_alpha * time_alpha * (3.0f - 2.0f * time_alpha);
 
-    lock_point = start_lock_point + (target_lock_point - start_lock_point) * eased_alpha;
+    lock_point = start_lock_point * (1.0f - eased_alpha) + target_lock_point * eased_alpha;
 
     spherical_to_cartesian_coords();
 
@@ -354,6 +358,7 @@ void camera::animate_camera_locking(int delta_time_ms)
 
 void camera::animate_changing_target(int delta_time_ms)
 {
+    spherical_to_cartesian_coords(true);
     animation_timer += delta_time_ms;
 
     if (animation_timer >= C_DURATION_CHANGE_TARGET)
@@ -368,12 +373,11 @@ void camera::animate_changing_target(int delta_time_ms)
     }
 
     float time_alpha = (float)animation_timer / (float)C_DURATION_CHANGE_TARGET;
-
     float eased_alpha = time_alpha * time_alpha * (3.0f - 2.0f * time_alpha);
 
-    if (eased_alpha <= 0.5f)
+    if (eased_alpha <= 1.0f /* 0.5f */)
     {
-        lock_point = start_lock_point + (target_lock_point - start_lock_point) * eased_alpha * 2.0f;
+        lock_point = start_lock_point + (target_lock_point - start_lock_point) * eased_alpha /* * 2.0f */;
     }
     pos = start_pos + (target_pos - start_pos) * eased_alpha;
 
@@ -436,16 +440,20 @@ void camera::spherical_to_cartesian_coords(bool to_target)
 {
     vector3 rel_pos;
 
-    rel_pos.x = radius * cos(beta) * sin(alpha);
-    rel_pos.y = radius * sin(beta);
-    rel_pos.z = radius * cos(beta) * cos(alpha);
-
     if (to_target)
     {
+        rel_pos.x = target_radius * cos(beta) * sin(alpha);
+        rel_pos.y = target_radius * sin(beta);
+        rel_pos.z = target_radius * cos(beta) * cos(alpha);
+
         target_pos = rel_pos + target_lock_point;
 
         return;
     }
+
+    rel_pos.x = radius * cos(beta) * sin(alpha);
+    rel_pos.y = radius * sin(beta);
+    rel_pos.z = radius * cos(beta) * cos(alpha);
 
     pos = rel_pos + target_lock_point;
     dir = target_lock_point - pos;

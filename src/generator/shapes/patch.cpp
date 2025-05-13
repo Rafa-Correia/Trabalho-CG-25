@@ -45,8 +45,8 @@ void patch_generator::generate(int argc, char **argv)
     std::vector<vector3> vertices;
     std::vector<size_t> mesh_indices;
 
-    std::vector<vector3> normals; // unused for now
-    // std::vector<vector2> tex_coords; //unused and vector2 undefined
+    std::vector<vector3> normals;
+    std::vector<vector2> tex_coords;
 
     size_t PATCH_COUNT = this->patch_indices.size();
     size_t CONTROL_POINT_COUNT = this->control_points.size();
@@ -102,6 +102,9 @@ void patch_generator::generate(int argc, char **argv)
                 n.normalize();
                 normals.push_back(n);
 
+                vector2 t = vector2((float)j / (float)tesselation_level, (float)k / (float)tesselation_level);
+                tex_coords.push_back(t);
+
                 // dont connect to previous line if you are on the first line (there's no previous line)
                 if (j > 0 && k > 0)
                 {
@@ -134,7 +137,7 @@ void patch_generator::generate(int argc, char **argv)
     }
 
     // by this point the file should be open!
-    output_file << "110\n";
+    output_file << "111\n";
 
     output_file << "0;0;0;" << 10.0f /*this is the bounding sphere radius, i'm not calculating it just yet*/ << "\n";
 
@@ -159,6 +162,14 @@ void patch_generator::generate(int argc, char **argv)
         if (i != 0)
             output_file << ";";
         output_file << normals.at(i);
+    }
+    output_file << "\n";
+
+    for (size_t i = 0; i < tex_coords.size(); i++)
+    {
+        if (i != 0)
+            output_file << ";";
+        output_file << tex_coords.at(i);
     }
 
     output_file << std::flush;

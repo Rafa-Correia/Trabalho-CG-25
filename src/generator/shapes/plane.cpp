@@ -31,6 +31,7 @@ void plane_generator::generate(int argc, char **argv)
     std::vector<size_t> indices;
 
     std::vector<vector3> normals;
+    std::vector<vector2> tex_coords;
 
     float halfSize = length / 2.0f;
     float step = length / divisions;
@@ -54,8 +55,11 @@ void plane_generator::generate(int argc, char **argv)
                 vector3 v(x, y, z);
                 vertices.push_back(v);
 
-                vector3 n(0.0f, 1.0f, 0.0f);
+                vector3 n(nx, ny, nz);
                 normals.push_back(n);
+
+                vector2 t((float)j / divisions, (float)i / divisions);
+                tex_coords.push_back(t);
 
                 if (i < divisions && j < divisions)
                 {
@@ -72,37 +76,45 @@ void plane_generator::generate(int argc, char **argv)
                 }
             }
         };
-
-        file << "110\n"; // Placeholder de settings, pode ajustar se necessário
-
-        file << "0;0;0;" << (length * sqrtf(2)) / 2.0f << "\n";
-
-        for (size_t i = 0; i < vertices.size(); i++)
-        {
-            if (i != 0)
-                file << ";";
-            file << vertices.at(i);
-        }
-        file << "\n";
-
-        for (size_t i = 0; i < indices.size(); i++)
-        {
-            if (i != 0)
-                file << ";";
-            file << indices.at(i);
-        }
-        file << "\n";
-
-        for (size_t i = 0; i < normals.size(); i++)
-        {
-            if (i != 0)
-                file << ";";
-            file << normals.at(i);
-        }
-
-        file << std::flush;
-
-        file.close();
     };
+
     addFace(0, 1, 0, -halfSize, -halfSize, -halfSize, step, 0, 0, 0, 0, step);
+
+    file << "111\n"; // Placeholder de settings, pode ajustar se necessário
+
+    file << "0;0;0;" << (length * sqrtf(2)) / 2.0f << "\n";
+
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << vertices.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << indices.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < normals.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << normals.at(i);
+    }
+    file << "\n";
+
+    for (size_t i = 0; i < tex_coords.size(); i++)
+    {
+        if (i != 0)
+            file << ";";
+        file << tex_coords.at(i);
+    }
+
+    file << std::flush;
+    file.close();
 }

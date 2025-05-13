@@ -1,4 +1,5 @@
 add_library(math STATIC
+    vector2.cpp
     vector3.cpp
     vector4.cpp 
     matrix4x4.cpp 
