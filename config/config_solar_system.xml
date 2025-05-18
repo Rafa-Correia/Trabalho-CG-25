@@ -4,7 +4,7 @@
         <position x="0" y="5" z="10" />
         <lookAt x="0" y="0" z="0" />
         <up x="0" y="1" z="0" />
-        <projection fov="60" near="0.01" far="100" />
+        <projection fov="60" near="0.5" far="1000" />
     </camera>
 
     <lights>
@@ -186,10 +186,18 @@
             </models>
             <group>
                 <transform>
-                    <scale x = "1.2" y="0" z="1.2"/>
+                    <scale x = "1.2" y="0.001" z="1.2"/>
                 </transform>
                 <models>
-                    <model file="torus.3d" />
+                    <model file="torus.3d">
+                        <color>
+                            <diffuse R="255" G="250" B="240" />
+                            <ambient R="32" G="32" B="32" />
+                            <specular R="255" G="255" B="255" />
+                            <emissive R="0" G="0" B="0" />
+                            <shininess value="4" />
+                        </color>
+                    </model>
                 </models>
             </group>
         </group>
@@ -236,7 +244,7 @@
             </models>
         </group>
 
-        
+
     </group>
     <group>
         <!-- THIS WILL BE THE DYNAMIC "COMET" THAT MOVES ALONG A CATMULROM CURVE! -->
@@ -253,10 +261,10 @@
                 <point x="9" y="-7" z="0" />
 
             </translate>
-            <scale x="0.2" y="0.2" z="0.2" />
+            <scale x="0.002" y="0.002" z="0.002" />
         </transform>
         <models>
-            <model file="patch.3d"> 
+            <model file="patch.3d">
                 <color>
                     <diffuse R="255" G="255" B="255" />
                     <ambient R="32" G="32" B="32" />

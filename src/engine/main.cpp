@@ -67,7 +67,7 @@ float cam_fov, cam_near, cam_far;
 bool draw_axis = false;
 bool wire_mode = false;
 bool draw_path = false;
-bool update_groups = true;
+bool update_groups = false;
 
 // frustum cull debug
 bool draw_bounding_spheres = false;
@@ -397,7 +397,7 @@ void init(int &argc, char **argv)
 #endif
 
 	// set background color
-	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+	glClearColor(0.005f, 0.005f, 0.005f, 1.0f);
 
 	// set time base for later (mainly deltatime stuff)
 	timebase = glutGet(GLUT_ELAPSED_TIME);

@@ -3,9 +3,9 @@
 SUBFOLDER="bin"
 EXECUTABLE="generator"
 
-SPHERE_ARGS="sphere 1 20 20 sphere.3d"
-TORUS_ARGS="torus 1.0 1.25 20 20 torus.3d"
-PATCH_ARGS="patch teapot.patch 9 patch.3d"
+SPHERE_ARGS="sphere 1 100 100 sphere.3d"
+TORUS_ARGS="torus 1.0 1.25 100 100 torus.3d"
+PATCH_ARGS="patch teapot.patch 20 patch.3d"
 
 
 "./$SUBFOLDER/$EXECUTABLE" $SPHERE_ARGS

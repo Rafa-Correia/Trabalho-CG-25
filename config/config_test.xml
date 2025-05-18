@@ -19,8 +19,8 @@
             <scale x="0.5" y="0.5" z="0.5" />
         </transform>
         <models>
-            <model file="sphere.3d">
-                <!--<texture file="earth.jpg"/> -->
+            <model file="patch.3d">
+                <texture file="./textures/teapot.jpg"/>
 
                 <color>
                     <diffuse R="255" G="200" B="140" />
